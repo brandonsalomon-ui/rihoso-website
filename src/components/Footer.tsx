@@ -1,33 +1,34 @@
 import Link from "next/link";
-import Logo from "./Logo";
 
 export default function Footer() {
   return (
-    <footer className="bg-forest-950 border-t border-forest-700/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          <div className="lg:col-span-2">
-            <Logo />
-            <p className="mt-4 text-cream-300 font-body text-lg leading-relaxed max-w-md">
-              Time, History, Art, Science, Education, and Tradition.
-              Preserving the Legacy of Horology.
+    <footer className="bg-navy-900 text-white">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16">
+          <div className="lg:col-span-1">
+            <span className="font-display text-2xl text-white">
+              Brandon Salomon
+            </span>
+            <p className="mt-4 text-navy-300 font-body text-base leading-relaxed max-w-sm">
+              Guiding leaders and organizations through the AI transformation
+              with clarity, confidence, and real-world strategy.
             </p>
           </div>
 
           <div>
-            <h4 className="text-gold-400 font-display text-sm tracking-widest uppercase mb-4">Navigate</h4>
-            <ul className="space-y-2">
+            <h4 className="text-tan-400 font-semibold text-sm tracking-wider uppercase mb-6">
+              Navigate
+            </h4>
+            <ul className="space-y-3">
               {[
-                { href: "/about", label: "About RIHOSO" },
-                { href: "/events", label: "Events" },
-                { href: "/memberships", label: "Memberships" },
-                { href: "/blog", label: "Blog" },
+                { href: "/about", label: "About" },
+                { href: "/services", label: "Services" },
                 { href: "/contact", label: "Contact" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-cream-300 hover:text-gold-400 font-body transition-colors duration-300"
+                    className="text-navy-300 hover:text-tan-400 font-body transition-colors duration-300"
                   >
                     {link.label}
                   </Link>
@@ -37,17 +38,20 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-gold-400 font-display text-sm tracking-widest uppercase mb-4">Resources</h4>
-            <ul className="space-y-2">
+            <h4 className="text-tan-400 font-semibold text-sm tracking-wider uppercase mb-6">
+              Services
+            </h4>
+            <ul className="space-y-3">
               {[
-                { href: "/watchmaking-schools", label: "Watchmaking Schools" },
-                { href: "/sponsors", label: "Sponsors" },
-                { href: "/memberships#join", label: "Join Now" },
+                { href: "/services#consulting", label: "AI Consulting" },
+                { href: "/services#training", label: "Team Training" },
+                { href: "/services#speaking", label: "Speaking Engagements" },
+                { href: "/services#leadership", label: "Leadership Coaching" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-cream-300 hover:text-gold-400 font-body transition-colors duration-300"
+                    className="text-navy-300 hover:text-tan-400 font-body transition-colors duration-300"
                   >
                     {link.label}
                   </Link>
@@ -57,18 +61,16 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-forest-700/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-cream-400 font-body text-sm">
-            &copy; {new Date().getFullYear()} Rhode Island Horological Society. All rights reserved.
+        <div className="gradient-divider mt-16 mb-8 opacity-30" />
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-navy-400 font-body text-sm">
+            &copy; {new Date().getFullYear()} Brandon Salomon. All rights
+            reserved.
           </p>
-          <div className="flex items-center gap-1 text-cream-400 font-body text-sm">
-            <span>Dedicated to the art and science of horology</span>
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-gold-400 ml-1" fill="currentColor">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="12" y1="5" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="12" y1="12" x2="17" y2="14" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            </svg>
-          </div>
+          <p className="text-navy-500 font-body text-sm">
+            Empowering teams through AI leadership
+          </p>
         </div>
       </div>
     </footer>

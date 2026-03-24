@@ -5,24 +5,25 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "RIHOSO — Rhode Island Horological Society",
-    template: "%s | RIHOSO",
+    default: "Brandon Salomon — AI Leadership & Consulting",
+    template: "%s | Brandon Salomon",
   },
   description:
-    "Time, History, Art, Science, Education, and Tradition. The Rhode Island Horological Society preserves the legacy of horology through community, education, and passion.",
+    "Helping organizations navigate AI transformation through leadership consulting, team training, and strategic implementation. Speaker, consultant, and AI integration expert.",
   keywords: [
-    "horology",
-    "Rhode Island",
-    "watchmaking",
-    "clocks",
-    "horological society",
-    "RIHOSO",
+    "AI consulting",
+    "AI leadership",
+    "AI training",
+    "digital transformation",
+    "speaking engagements",
+    "team training",
+    "Brandon Salomon",
   ],
   openGraph: {
-    title: "RIHOSO — Rhode Island Horological Society",
+    title: "Brandon Salomon — AI Leadership & Consulting",
     description:
-      "Preserving the Legacy of Horology. Time, History, Art, Science, Education, and Tradition.",
-    siteName: "RIHOSO",
+      "Helping organizations navigate AI transformation through leadership consulting, team training, and strategic implementation.",
+    siteName: "Brandon Salomon",
     type: "website",
   },
 };
@@ -35,14 +36,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap"
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased grain bg-forest-800 text-cream-100">
+      <body className="font-body antialiased bg-sand-100 text-navy-800">
         <Header />
-        <main className="min-h-screen pt-16 sm:pt-20">{children}</main>
+        <main className="min-h-screen">{children}</main>
         <Footer />
       </body>
     </html>
