@@ -3,32 +3,15 @@ import Link from "next/link";
 import NewsGrid from "@/components/NewsGrid";
 import SectionHeading from "@/components/SectionHeading";
 import Logo from "@/components/Logo";
+import { upcomingEvents } from "@/lib/events";
 
-const UPCOMING_EVENTS = [
-  {
-    title: "Monthly Members Meeting",
-    date: "First Thursday of Each Month",
-    location: "Rhode Island",
-    description:
-      "Join fellow horologists for discussions, show-and-tell, and guest presentations.",
-  },
-  {
-    title: "Spring Horological Fair",
-    date: "April 12, 2026",
-    location: "Providence, RI",
-    description:
-      "Our signature event featuring vendors, exhibits, and educational workshops.",
-  },
-  {
-    title: "Watchmaking Workshop",
-    date: "May 17, 2026",
-    location: "TBA",
-    description:
-      "Hands-on workshop covering movement assembly, cleaning, and maintenance.",
-  },
-];
+// Re-check dates every hour so past events drop off automatically.
+export const revalidate = 3600;
+
+
 
 export default function HomePage() {
+  const homeEvents = upcomingEvents().slice(0, 3);
   return (
     <>
       {/* Hero Section */}
@@ -82,7 +65,7 @@ export default function HomePage() {
             style={{ animationFillMode: "forwards" }}
           >
             <Link
-              href="/memberships"
+              href="/memberships#join"
               className="px-8 py-4 bg-gold-400 text-forest-900 font-body text-lg tracking-widest uppercase hover:bg-gold-300 transition-colors duration-300"
             >
               Become a Member
@@ -106,8 +89,12 @@ export default function HomePage() {
           subtitle="Gatherings for collectors, enthusiasts, and students of horology"
         />
 
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {UPCOMING_EVENTS.map((event, i) => (
+        <div
+          className={`mt-16 grid grid-cols-1 gap-8 ${
+            homeEvents.length >= 3 ? "md:grid-cols-3" : homeEvents.length === 2 ? "md:grid-cols-2 max-w-4xl mx-auto" : "max-w-xl mx-auto"
+          }`}
+        >
+          {homeEvents.map((event, i) => (
             <div
               key={i}
               className="p-8 bg-forest-900/50 border border-forest-600/30 hover:border-gold-400/30 transition-all duration-500 group"
@@ -116,11 +103,11 @@ export default function HomePage() {
                 {event.date}
               </div>
               <h3 className="font-display text-xl text-cream-100 group-hover:text-gold-300 transition-colors duration-300">
-                {event.title}
+                {event.shortTitle || event.title}
               </h3>
               <p className="mt-1 text-cream-400 font-body text-sm">{event.location}</p>
               <p className="mt-4 text-cream-300 font-body leading-relaxed">
-                {event.description}
+                {event.shortDescription || event.description}
               </p>
             </div>
           ))}
