@@ -1,39 +1,37 @@
+import Image from "next/image";
+
 export default function Logo({ size = "default" }: { size?: "small" | "default" | "large" }) {
+  // Large (home page hero): the full seal on its own — it already carries the society's name.
+  if (size === "large") {
+    return (
+      <Image
+        src="/rihoso-seal.png"
+        alt="Rhode Island Horological Society seal"
+        width={600}
+        height={600}
+        priority
+        className="w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+      />
+    );
+  }
+
   const dimensions = {
-    small: { emblem: 36, text: "text-lg", subtitle: "text-[9px]" },
-    default: { emblem: 44, text: "text-2xl", subtitle: "text-[10px]" },
-    large: { emblem: 72, text: "text-4xl", subtitle: "text-xs" },
+    small: { emblem: 48, text: "text-lg", subtitle: "text-[9px]" },
+    default: { emblem: 64, text: "text-2xl", subtitle: "text-[10px]" },
   };
   const d = dimensions[size];
 
   return (
     <div className="flex items-center gap-3">
-      <div
-        className="relative rounded-full border-2 border-gold-400 flex items-center justify-center flex-shrink-0"
+      <Image
+        src="/rihoso-seal.png"
+        alt="Rhode Island Horological Society seal"
+        width={d.emblem * 2}
+        height={d.emblem * 2}
+        priority={size === "small"}
+        className="flex-shrink-0"
         style={{ width: d.emblem, height: d.emblem }}
-      >
-        <svg
-          viewBox="0 0 40 40"
-          className="text-gold-400"
-          style={{ width: d.emblem * 0.6, height: d.emblem * 0.6 }}
-        >
-          <circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
-          <line x1="20" y1="8" x2="20" y2="20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="20" y1="20" x2="28" y2="24" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-          <circle cx="20" cy="20" r="1.5" fill="currentColor" />
-          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => (
-            <line
-              key={angle}
-              x1={20 + 12 * Math.cos((angle * Math.PI) / 180)}
-              y1={20 + 12 * Math.sin((angle * Math.PI) / 180)}
-              x2={20 + 14 * Math.cos((angle * Math.PI) / 180)}
-              y2={20 + 14 * Math.sin((angle * Math.PI) / 180)}
-              stroke="currentColor"
-              strokeWidth={angle % 90 === 0 ? "1.5" : "0.75"}
-            />
-          ))}
-        </svg>
-      </div>
+      />
       <div className="flex flex-col">
         <span className={`${d.text} font-display font-bold tracking-[0.2em] text-cream-100 leading-none`}>
           RIHOSO
