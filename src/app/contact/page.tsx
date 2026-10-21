@@ -5,10 +5,28 @@ import { useState } from "react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitted(true);
+    setSending(true);
+    setError("");
+    const form = new FormData(e.currentTarget);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.fromEntries(form.entries())),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "Something went wrong.");
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -41,6 +59,7 @@ export default function ContactPage() {
                 type="text"
                 id="name"
                 name="name"
+                autoComplete="name"
                 required
                 className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
                 placeholder="Your name"
@@ -55,9 +74,24 @@ export default function ContactPage() {
                 type="email"
                 id="email"
                 name="email"
+                autoComplete="email"
                 required
                 className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
                 placeholder="your@email.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm text-cream-200 mb-1">
+                Phone <span className="text-cream-400">(optional)</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                autoComplete="tel"
+                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
+                placeholder="(401) 555-0123"
               />
             </div>
 
@@ -92,11 +126,25 @@ export default function ContactPage() {
               />
             </div>
 
+            <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+              <label>
+                Website
+                <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+              </label>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-gold-400 text-forest-950 py-3 rounded font-semibold hover:bg-gold-300 transition-colors"
+              disabled={sending}
+              className="w-full bg-gold-400 text-forest-950 py-3 rounded font-semibold hover:bg-gold-300 transition-colors disabled:opacity-60"
             >
-              Send Message
+              {sending ? "Sending…" : "Send Message"}
             </button>
           </form>
         )}
