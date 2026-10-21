@@ -11,7 +11,7 @@ const schools = [
     location: "Lititz, PA",
     description:
       "One of the most respected watchmaking schools in North America, offering a comprehensive program in watch repair and restoration.",
-    website: "https://www.lititzwatchtechnicum.org",
+    website: "https://en.wikipedia.org/wiki/Lititz_Watch_Technicum",
   },
   {
     name: "NAWCC School of Horology",
@@ -25,7 +25,7 @@ const schools = [
     location: "Dallas, TX",
     description:
       "Swiss-certified watchmaking program training students to WOSTEP standards for careers in luxury watch service.",
-    website: "https://www.naiosw.org",
+    website: "https://www.naiosw.com",
   },
   {
     name: "North Seattle College — Watch Technology",
