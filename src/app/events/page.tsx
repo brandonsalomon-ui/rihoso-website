@@ -1,59 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { nextMonthlyMeeting, upcomingEvents } from "@/lib/events";
+
+// Re-check dates every hour so past events drop off automatically.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Events & Gatherings",
   description: "Upcoming RIHOSO events, meetings, and horological gatherings in Rhode Island.",
 };
 
-const events = [
-  {
-    title: "Monthly Meeting & Show-and-Tell",
-    date: "First Thursday of Every Month",
-    time: "7:00 PM",
-    location: "Rhode Island",
-    description:
-      "Our regular monthly meeting. Bring your latest acquisitions, restorations, and questions for the group. All skill levels welcome.",
-    recurring: true,
-  },
-  {
-    title: "Spring Horological Fair",
-    date: "April 12, 2026",
-    time: "9:00 AM - 4:00 PM",
-    location: "Providence, RI",
-    description:
-      "Annual spring gathering featuring dealers, collectors, and exhibitors. Browse vintage and modern timepieces, tools, parts, and horological literature.",
-    recurring: false,
-  },
-  {
-    title: "Watchmaking Workshop: Movement Basics",
-    date: "May 17, 2026",
-    time: "10:00 AM - 2:00 PM",
-    location: "TBA",
-    description:
-      "Hands-on workshop covering the fundamentals of mechanical watch movements. Limited spots available. Open to members and guests.",
-    recurring: false,
-  },
-  {
-    title: "Summer Clock Tour",
-    date: "June 2026",
-    time: "TBA",
-    location: "Various Locations, RI",
-    description:
-      "Guided tour of historic public clocks and clock towers throughout Rhode Island. Learn the history behind these magnificent timepieces.",
-    recurring: false,
-  },
-  {
-    title: "Annual Holiday Dinner",
-    date: "December 2026",
-    time: "6:00 PM",
-    location: "TBA",
-    description:
-      "Our annual year-end celebration. Join fellow members for dinner, awards, and camaraderie.",
-    recurring: false,
-  },
-];
-
 export default function EventsPage() {
+  const events = upcomingEvents();
+  const nextMeeting = nextMonthlyMeeting();
+  const hasDated = events.some((e) => !e.recurring);
+
   return (
     <section className="py-20 bg-forest-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,9 +39,14 @@ export default function EventsPage() {
                   <p className="text-gold-400 font-semibold text-sm">{event.date}</p>
                   <p className="text-cream-400 text-sm">{event.time}</p>
                   {event.recurring && (
-                    <span className="inline-block mt-1 text-xs bg-gold-400/20 text-gold-300 px-2 py-0.5 rounded">
-                      Recurring
-                    </span>
+                    <>
+                      <span className="inline-block mt-1 text-xs bg-gold-400/20 text-gold-300 px-2 py-0.5 rounded">
+                        Recurring
+                      </span>
+                      {nextMeeting && (
+                        <p className="mt-2 text-xs text-cream-300">Next: {nextMeeting}</p>
+                      )}
+                    </>
                   )}
                 </div>
                 <div>
@@ -92,6 +58,19 @@ export default function EventsPage() {
             </div>
           ))}
         </div>
+
+        {!hasDated && (
+          <p className="mt-10 text-center text-cream-300">
+            More gatherings are being planned — check back soon.
+          </p>
+        )}
+
+        <p className="mt-10 text-center text-cream-400 text-sm">
+          Want to hear about new events first?{" "}
+          <Link href="/memberships#join" className="text-gold-400 hover:text-gold-300 transition-colors">
+            Become a member
+          </Link>
+        </p>
       </div>
     </section>
   );
