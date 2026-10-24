@@ -28,7 +28,18 @@ export type SocietyEvent = {
 //
 // For a monthly meeting, set `recurring: true` (and leave out `endsOn`); the site
 // then also shows the next first-Thursday date.
-export const EVENTS: SocietyEvent[] = [];
+export const EVENTS: SocietyEvent[] = [
+  {
+    title: "Monthly Meetings Begin",
+    date: "January 2027",
+    endsOn: "2027-01-31",
+    time: "Date & time to be announced",
+    location: "Rhode Island",
+    description:
+      "Starting in January 2027, RIHOSO will meet every month. Members will be the first to receive the date, time, and location.",
+    shortDescription: "Starting in January 2027, RIHOSO will meet every month.",
+  },
+];
 
 /** Today's date in Rhode Island as YYYY-MM-DD. */
 function todayInRI(now = new Date()) {
