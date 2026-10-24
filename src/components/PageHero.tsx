@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Gear, GuillocheRosette, OrnamentDivider } from "./ornaments";
 
 /** Shared banner for interior pages: eyebrow, title, intro, and rotating horological artwork. */
@@ -6,7 +7,11 @@ export default function PageHero({
   title,
   subtitle,
   children,
+  image,
+  imageFocus = "50% 40%",
 }: {
+  image?: string;
+  imageFocus?: string;
   eyebrow: string;
   title: string;
   subtitle?: string;
@@ -14,6 +19,12 @@ export default function PageHero({
 }) {
   return (
     <section className="relative overflow-hidden bg-forest-900 border-b border-gold-400/10">
+      {image && (
+        <>
+          <Image src={image} alt="" fill priority sizes="100vw" className="object-cover opacity-35" style={{ objectPosition: imageFocus }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-forest-900/70 via-forest-900/60 to-forest-900" />
+        </>
+      )}
       {/* glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(201,168,76,0.14),transparent_60%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_60%,rgba(61,107,61,0.35),transparent_45%)]" />
