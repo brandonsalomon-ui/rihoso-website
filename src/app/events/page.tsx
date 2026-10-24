@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function EventsPage() {
   const events = upcomingEvents();
-  const nextMeeting = nextMonthlyMeeting();
+  const nextMeeting = events.some((e) => e.recurring) ? nextMonthlyMeeting() : null;
   const hasDated = events.some((e) => !e.recurring);
 
   return (
@@ -43,6 +43,28 @@ export default function EventsPage() {
 
       <section className="py-20 sm:py-24 bg-forest-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {events.length === 0 ? (
+            <Reveal>
+              <div className="relative overflow-hidden rounded-2xl panel-lux px-6 py-14 sm:px-12 text-center">
+                <span className="mx-auto flex items-center justify-center w-16 h-16 rounded-full border border-gold-400/50 text-gold-300">
+                  <Icon name="calendar" className="w-8 h-8" />
+                </span>
+                <h2 className="mt-6 font-display text-3xl text-cream-50">New gatherings coming soon</h2>
+                <p className="mt-4 text-lg text-cream-300 max-w-xl mx-auto leading-relaxed">
+                  We&apos;re planning our next events now. Become a member to be the first to hear when dates are announced.
+                </p>
+                <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/memberships#join" className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-3 tracking-widest uppercase text-sm">
+                    Become a member
+                    <Icon name="arrow" className="w-4 h-4" />
+                  </Link>
+                  <Link href="/contact" className="inline-flex items-center justify-center gap-2 px-8 py-3 tracking-widest uppercase text-sm border border-cream-300/30 text-cream-200 hover:border-gold-400 hover:text-gold-300 transition-colors">
+                    Ask about events
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          ) : (
           <ol className="relative">
             {/* timeline spine */}
             <span
@@ -87,8 +109,9 @@ export default function EventsPage() {
               </Reveal>
             ))}
           </ol>
+          )}
 
-          {!hasDated && (
+          {events.length > 0 && !hasDated && (
             <p className="mt-10 text-center text-cream-300">
               More gatherings are being planned — check back soon.
             </p>

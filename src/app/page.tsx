@@ -125,6 +125,24 @@ export default function HomePage() {
           subtitle="Gatherings for collectors, enthusiasts, and students of horology"
         />
 
+        {homeEvents.length === 0 && (
+          <Reveal className="mt-16 max-w-2xl mx-auto">
+            <div className="panel-lux rounded-xl px-8 py-10 text-center">
+              <span className="mx-auto flex items-center justify-center w-12 h-12 rounded-full border border-gold-400/50 text-gold-300">
+                <Icon name="calendar" className="w-6 h-6" />
+              </span>
+              <p className="mt-5 font-display text-2xl text-cream-50">New gatherings coming soon</p>
+              <p className="mt-3 text-cream-300 leading-relaxed">
+                Our next events are being planned. Members hear about them first.
+              </p>
+              <Link href="/memberships#join" className="btn-gold mt-7 inline-flex items-center gap-2 px-7 py-3 tracking-widest uppercase text-sm">
+                Become a member
+                <Icon name="arrow" className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
+        )}
+
         <div
           className={`mt-16 grid grid-cols-1 gap-8 ${
             homeEvents.length >= 3 ? "md:grid-cols-3" : homeEvents.length === 2 ? "md:grid-cols-2 max-w-4xl mx-auto" : "max-w-xl mx-auto"
@@ -162,7 +180,7 @@ export default function HomePage() {
             href="/events"
             className="inline-flex items-center gap-2 text-gold-400 font-body tracking-wide hover:text-gold-300 transition-colors group"
           >
-            View All Events
+            {homeEvents.length ? "View All Events" : "See Past Gatherings"}
             <svg
               className="w-4 h-4 group-hover:translate-x-1 transition-transform"
               fill="none"
