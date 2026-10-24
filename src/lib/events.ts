@@ -13,61 +13,22 @@ export type SocietyEvent = {
 };
 
 // Add new events here. Each dated event disappears from the site automatically
-// the day after its `endsOn` date.
-export const EVENTS: SocietyEvent[] = [
-  {
-    title: "Monthly Meeting & Show-and-Tell",
-    shortTitle: "Monthly Members Meeting",
-    date: "First Thursday of Every Month",
-    time: "7:00 PM",
-    location: "Rhode Island",
-    description:
-      "Our regular monthly meeting. Bring your latest acquisitions, restorations, and questions for the group. All skill levels welcome.",
-    shortDescription:
-      "Join fellow horologists for discussions, show-and-tell, and guest presentations.",
-    recurring: true,
-  },
-  {
-    title: "Spring Horological Fair",
-    date: "April 12, 2026",
-    endsOn: "2026-04-12",
-    time: "9:00 AM - 4:00 PM",
-    location: "Providence, RI",
-    description:
-      "Annual spring gathering featuring dealers, collectors, and exhibitors. Browse vintage and modern timepieces, tools, parts, and horological literature.",
-    shortDescription: "Our signature event featuring vendors, exhibits, and educational workshops.",
-  },
-  {
-    title: "Watchmaking Workshop: Movement Basics",
-    shortTitle: "Watchmaking Workshop",
-    date: "May 17, 2026",
-    endsOn: "2026-05-17",
-    time: "10:00 AM - 2:00 PM",
-    location: "TBA",
-    description:
-      "Hands-on workshop covering the fundamentals of mechanical watch movements. Limited spots available. Open to members and guests.",
-    shortDescription: "Hands-on workshop covering movement assembly, cleaning, and maintenance.",
-  },
-  {
-    title: "Summer Clock Tour",
-    date: "June 2026",
-    endsOn: "2026-06-30",
-    time: "TBA",
-    location: "Various Locations, RI",
-    description:
-      "Guided tour of historic public clocks and clock towers throughout Rhode Island. Learn the history behind these magnificent timepieces.",
-  },
-  {
-    title: "Annual Holiday Dinner",
-    date: "December 2026",
-    endsOn: "2026-12-31",
-    time: "6:00 PM",
-    location: "TBA",
-    description:
-      "Our annual year-end celebration. Join fellow members for dinner, awards, and camaraderie.",
-    shortDescription: "Our year-end celebration with dinner, awards, and camaraderie.",
-  },
-];
+// the day after its `endsOn` date. While this list is empty, the Events page and
+// the home page show a "no gatherings scheduled" message instead.
+//
+// Example:
+//   {
+//     title: "Spring Gathering",
+//     date: "April 16, 2027",
+//     endsOn: "2027-04-16",
+//     time: "6:00 PM",
+//     location: "University Club, Providence",
+//     description: "An evening of watches, conversation, and a watchmaking demonstration.",
+//   },
+//
+// For a monthly meeting, set `recurring: true` (and leave out `endsOn`); the site
+// then also shows the next first-Thursday date.
+export const EVENTS: SocietyEvent[] = [];
 
 /** Today's date in Rhode Island as YYYY-MM-DD. */
 function todayInRI(now = new Date()) {
