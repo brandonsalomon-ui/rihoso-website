@@ -3,6 +3,9 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { MEMBERSHIP_TIERS, type TierId } from "@/lib/membership";
+import { GuillocheRosette, Icon, type IconName } from "./ornaments";
+
+const TIER_ICON: Record<string, IconName> = { individual: "time", family: "users", patron: "tradition" };
 
 const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -59,23 +62,26 @@ export default function MembershipSignup() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col rounded-lg p-8 border transition-colors ${
-                t.highlighted
-                  ? "bg-forest-700/60 border-gold-400/50 ring-1 ring-gold-400/20"
-                  : "bg-forest-800/60 border-forest-600/30 hover:border-gold-400/30"
-              }`}
+              data-active={t.highlighted}
+              className={`card-lux group flex flex-col rounded-xl p-8 overflow-hidden ${t.highlighted ? "md:-mt-4 md:pb-12" : ""}`}
             >
+              <div className="pointer-events-none absolute -right-16 -top-16 text-gold-400/[0.08]">
+                <GuillocheRosette className="w-56 h-56 group-hover:animate-rotate-medium" />
+              </div>
               {t.highlighted && (
-                <p className="text-xs text-gold-400 uppercase tracking-wider font-semibold mb-4">
+                <p className="absolute top-0 left-1/2 -translate-x-1/2 bg-gradient-to-br from-gold-300 via-gold-400 to-gold-500 text-forest-950 whitespace-nowrap text-[11px] uppercase tracking-[0.25em] font-semibold px-4 py-1 rounded-b-md">
                   Most Popular
                 </p>
               )}
-              <h3 className="text-2xl font-display text-cream-50 mb-1">{t.name}</h3>
-              <div className="mb-6">
-                <span className="text-3xl font-bold text-gold-400">{t.price}</span>
+              <span className={`relative flex items-center justify-center w-14 h-14 rounded-full border mb-5 ${t.highlighted ? "mt-4 border-gold-300 text-gold-200 bg-gold-400/10" : "border-gold-400/40 text-gold-400"}`}>
+                <Icon name={TIER_ICON[t.id]} className="w-7 h-7" />
+              </span>
+              <h3 className="relative text-2xl font-display text-cream-50 mb-1">{t.name}</h3>
+              <div className="relative mb-6">
+                <span className="font-display text-4xl font-bold text-gold-foil">{t.price}</span>
                 <span className="text-cream-400 text-sm ml-1">/{t.period}</span>
               </div>
-              <ul className="space-y-3 mb-8 flex-1">
+              <ul className="relative space-y-3 mb-8 flex-1">
                 {t.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm text-cream-300">
                     <svg className="w-4 h-4 text-gold-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,8 +97,8 @@ export default function MembershipSignup() {
                 aria-pressed={isSelected}
                 className={`w-full py-3 rounded font-semibold transition-colors ${
                   t.highlighted
-                    ? "bg-gold-400 text-forest-950 hover:bg-gold-300"
-                    : "border border-cream-200/30 text-cream-100 hover:bg-cream-100/10"
+                    ? "btn-gold"
+                    : "border border-cream-200/30 text-cream-100 hover:border-gold-400 hover:text-gold-200 hover:bg-gold-400/5"
                 }`}
               >
                 Join as {t.name}
@@ -120,7 +126,7 @@ export default function MembershipSignup() {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 bg-forest-800/40 border border-forest-600/30 rounded-lg p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
             <fieldset>
               <legend className="block text-sm text-cream-200 mb-2">Membership type</legend>
               <div className="grid grid-cols-3 gap-2">
@@ -198,7 +204,7 @@ export default function MembershipSignup() {
             <button
               type="submit"
               disabled={status === "sending"}
-              className="w-full bg-gold-400 text-forest-950 py-3 rounded font-semibold hover:bg-gold-300 transition-colors disabled:opacity-60"
+              className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
             >
               {status === "sending" ? "Sending…" : `Join as ${selected.name} — ${selected.price}/yr`}
             </button>
