@@ -1,3 +1,5 @@
+import { OrnamentDivider } from "./ornaments";
+
 export default function SectionHeading({
   title,
   subtitle,
@@ -27,11 +29,7 @@ export default function SectionHeading({
           {subtitle}
         </p>
       )}
-      <div
-        className={`mt-6 h-px w-24 ${centered ? "mx-auto" : ""} ${
-          light ? "bg-gold-500" : "bg-gold-400"
-        }`}
-      />
+      <OrnamentDivider className={`mt-6 ${centered ? "" : "!justify-start"}`} />
     </div>
   );
 }

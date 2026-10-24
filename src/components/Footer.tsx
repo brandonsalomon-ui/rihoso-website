@@ -1,10 +1,14 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import { GuillocheRosette } from "./ornaments";
 
 export default function Footer() {
   return (
-    <footer className="bg-forest-950 border-t border-forest-700/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <footer className="relative overflow-hidden bg-forest-950 border-t border-gold-400/10">
+      <div className="pointer-events-none absolute -right-48 -bottom-48 text-gold-400/[0.05]">
+        <GuillocheRosette className="w-[520px] h-[520px] animate-rotate-slow-reverse" />
+      </div>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="lg:col-span-2">
             <Logo />

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
+import Reveal from "@/components/Reveal";
+import { Icon, OrnamentDivider } from "@/components/ornaments";
+import PhotoGallery from "@/components/PhotoGallery";
+import { PHOTOS } from "@/lib/photos";
 import { nextMonthlyMeeting, upcomingEvents } from "@/lib/events";
 
 // Re-check dates every hour so past events drop off automatically.
@@ -16,62 +21,114 @@ export default function EventsPage() {
   const hasDated = events.some((e) => !e.recurring);
 
   return (
-    <section className="py-20 bg-forest-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2 text-center">
-          Mark Your Calendar
-        </p>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream-50 mb-4 text-center">
-          Events &amp; Gatherings
-        </h1>
-        <p className="text-center text-cream-300 mb-12 max-w-2xl mx-auto">
-          Join us for meetings, workshops, fairs, and social events throughout the year.
-        </p>
+    <>
+      <PageHero
+        eyebrow="Mark Your Calendar"
+        title="Events & Gatherings"
+        subtitle="Join us for meetings, workshops, fairs, and social events throughout the year."
+        image={PHOTOS.membersDinner.src}
+      >
+        {nextMeeting && (
+          <div className="inline-flex items-center gap-4 rounded-full border border-gold-400/30 bg-forest-950/50 backdrop-blur-sm pl-2 pr-6 py-2">
+            <span className="flex items-center justify-center w-10 h-10 rounded-full btn-gold">
+              <Icon name="calendar" className="w-5 h-5" />
+            </span>
+            <span className="text-left">
+              <span className="block text-[11px] uppercase tracking-[0.25em] text-gold-400">Next members meeting</span>
+              <span className="block font-display text-cream-50">{nextMeeting}</span>
+            </span>
+          </div>
+        )}
+      </PageHero>
 
-        <div className="space-y-6">
-          {events.map((event, i) => (
-            <div
-              key={i}
-              className="bg-forest-800/60 border border-forest-600/30 rounded-lg p-6 hover:border-gold-400/30 transition-colors"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                <div className="sm:w-48 shrink-0">
-                  <p className="text-gold-400 font-semibold text-sm">{event.date}</p>
-                  <p className="text-cream-400 text-sm">{event.time}</p>
-                  {event.recurring && (
-                    <>
-                      <span className="inline-block mt-1 text-xs bg-gold-400/20 text-gold-300 px-2 py-0.5 rounded">
+      <section className="py-20 sm:py-24 bg-forest-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ol className="relative">
+            {/* timeline spine */}
+            <span
+              aria-hidden="true"
+              className="absolute left-5 sm:left-6 top-2 bottom-2 w-px bg-gradient-to-b from-gold-400/70 via-gold-400/25 to-transparent"
+            />
+            {events.map((event, i) => (
+              <Reveal as="li" key={i} delay={i * 100} className="relative pl-16 sm:pl-20 pb-10 last:pb-0">
+                <span className="absolute left-0 top-4 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-forest-900 border border-gold-400/60 text-gold-300 shadow-[0_0_0_6px_rgba(26,46,26,1)]">
+                  <Icon name={event.recurring ? "repeat" : "calendar"} className="w-5 h-5" />
+                </span>
+                <div className="card-lux group rounded-xl p-6 sm:p-8">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <p className="text-gold-400 font-semibold tracking-[0.12em] uppercase text-sm">{event.date}</p>
+                    {event.recurring && (
+                      <span className="text-[11px] uppercase tracking-[0.2em] bg-gold-400/15 text-gold-300 border border-gold-400/30 px-2.5 py-0.5 rounded-full">
                         Recurring
                       </span>
-                      {nextMeeting && (
-                        <p className="mt-2 text-xs text-cream-300">Next: {nextMeeting}</p>
-                      )}
-                    </>
-                  )}
+                    )}
+                  </div>
+                  <h2 className="mt-3 text-2xl font-display text-cream-50 group-hover:text-gold-200 transition-colors">
+                    {event.title}
+                  </h2>
+                  <p className="mt-3 text-cream-300 leading-relaxed">{event.description}</p>
+                  <div className="mt-5 pt-5 border-t border-gold-400/10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-cream-300">
+                    <span className="inline-flex items-center gap-2">
+                      <Icon name="clock" className="w-4 h-4 text-gold-400" />
+                      {event.time}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon name="pin" className="w-4 h-4 text-gold-400" />
+                      {event.location}
+                    </span>
+                    {event.recurring && nextMeeting && (
+                      <span className="inline-flex items-center gap-2 text-gold-300">
+                        <Icon name="calendar" className="w-4 h-4" />
+                        Next: {nextMeeting}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-display text-cream-100 mb-2">{event.title}</h3>
-                  <p className="text-sm text-cream-300 mb-2">{event.description}</p>
-                  <p className="text-xs text-cream-400">{event.location}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+              </Reveal>
+            ))}
+          </ol>
+
+          {!hasDated && (
+            <p className="mt-10 text-center text-cream-300">
+              More gatherings are being planned — check back soon.
+            </p>
+          )}
+
         </div>
+      </section>
 
-        {!hasDated && (
-          <p className="mt-10 text-center text-cream-300">
-            More gatherings are being planned — check back soon.
-          </p>
-        )}
+      <section className="py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Past Gatherings</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">From Our Recent Events</h2>
+            <OrnamentDivider className="mt-6" />
+          </Reveal>
+          <Reveal>
+            <PhotoGallery
+              photos={[PHOTOS.presentation, PHOTOS.membersEvening, PHOTOS.movementDemo, PHOTOS.membersDinner, PHOTOS.demoConversation, PHOTOS.crowd]}
+              layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-2"]}
+            />
+          </Reveal>
+        </div>
+      </section>
 
-        <p className="mt-10 text-center text-cream-400 text-sm">
-          Want to hear about new events first?{" "}
-          <Link href="/memberships#join" className="text-gold-400 hover:text-gold-300 transition-colors">
-            Become a member
-          </Link>
-        </p>
-      </div>
-    </section>
+      <section className="pb-20 sm:pb-24 bg-forest-900/60">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="rounded-xl panel-lux px-6 py-8 sm:flex items-center justify-between gap-6 text-center sm:text-left">
+              <p className="font-display text-xl text-cream-50">Want to hear about new events first?</p>
+              <Link
+                href="/memberships#join"
+                className="btn-gold mt-5 sm:mt-0 inline-flex items-center gap-2 px-7 py-3 tracking-widest uppercase text-sm shrink-0"
+              >
+                Become a member
+                <Icon name="arrow" className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </>
   );
 }

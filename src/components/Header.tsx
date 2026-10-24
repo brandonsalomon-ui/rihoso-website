@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo from "./Logo";
 
 const NAV_ITEMS = [
@@ -17,9 +18,11 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-forest-900/95 backdrop-blur-sm border-b border-forest-700/50">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-forest-900/95 backdrop-blur-sm border-b border-gold-400/10 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           <Link href="/" className="hover:opacity-90 transition-opacity">
@@ -31,14 +34,17 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-3 py-2 text-sm font-body tracking-wide text-cream-200 hover:text-gold-400 transition-colors duration-300"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={`relative px-3 py-2 text-sm font-body tracking-wide transition-colors duration-300 hover:text-gold-400 after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-400 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100 ${
+                  isActive(item.href) ? "text-gold-300 after:scale-x-100" : "text-cream-200 after:scale-x-0"
+                }`}
               >
                 {item.label}
               </Link>
             ))}
             <Link
               href="/memberships#join"
-              className="ml-3 px-5 py-2 text-sm font-body tracking-widest uppercase bg-gold-400 text-forest-900 hover:bg-gold-300 transition-colors duration-300"
+              className="btn-gold ml-3 px-5 py-2 text-sm font-body tracking-widest uppercase"
             >
               Join Now
             </Link>
@@ -68,7 +74,7 @@ export default function Header() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-3 text-lg font-body text-cream-200 hover:text-gold-400 hover:bg-forest-800/50 transition-colors rounded"
+                className={`px-4 py-3 text-lg font-body hover:text-gold-400 hover:bg-forest-800/50 transition-colors rounded ${isActive(item.href) ? "text-gold-300 bg-forest-800/50" : "text-cream-200"}`}
               >
                 {item.label}
               </Link>
@@ -76,7 +82,7 @@ export default function Header() {
             <Link
               href="/memberships#join"
               onClick={() => setIsOpen(false)}
-              className="mt-2 mx-4 px-5 py-3 text-center text-sm font-body tracking-widest uppercase bg-gold-400 text-forest-900 hover:bg-gold-300 transition-colors"
+              className="btn-gold mt-2 mx-4 px-5 py-3 text-center text-sm font-body tracking-widest uppercase"
             >
               Join Now
             </Link>

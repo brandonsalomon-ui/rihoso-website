@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BlogCover from "@/components/BlogCover";
+import { Icon, OrnamentDivider } from "@/components/ornaments";
 
 const articles: Record<string, { title: string; date: string; content: string }> = {
   "art-of-mechanical-timekeeping": {
@@ -87,33 +89,61 @@ export default function BlogArticle({ params }: { params: { slug: string } }) {
     );
   }
 
+  const paragraphs = article.content.split("\n\n");
+
   return (
-    <section className="py-20 bg-forest-900">
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/blog"
-          className="text-gold-400 hover:text-gold-300 text-sm transition-colors"
-        >
-          &larr; Back to Blog
-        </Link>
-
-        <h1 className="text-3xl sm:text-4xl font-display font-bold text-cream-50 mt-6 mb-3">
-          {article.title}
-        </h1>
-        <p className="text-cream-400 text-sm mb-10">
-          {new Date(article.date).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </p>
-
-        <div className="space-y-5 text-cream-200 leading-relaxed">
-          {article.content.split("\n\n").map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
-          ))}
+    <>
+      <section className="relative bg-forest-900 border-b border-gold-400/10">
+        <div className="absolute inset-0 opacity-80">
+          <BlogCover slug={params.slug} className="h-full w-full" />
         </div>
-      </article>
-    </section>
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-900 via-forest-900/75 to-forest-900/40" />
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:pt-32 sm:pb-20 text-center">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-gold-400 hover:text-gold-200 text-sm tracking-wide transition-colors"
+          >
+            <Icon name="arrow" className="w-4 h-4 rotate-180" />
+            Back to Blog
+          </Link>
+          <h1 className="mt-6 text-4xl sm:text-5xl font-display font-bold text-cream-50 leading-tight text-balance">
+            {article.title}
+          </h1>
+          <p className="mt-5 text-xs uppercase tracking-[0.3em] text-gold-400">
+            {new Date(article.date + "T12:00:00").toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+          <OrnamentDivider className="mt-8" />
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-forest-800">
+        <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6 text-lg sm:text-xl text-cream-200 leading-relaxed">
+            {paragraphs.map((paragraph, i) => (
+              <p
+                key={i}
+                className={
+                  i === 0
+                    ? "first-letter:float-left first-letter:font-display first-letter:text-7xl first-letter:leading-[0.85] first-letter:mr-3 first-letter:mt-1 first-letter:text-gold-400"
+                    : ""
+                }
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+          <OrnamentDivider className="mt-14" />
+          <div className="mt-10 text-center">
+            <Link href="/blog" className="text-gold-400 hover:text-gold-200 tracking-wide transition-colors">
+              More from the Society
+            </Link>
+          </div>
+        </article>
+      </section>
+    </>
   );
 }

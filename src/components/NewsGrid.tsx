@@ -1,3 +1,5 @@
+import { GuillocheRosette, WatchDial } from "./ornaments";
+
 interface NewsArticle {
   title: string;
   description?: string;
@@ -49,8 +51,15 @@ export default async function NewsGrid() {
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group block bg-forest-800/50 border border-forest-600/30 hover:border-gold-400/40 transition-all duration-500 overflow-hidden"
+            className="card-lux group flex flex-col rounded-xl overflow-hidden"
           >
+            {!imageUrl && (
+              <div className="relative aspect-[16/10] overflow-hidden bg-forest-900 flex items-center justify-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(201,168,76,0.15),transparent_65%)]" />
+                <GuillocheRosette className="absolute w-[130%] text-gold-400/10 animate-rotate-slow" />
+                <WatchDial className="relative w-32 h-32 text-gold-400/50 group-hover:text-gold-300/80 transition-colors duration-500" />
+              </div>
+            )}
             {imageUrl && (
               <div className="aspect-[16/10] overflow-hidden bg-forest-700/30">
                 <img

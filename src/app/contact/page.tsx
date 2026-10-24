@@ -2,6 +2,12 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
+import PageHero from "@/components/PageHero";
+import LiveDial from "@/components/LiveDial";
+import { Icon } from "@/components/ornaments";
+import { EVENTS } from "@/lib/events";
+
+const MEETING = EVENTS.find((e) => e.recurring);
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -30,17 +36,15 @@ export default function ContactPage() {
   }
 
   return (
-    <section className="py-20 bg-forest-900">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2 text-center">
-          Get in Touch
-        </p>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream-50 mb-4 text-center">
-          Contact Us
-        </h1>
-        <p className="text-center text-cream-300 mb-12">
-          Have a question about RIHOSO, our events, or membership? We&apos;d love to hear from you.
-        </p>
+    <>
+    <PageHero
+      eyebrow="Get in Touch"
+      title="Contact Us"
+      subtitle="Have a question about RIHOSO, our events, or membership? We'd love to hear from you."
+    />
+    <section className="py-20 sm:py-24 bg-forest-800">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.5fr_1fr] gap-10 items-start">
+        <div className="panel-lux rounded-xl p-6 sm:p-10">
 
         {submitted ? (
           <div className="text-center bg-forest-800/60 border border-gold-400/30 rounded-lg p-8">
@@ -61,7 +65,7 @@ export default function ContactPage() {
                 name="name"
                 autoComplete="name"
                 required
-                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
+                className="w-full bg-forest-950/60 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
                 placeholder="Your name"
               />
             </div>
@@ -76,7 +80,7 @@ export default function ContactPage() {
                 name="email"
                 autoComplete="email"
                 required
-                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
+                className="w-full bg-forest-950/60 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
                 placeholder="your@email.com"
               />
             </div>
@@ -90,7 +94,7 @@ export default function ContactPage() {
                 id="phone"
                 name="phone"
                 autoComplete="tel"
-                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
+                className="w-full bg-forest-950/60 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors"
                 placeholder="(401) 555-0123"
               />
             </div>
@@ -102,7 +106,7 @@ export default function ContactPage() {
               <select
                 id="subject"
                 name="subject"
-                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 focus:outline-none focus:border-gold-400/60 transition-colors"
+                className="w-full bg-forest-950/60 border border-forest-600/50 rounded px-4 py-3 text-cream-100 focus:outline-none focus:border-gold-400/60 transition-colors"
               >
                 <option value="general">General Inquiry</option>
                 <option value="membership">Membership Question</option>
@@ -121,7 +125,7 @@ export default function ContactPage() {
                 name="message"
                 rows={5}
                 required
-                className="w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors resize-none"
+                className="w-full bg-forest-950/60 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors resize-none"
                 placeholder="Your message..."
               />
             </div>
@@ -142,21 +146,43 @@ export default function ContactPage() {
             <button
               type="submit"
               disabled={sending}
-              className="w-full bg-gold-400 text-forest-950 py-3 rounded font-semibold hover:bg-gold-300 transition-colors disabled:opacity-60"
+              className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
             >
               {sending ? "Sending…" : "Send Message"}
             </button>
           </form>
         )}
 
-        <div className="mt-12 text-center text-cream-400 text-sm">
-          <p>Or reach us directly at{" "}
-            <a href="mailto:info@rihoso.com" className="text-gold-400 hover:text-gold-300 transition-colors">
-              info@rihoso.com
-            </a>
-          </p>
         </div>
+
+        <aside className="space-y-6 lg:sticky lg:top-32">
+          <div className="card-lux rounded-xl p-8 text-center">
+            <LiveDial className="w-40 h-40 mx-auto text-gold-300" />
+            {MEETING && (
+              <>
+                <p className="mt-5 text-xs uppercase tracking-[0.3em] text-gold-400">{MEETING.shortTitle ?? MEETING.title}</p>
+                <p className="mt-2 font-display text-xl text-cream-50">{MEETING.date}</p>
+                <p className="text-cream-300">
+                  {MEETING.time} · {MEETING.location}
+                </p>
+              </>
+            )}
+          </div>
+          <a
+            href="mailto:info@rihoso.com"
+            className="card-lux group rounded-xl p-6 flex items-center gap-4"
+          >
+            <span className="flex items-center justify-center w-12 h-12 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors">
+              <Icon name="mail" className="w-6 h-6" />
+            </span>
+            <span>
+              <span className="block text-xs uppercase tracking-[0.25em] text-cream-400">Email us directly</span>
+              <span className="block font-display text-lg text-gold-300">info@rihoso.com</span>
+            </span>
+          </a>
+        </aside>
       </div>
     </section>
+    </>
   );
 }

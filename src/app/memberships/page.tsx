@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
 import MembershipSignup from "@/components/MembershipSignup";
 
 export const metadata: Metadata = {
@@ -9,29 +10,26 @@ export const metadata: Metadata = {
 
 export default function MembershipsPage() {
   return (
-    <section className="py-20 bg-forest-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2 text-center">
-          Join the Society
-        </p>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream-50 mb-4 text-center">
-          Membership
-        </h1>
-        <p className="text-center text-cream-300 mb-16 max-w-2xl mx-auto">
-          Become part of a community dedicated to preserving the art and science of horology.
-        </p>
+    <>
+      <PageHero
+        eyebrow="Join the Society"
+        title="Membership"
+        subtitle="Become part of a community dedicated to preserving the art and science of horology."
+      />
+      <section className="py-20 sm:py-24 bg-forest-800">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <MembershipSignup />
 
-        <MembershipSignup />
-
-        <div className="mt-12 text-center">
-          <p className="text-cream-400 text-sm">
-            Questions about membership?{" "}
-            <Link href="/contact" className="text-gold-400 hover:text-gold-300 transition-colors">
-              Contact us
-            </Link>
-          </p>
+          <div className="mt-12 text-center">
+            <p className="text-cream-400">
+              Questions about membership?{" "}
+              <Link href="/contact" className="text-gold-400 hover:text-gold-300 transition-colors">
+                Contact us
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

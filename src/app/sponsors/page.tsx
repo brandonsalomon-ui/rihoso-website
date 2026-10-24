@@ -1,80 +1,62 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
+import Reveal from "@/components/Reveal";
+import SponsorCarousel from "@/components/SponsorCarousel";
+import { Gear, Icon } from "@/components/ornaments";
+import { SPONSORS } from "@/lib/sponsors";
 
 export const metadata: Metadata = {
   title: "Sponsors & Supporters",
   description: "Our sponsors and supporters who help make RIHOSO events and programs possible.",
 };
 
-const sponsors = [
-  { name: "Heritage Timepieces", tier: "Gold" },
-  { name: "Providence Watch Co.", tier: "Gold" },
-  { name: "New England Horology Supply", tier: "Silver" },
-  { name: "Atlantic Clock Repair", tier: "Silver" },
-  { name: "Narragansett Antiques", tier: "Silver" },
-  { name: "Bay State Watch Parts", tier: "Bronze" },
-  { name: "Ocean State Jewelers", tier: "Bronze" },
-  { name: "Colonial Clockworks", tier: "Bronze" },
-];
-
-function SponsorCard({ name, tier }: { name: string; tier: string }) {
-  const borderColor =
-    tier === "Gold"
-      ? "border-gold-400/50"
-      : tier === "Silver"
-      ? "border-cream-300/40"
-      : "border-forest-500/40";
-
-  return (
-    <div
-      className={`bg-forest-800/60 border ${borderColor} rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-gold-400/40 transition-colors min-h-[120px]`}
-    >
-      <div className="w-12 h-12 rounded-full bg-forest-700 flex items-center justify-center mb-3">
-        <span className="text-cream-200 font-display text-lg font-bold">
-          {name.charAt(0)}
-        </span>
-      </div>
-      <p className="text-cream-100 font-display text-sm">{name}</p>
-      <p className="text-xs text-gold-400 mt-1">{tier} Sponsor</p>
-    </div>
-  );
-}
-
 export default function SponsorsPage() {
   return (
-    <section className="py-20 bg-forest-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2 text-center">
-          Our Partners
+    <>
+      <PageHero
+        eyebrow="Our Partners"
+        title="Sponsors & Supporters"
+        subtitle="We are grateful to our sponsors and supporters who help make our events, programs, and educational initiatives possible."
+      >
+        <p className="inline-flex items-baseline gap-3 rounded-full border border-gold-400/25 bg-forest-950/40 backdrop-blur-sm px-6 py-2">
+          <span className="font-display text-3xl font-bold text-gold-foil">{SPONSORS.length}</span>
+          <span className="text-xs uppercase tracking-[0.25em] text-cream-300">Partners &amp; Supporters</span>
         </p>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream-50 mb-4 text-center">
-          Sponsors &amp; Supporters
-        </h1>
-        <p className="text-center text-cream-300 mb-16 max-w-2xl mx-auto">
-          We are grateful to our sponsors and supporters who help make our events, programs, and
-          educational initiatives possible.
-        </p>
+      </PageHero>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {sponsors.map((sponsor) => (
-            <SponsorCard key={sponsor.name} {...sponsor} />
-          ))}
-        </div>
+      <section className="relative py-20 sm:py-24 bg-forest-800 overflow-hidden">
+        <div className="absolute inset-0 bg-guilloche opacity-50 pointer-events-none" />
+        <Reveal className="relative">
+          <SponsorCarousel sponsors={SPONSORS} />
+          <p className="mt-8 text-center text-sm text-cream-400">Hover to pause.</p>
+        </Reveal>
 
-        <div className="mt-16 text-center bg-forest-800/40 border border-forest-600/30 rounded-lg p-8">
-          <h2 className="text-2xl font-display text-cream-50 mb-3">Become a Sponsor</h2>
-          <p className="text-cream-300 text-sm mb-6 max-w-lg mx-auto">
-            Interested in supporting the Rhode Island Horological Society? We offer
-            multiple sponsorship tiers with visibility at events and on our website.
-          </p>
-          <Link
-            href="/contact"
-            className="inline-block bg-gold-400 text-forest-950 px-8 py-3 rounded font-semibold hover:bg-gold-300 transition-colors"
-          >
-            Get in Touch
-          </Link>
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+          <Reveal>
+            <div className="relative overflow-hidden text-center rounded-2xl panel-lux p-10 sm:p-12">
+              <div className="pointer-events-none absolute -right-16 -top-16 text-gold-400/10">
+                <Gear className="w-56 h-56 animate-rotate-slow" teeth={26} />
+              </div>
+              <div className="pointer-events-none absolute -left-12 -bottom-16 text-gold-400/10">
+                <Gear className="w-44 h-44 animate-rotate-slow-reverse" teeth={18} />
+              </div>
+              <h2 className="relative text-3xl font-display text-cream-50 mb-3">Become a Sponsor</h2>
+              <p className="relative text-cream-300 text-lg mb-8 max-w-lg mx-auto">
+                Interested in supporting the Rhode Island Horological Society? We offer
+                multiple sponsorship tiers with visibility at events and on our website.
+              </p>
+              <Link
+                href="/contact"
+                className="btn-gold relative inline-flex items-center gap-2 px-8 py-3 tracking-widest uppercase"
+              >
+                Get in Touch
+                <Icon name="arrow" className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

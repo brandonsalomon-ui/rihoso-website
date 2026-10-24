@@ -77,3 +77,164 @@ body {
 .animation-delay-200 { animation-delay: 0.2s; }
 .animation-delay-400 { animation-delay: 0.4s; }
 .animation-delay-600 { animation-delay: 0.6s; }
+
+.animate-rotate-slow-reverse {
+  animation: rotate-slow 90s linear infinite reverse;
+}
+.animate-rotate-medium {
+  animation: rotate-slow 30s linear infinite;
+}
+
+@keyframes pendulum {
+  0%, 100% { transform: rotate(9deg); }
+  50% { transform: rotate(-9deg); }
+}
+.animate-pendulum {
+  animation: pendulum 2s ease-in-out infinite;
+}
+
+/* Sponsor logo marquee */
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.sponsor-track {
+  animation: marquee 80s linear infinite;
+}
+.sponsor-track-reverse {
+  animation-direction: reverse;
+}
+.sponsor-marquee:hover .sponsor-track,
+.sponsor-marquee:focus-within .sponsor-track {
+  animation-play-state: paused;
+}
+.sponsor-plaque {
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.sponsor-plaque:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.7), 0 0 30px -8px rgba(201, 168, 76, 0.55);
+}
+
+/* Scroll-reveal (see components/Reveal.tsx). Only hides content once JS has loaded. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.js [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Luxury card: hairline gold gradient border, soft lift on hover */
+.card-lux {
+  position: relative;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(31, 58, 31, 0.92), rgba(15, 29, 15, 0.92)) padding-box,
+    linear-gradient(135deg, rgba(201, 168, 76, 0.45), rgba(61, 107, 61, 0.25) 45%, rgba(201, 168, 76, 0.18)) border-box;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.5s ease, background 0.5s ease;
+}
+.card-lux:hover,
+.card-lux[data-active="true"] {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 168, 76, 0.25), 0 0 40px -12px rgba(201, 168, 76, 0.35);
+  background:
+    linear-gradient(160deg, rgba(31, 58, 31, 0.98), rgba(15, 29, 15, 0.98)) padding-box,
+    linear-gradient(135deg, rgba(232, 201, 110, 0.85), rgba(61, 107, 61, 0.35) 45%, rgba(201, 168, 76, 0.5)) border-box;
+}
+
+/* Gold foil text */
+.text-gold-foil {
+  background: linear-gradient(100deg, #9a742e 0%, #e8c96e 30%, #f9f0d6 48%, #c9a84c 62%, #9a742e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gold button with a light sweep on hover */
+.btn-gold {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e8c96e, #c9a84c 55%, #b8923a);
+  color: #0f1d0f;
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+}
+.btn-gold::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transition: transform 0.8s ease;
+}
+.btn-gold:hover {
+  box-shadow: 0 10px 30px -10px rgba(201, 168, 76, 0.7);
+}
+.btn-gold:hover::after {
+  transform: translateX(120%) skewX(-20deg);
+}
+
+/* Map pin pulse */
+@keyframes pin-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+.pin-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pin-pulse 2.4s ease-out infinite;
+}
+
+/* Dashed routes on the schools map drift toward each school */
+@keyframes route-flow {
+  to { stroke-dashoffset: -100; }
+}
+.route-dash {
+  animation: route-flow 7s linear infinite;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+/* Static version of .card-lux for large panels */
+.panel-lux {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(26, 46, 26, 0.95), rgba(8, 15, 8, 0.95)) padding-box,
+    linear-gradient(135deg, rgba(201, 168, 76, 0.5), rgba(61, 107, 61, 0.25) 45%, rgba(201, 168, 76, 0.25)) border-box;
+}
+
+/* Fine engine-turned (guilloché) background texture */
+.bg-guilloche {
+  background-image:
+    repeating-radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.05) 0 1px, transparent 1px 7px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rotate-slow,
+  .animate-rotate-slow-reverse,
+  .animate-rotate-medium,
+  .pin-pulse,
+  .route-dash,
+  .animate-pendulum {
+    animation: none;
+  }
+  .sponsor-track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.5rem;
+  }
+  .sponsor-track > [aria-hidden="true"] {
+    display: none;
+  }
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1 !important;
+  }
+}

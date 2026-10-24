@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageHero from "@/components/PageHero";
+import Reveal from "@/components/Reveal";
+import BlogCover from "@/components/BlogCover";
+import { Icon } from "@/components/ornaments";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -42,48 +46,63 @@ const posts = [
 ];
 
 export default function BlogPage() {
-  return (
-    <section className="py-20 bg-forest-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2 text-center">
-          From the Society
-        </p>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-cream-50 mb-4 text-center">
-          Blog
-        </h1>
-        <p className="text-center text-cream-300 mb-12 max-w-2xl mx-auto">
-          Stories, insights, and knowledge from our community of horological enthusiasts.
-        </p>
+  const [featured, ...rest] = posts;
+  const fmt = (d: string) =>
+    new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-        <div className="space-y-6">
-          {posts.map((post) => (
+  return (
+    <>
+      <PageHero
+        eyebrow="From the Society"
+        title="Blog"
+        subtitle="Stories, insights, and knowledge from our community of horological enthusiasts."
+      />
+
+      <section className="py-20 sm:py-24 bg-forest-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Featured */}
+          <Reveal>
             <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              className="block bg-forest-800/60 border border-forest-600/30 rounded-lg p-6 hover:border-gold-400/30 transition-colors group"
+              href={`/blog/${featured.slug}`}
+              className="card-lux group grid md:grid-cols-2 rounded-2xl overflow-hidden"
             >
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                <div className="sm:w-32 shrink-0">
-                  <p className="text-gold-400 text-sm">
-                    {new Date(post.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <h2 className="text-xl font-display text-cream-100 mb-2 group-hover:text-gold-300 transition-colors">
-                    {post.title}
-                  </h2>
-                  <p className="text-sm text-cream-300">{post.excerpt}</p>
-                  <p className="text-xs text-cream-400 mt-2">By {post.author}</p>
-                </div>
+              <BlogCover slug={featured.slug} className="aspect-[16/10] md:aspect-auto md:min-h-[340px]" />
+              <div className="p-8 sm:p-10 flex flex-col justify-center">
+                <p className="text-xs uppercase tracking-[0.3em] text-gold-400">Latest · {fmt(featured.date)}</p>
+                <h2 className="mt-4 font-display text-3xl sm:text-4xl text-cream-50 leading-tight group-hover:text-gold-200 transition-colors">
+                  {featured.title}
+                </h2>
+                <p className="mt-4 text-lg text-cream-300 leading-relaxed">{featured.excerpt}</p>
+                <span className="mt-8 inline-flex items-center gap-2 text-gold-400 tracking-wide">
+                  Read article
+                  <Icon name="arrow" className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </span>
               </div>
             </Link>
-          ))}
+          </Reveal>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {rest.map((post, i) => (
+              <Reveal key={post.slug} delay={i * 120} className="h-full">
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="card-lux group flex flex-col h-full rounded-xl overflow-hidden"
+                >
+                  <BlogCover slug={post.slug} className="aspect-[16/10]" />
+                  <div className="p-6 flex flex-col flex-1">
+                    <p className="text-xs uppercase tracking-[0.25em] text-gold-400">{fmt(post.date)}</p>
+                    <h2 className="mt-3 text-xl font-display text-cream-50 leading-snug group-hover:text-gold-200 transition-colors">
+                      {post.title}
+                    </h2>
+                    <p className="mt-3 text-cream-300 leading-relaxed flex-1">{post.excerpt}</p>
+                    <p className="mt-5 text-sm text-cream-400">By {post.author}</p>
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
