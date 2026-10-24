@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
+import Image from "next/image";
 import LiveDial from "@/components/LiveDial";
+import PhotoGallery from "@/components/PhotoGallery";
+import { PHOTOS } from "@/lib/photos";
 import { Gear, GuillocheRosette, Icon, OrnamentDivider, type IconName } from "@/components/ornaments";
 
 export const metadata: Metadata = {
@@ -25,6 +28,7 @@ export default function AboutPage() {
         eyebrow="Who We Are"
         title="About RIHOSO"
         subtitle="A community of watch and clock enthusiasts, collectors, historians, and craftspeople."
+        image={PHOTOS.membersEvening.src}
       />
 
       {/* Intro + live dial */}
@@ -39,16 +43,25 @@ export default function AboutPage() {
             <OrnamentDivider className="!justify-start mt-8" />
           </Reveal>
           <Reveal delay={150} className="flex justify-center">
-            <div className="relative">
-              <div className="absolute inset-0 -m-16 text-gold-400/10">
+            <div className="relative w-full max-w-sm">
+              <div className="absolute -inset-10 text-gold-400/10 pointer-events-none">
                 <GuillocheRosette className="w-full h-full animate-rotate-slow" />
               </div>
-              <div className="relative rounded-full p-4 bg-forest-950/60 border border-gold-400/30 shadow-[0_0_60px_-10px_rgba(201,168,76,0.35)]">
-                <LiveDial className="w-64 h-64 sm:w-72 sm:h-72 text-gold-300" />
+              <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-gold-300/80 via-gold-500/30 to-gold-400/60 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.7)]">
+                <div className="relative aspect-[4/5] rounded-[15px] overflow-hidden">
+                  <Image
+                    src={PHOTOS.microscope.src}
+                    alt={PHOTOS.microscope.alt}
+                    fill
+                    sizes="(min-width: 1024px) 384px, 90vw"
+                    className="object-cover"
+                    style={{ objectPosition: PHOTOS.microscope.focus }}
+                  />
+                </div>
               </div>
-              <p className="mt-6 text-center text-xs uppercase tracking-[0.3em] text-cream-400">
-                Now in Rhode Island
-              </p>
+              <div className="absolute -left-8 -bottom-8 rounded-full p-2 bg-forest-950 border border-gold-400/40 shadow-[0_0_40px_-8px_rgba(201,168,76,0.5)]">
+                <LiveDial className="w-28 h-28 sm:w-32 sm:h-32 text-gold-300" />
+              </div>
             </div>
           </Reveal>
         </div>
@@ -104,6 +117,23 @@ export default function AboutPage() {
               </p>
             </Reveal>
           </div>
+        </div>
+      </section>
+
+      {/* Photos */}
+      <section className="py-20 sm:py-24 bg-forest-800 border-t border-gold-400/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Life at RIHOSO</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">Moments from the Society</h2>
+            <OrnamentDivider className="mt-6" />
+          </Reveal>
+          <Reveal>
+            <PhotoGallery
+              photos={[PHOTOS.movementDemo, PHOTOS.membersEvening, PHOTOS.demoConversation, PHOTOS.membersDinner, PHOTOS.presentation, PHOTOS.portrait]}
+              layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-2"]}
+            />
+          </Reveal>
         </div>
       </section>
 
