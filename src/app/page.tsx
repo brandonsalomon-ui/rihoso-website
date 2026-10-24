@@ -6,6 +6,8 @@ import Logo from "@/components/Logo";
 import { upcomingEvents } from "@/lib/events";
 import Reveal from "@/components/Reveal";
 import LiveDial from "@/components/LiveDial";
+import PhotoGallery from "@/components/PhotoGallery";
+import { PHOTOS } from "@/lib/photos";
 import { Gear, GuillocheRosette, Icon, WatchDial, type IconName } from "@/components/ornaments";
 
 const PILLARS: { label: string; icon: IconName }[] = [
@@ -209,6 +211,25 @@ export default function HomePage() {
             >
               <NewsGrid />
             </Suspense>
+          </div>
+        </div>
+      </section>
+
+      {/* Photos */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <SectionHeading title="Inside the Society" subtitle="Demonstrations, dinners, and evenings among fellow collectors" />
+          <Reveal className="mt-14">
+            <PhotoGallery
+              photos={[PHOTOS.microscope, PHOTOS.membersEvening, PHOTOS.movementDemo, PHOTOS.membersDinner]}
+              layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2"]}
+            />
+          </Reveal>
+          <div className="mt-10 text-center">
+            <Link href="/about" className="inline-flex items-center gap-2 text-gold-400 tracking-wide hover:text-gold-300 transition-colors">
+              More about RIHOSO
+              <Icon name="arrow" className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
