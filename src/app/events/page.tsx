@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
-import { Icon } from "@/components/ornaments";
+import { Icon, OrnamentDivider } from "@/components/ornaments";
+import PhotoGallery from "@/components/PhotoGallery";
+import { PHOTOS } from "@/lib/photos";
 import { nextMonthlyMeeting, upcomingEvents } from "@/lib/events";
 
 // Re-check dates every hour so past events drop off automatically.
@@ -24,6 +26,7 @@ export default function EventsPage() {
         eyebrow="Mark Your Calendar"
         title="Events & Gatherings"
         subtitle="Join us for meetings, workshops, fairs, and social events throughout the year."
+        image={PHOTOS.membersDinner.src}
       >
         {nextMeeting && (
           <div className="inline-flex items-center gap-4 rounded-full border border-gold-400/30 bg-forest-950/50 backdrop-blur-sm pl-2 pr-6 py-2">
@@ -91,7 +94,28 @@ export default function EventsPage() {
             </p>
           )}
 
-          <Reveal className="mt-14">
+        </div>
+      </section>
+
+      <section className="py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Past Gatherings</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">From Our Recent Events</h2>
+            <OrnamentDivider className="mt-6" />
+          </Reveal>
+          <Reveal>
+            <PhotoGallery
+              photos={[PHOTOS.presentation, PHOTOS.membersEvening, PHOTOS.movementDemo, PHOTOS.membersDinner, PHOTOS.demoConversation, PHOTOS.crowd]}
+              layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-2"]}
+            />
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="pb-20 sm:pb-24 bg-forest-900/60">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
             <div className="rounded-xl panel-lux px-6 py-8 sm:flex items-center justify-between gap-6 text-center sm:text-left">
               <p className="font-display text-xl text-cream-50">Want to hear about new events first?</p>
               <Link
