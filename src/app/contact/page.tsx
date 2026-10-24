@@ -167,6 +167,9 @@ export default function ContactPage() {
                 </p>
               </>
             )}
+            {!MEETING && (
+              <p className="mt-5 text-xs uppercase tracking-[0.3em] text-gold-400">Now in Rhode Island</p>
+            )}
           </div>
           <a
             href="mailto:info@rihoso.com"
