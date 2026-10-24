@@ -93,6 +93,28 @@ body {
   animation: pendulum 2s ease-in-out infinite;
 }
 
+/* Sponsor logo marquee */
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.sponsor-track {
+  animation: marquee 80s linear infinite;
+}
+.sponsor-track-reverse {
+  animation-direction: reverse;
+}
+.sponsor-marquee:hover .sponsor-track,
+.sponsor-marquee:focus-within .sponsor-track {
+  animation-play-state: paused;
+}
+.sponsor-plaque {
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.sponsor-plaque:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.7), 0 0 30px -8px rgba(201, 168, 76, 0.55);
+}
+
 /* Scroll-reveal (see components/Reveal.tsx). Only hides content once JS has loaded. */
 .js [data-reveal] {
   opacity: 0;
@@ -195,6 +217,16 @@ body {
   .route-dash,
   .animate-pendulum {
     animation: none;
+  }
+  .sponsor-track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.5rem;
+  }
+  .sponsor-track > [aria-hidden="true"] {
+    display: none;
   }
   .js [data-reveal] {
     opacity: 1;
