@@ -2,7 +2,8 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 
 export const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -11,25 +12,6 @@ export default function SignInForm({ next }: { next: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
-  const [verifying, setVerifying] = useState(false);
-
-  async function handleCode(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const token = String(new FormData(e.currentTarget).get("code") ?? "").replace(/\D/g, "");
-    if (token.length < 6) {
-      setError("Please enter the code from the email.");
-      return;
-    }
-    setVerifying(true);
-    setError("");
-    const { error } = await createClient().auth.verifyOtp({ email, token, type: "email" });
-    if (error) {
-      setError("That code didn't work — it may have expired. Request a new email below.");
-      setVerifying(false);
-      return;
-    }
-    window.location.href = next;
-  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,10 +21,15 @@ export default function SignInForm({ next }: { next: string }) {
     const name = String(form.get("name") ?? "").trim();
     const addr = String(form.get("email") ?? "").trim();
     setEmail(addr);
-    const { error } = await createClient().auth.signInWithOtp({
+    // Implicit-flow client just for sending the link, so the link works in any browser
+    // (the PKCE flow only works in the browser that requested it).
+    const sender = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const { error } = await sender.auth.signInWithOtp({
       email: addr,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
         data: name ? { display_name: name } : undefined,
       },
     });
@@ -59,23 +46,9 @@ export default function SignInForm({ next }: { next: string }) {
       <div className="panel-lux rounded-xl p-8 text-center space-y-5" role="status">
         <h2 className="text-2xl font-display text-cream-50">Check your email</h2>
         <p className="text-cream-300">
-          We sent a sign-in email to <span className="text-cream-100">{email}</span>. Click the link in it, or type the
-          code from the email here:
+          We sent a sign-in link to <span className="text-cream-100">{email}</span>. Click it once — on this
+          device or any other — and you&apos;ll be signed in there. It expires in an hour.
         </p>
-        <form onSubmit={handleCode} className="flex gap-3 max-w-xs mx-auto">
-          <input
-            name="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={10}
-            aria-label="Sign-in code"
-            className={inputClass + " text-center tracking-[0.3em]"}
-            placeholder="123456"
-          />
-          <button disabled={verifying} className="btn-gold px-5 rounded font-semibold disabled:opacity-60">
-            {verifying ? "…" : "Sign in"}
-          </button>
-        </form>
         {error && <p className="text-sm text-red-300" role="alert">{error}</p>}
         <button type="button" onClick={() => { setStatus("idle"); setError(""); }} className="text-sm text-gold-400 hover:text-gold-300">
           Use a different email or resend
