@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import ReplyForm from "@/components/exchange/ReplyForm";
+import OfferPanel from "@/components/exchange/OfferPanel";
 import { formatUsd } from "@/lib/marketplace";
 import { getUser } from "@/lib/supabase/server";
 
@@ -17,7 +18,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
   const { data: conv } = await supabase
     .from("conversations")
     .select(
-      "id, buyer_id, seller_id, listing_id, listings(id, title, price_cents, status), buyer:profiles!conversations_buyer_id_fkey(display_name), seller:profiles!conversations_seller_id_fkey(display_name)"
+      "id, buyer_id, seller_id, listing_id, listings(id, title, price_cents, status, allows_shipping, allows_pickup), buyer:profiles!conversations_buyer_id_fkey(display_name), seller:profiles!conversations_seller_id_fkey(display_name)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -26,7 +27,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
     id: string;
     buyer_id: string;
     seller_id: string;
-    listings: { id: string; title: string; price_cents: number; status: string } | null;
+    listings: { id: string; title: string; price_cents: number; status: string; allows_shipping: boolean; allows_pickup: boolean } | null;
     buyer: { display_name: string } | null;
     seller: { display_name: string } | null;
   };
@@ -36,6 +37,24 @@ export default async function ConversationPage({ params }: { params: { id: strin
     .select("id, sender_id, body, created_at")
     .eq("conversation_id", c.id)
     .order("created_at", { ascending: true });
+
+  const [{ data: offerRow }, { data: orderRow }] = await Promise.all([
+    supabase
+      .from("offers")
+      .select("id, amount_cents, allows_shipping, allows_pickup, status, expires_at")
+      .eq("conversation_id", c.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("orders")
+      .select("id")
+      .eq("conversation_id", c.id)
+      .neq("status", "pending_payment")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   const names: Record<string, string> = {
     [c.buyer_id]: c.buyer?.display_name ?? "Buyer",
@@ -56,6 +75,29 @@ export default async function ConversationPage({ params }: { params: { id: strin
               </p>
             </Link>
           )}
+
+          <div className="mt-6">
+            <OfferPanel
+              role={user.id === c.seller_id ? "seller" : "buyer"}
+              conversationId={c.id}
+              listingOpen={c.listings?.status === "active"}
+              listingAllowsShipping={c.listings?.allows_shipping ?? true}
+              listingAllowsPickup={c.listings?.allows_pickup ?? false}
+              orderId={orderRow?.id ?? null}
+              offer={
+                offerRow
+                  ? {
+                      id: offerRow.id,
+                      amount: formatUsd(offerRow.amount_cents),
+                      allowsShipping: offerRow.allows_shipping,
+                      allowsPickup: offerRow.allows_pickup,
+                      status: offerRow.status,
+                      expiresAt: offerRow.expires_at,
+                    }
+                  : null
+              }
+            />
+          </div>
 
           <ol className="mt-8 space-y-4">
             {(messages ?? []).map((m) => {
