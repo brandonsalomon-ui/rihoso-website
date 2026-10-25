@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
-import { getStripe, isStripeConfigured, signAccountId, verifyAccountId } from "@/lib/stripe";
+import { isStripeConfigured, signAccountId, verifyAccountId } from "@/lib/stripe";
+import { isReady, syncSellerFromStripe } from "@/lib/sellers";
 
 export const metadata: Metadata = { title: "Seller Setup", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -11,8 +12,8 @@ type Result = "ready" | "pending" | "incomplete" | "invalid";
 async function checkAccount(account: string, sig: string): Promise<Result> {
   if (!isStripeConfigured() || !verifyAccountId(account, sig)) return "invalid";
   try {
-    const acct = await getStripe().accounts.retrieve(account);
-    if (acct.payouts_enabled && acct.capabilities?.transfers === "active") return "ready";
+    const acct = await syncSellerFromStripe(account);
+    if (isReady(acct)) return "ready";
     if (acct.details_submitted) return "pending";
     return "incomplete";
   } catch {
@@ -23,7 +24,7 @@ async function checkAccount(account: string, sig: string): Promise<Result> {
 const COPY: Record<Result, { title: string; body: string }> = {
   ready: {
     title: "You're all set",
-    body: "Your seller account is verified and ready to receive payouts. We'll email you when listing opens on the Watch Exchange.",
+    body: "Your seller account is verified and ready to receive payouts. You can list your first watch now.",
   },
   pending: {
     title: "Thanks — we're reviewing your details",
@@ -64,8 +65,10 @@ export default async function SellerReturnPage({
             <a href={resumeHref} className="btn-gold inline-block px-8 py-3 font-semibold">Continue setup</a>
           ) : result === "invalid" ? (
             <Link href="/marketplace/sell" className="btn-gold inline-block px-8 py-3 font-semibold">Start again</Link>
+          ) : result === "ready" ? (
+            <Link href="/marketplace/listings/new" className="btn-gold inline-block px-8 py-3 font-semibold">List a watch</Link>
           ) : (
-            <Link href="/marketplace" className="text-gold-400 hover:text-gold-300">Back to the Watch Exchange</Link>
+            <Link href="/marketplace/account" className="text-gold-400 hover:text-gold-300">Go to my account</Link>
           )}
         </div>
       </section>
