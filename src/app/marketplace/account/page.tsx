@@ -21,6 +21,16 @@ const STATUS_LABEL: Record<string, string> = {
   removed: "Removed",
 };
 
+const ORDER_LABEL: Record<string, string> = {
+  paid_held: "Paid — held",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  released: "Complete",
+  disputed: "Problem reported",
+  refunded: "Refunded",
+  cancelled: "Cancelled",
+};
+
 export default async function AccountPage() {
   const { supabase, user } = await getUser();
   if (!user) redirect("/marketplace/sign-in?next=/marketplace/account");
@@ -33,7 +43,7 @@ export default async function AccountPage() {
     } catch {}
   }
 
-  const [{ data: profile }, { data: listings }, { data: requests }] = await Promise.all([
+  const [{ data: profile }, { data: listings }, { data: requests }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("display_name, is_member").eq("id", user.id).single(),
     supabase
       .from("listings")
@@ -46,7 +56,22 @@ export default async function AccountPage() {
       .eq("requester_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("orders")
+      .select("id, buyer_id, seller_id, amount_cents, status, created_at, listings(title)")
+      .neq("status", "pending_payment")
+      .order("created_at", { ascending: false })
+      .limit(25),
   ]);
+  const orderRows = (orders ?? []) as unknown as {
+    id: string;
+    buyer_id: string;
+    seller_id: string;
+    amount_cents: number;
+    status: string;
+    created_at: string;
+    listings: { title: string } | null;
+  }[];
 
   return (
     <>
@@ -106,6 +131,25 @@ export default async function AccountPage() {
               <p className="mt-4 text-cream-400 text-sm">No listings yet.</p>
             )}
           </div>
+
+          {orderRows.length ? (
+            <div className="panel-lux rounded-xl p-6 sm:p-8">
+              <h2 className="font-display text-2xl text-cream-50 mb-3">Orders</h2>
+              <ul className="divide-y divide-forest-600/30 text-sm">
+                {orderRows.map((o) => (
+                  <li key={o.id} className="py-3 flex justify-between gap-4">
+                    <Link href={`/marketplace/orders/${o.id}`} className="text-cream-100 hover:text-gold-300">
+                      <span className="text-gold-400 text-xs uppercase tracking-widest mr-2">{o.seller_id === user.id ? "Sold" : "Bought"}</span>
+                      {o.listings?.title ?? "Watch"}
+                    </Link>
+                    <span className="text-cream-400 whitespace-nowrap">
+                      {formatUsd(o.amount_cents)} · {ORDER_LABEL[o.status] ?? o.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {requests?.length ? (
             <div className="panel-lux rounded-xl p-6 sm:p-8">
