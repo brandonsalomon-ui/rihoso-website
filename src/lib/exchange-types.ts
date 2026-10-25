@@ -32,6 +32,9 @@ export type Listing = {
   status: ListingStatus;
   validation_status: ValidationStatus;
   validation_notes: string | null;
+  allows_shipping: boolean;
+  allows_pickup: boolean;
+  pickup_area: string | null;
   published_at: string | null;
   created_at: string;
   listing_photos?: ListingPhoto[];
@@ -39,7 +42,7 @@ export type Listing = {
 };
 
 export const LISTING_SELECT =
-  "id, seller_id, title, brand, model, reference, year, condition, has_box, has_papers, description, price_cents, status, validation_status, validation_notes, published_at, created_at, listing_photos(id, storage_path, position), profiles!listings_seller_id_fkey(display_name, is_member)";
+  "id, seller_id, title, brand, model, reference, year, condition, has_box, has_papers, description, price_cents, status, validation_status, validation_notes, allows_shipping, allows_pickup, pickup_area, published_at, created_at, listing_photos(id, storage_path, position), profiles!listings_seller_id_fkey(display_name, is_member)";
 
 export function sortedPhotos(l: Listing) {
   return [...(l.listing_photos ?? [])].sort((a, b) => a.position - b.position);
