@@ -11,6 +11,25 @@ export default function SignInForm({ next }: { next: string }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+  async function handleCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const token = String(new FormData(e.currentTarget).get("code") ?? "").replace(/\D/g, "");
+    if (token.length < 6) {
+      setError("Please enter the code from the email.");
+      return;
+    }
+    setVerifying(true);
+    setError("");
+    const { error } = await createClient().auth.verifyOtp({ email, token, type: "email" });
+    if (error) {
+      setError("That code didn't work — it may have expired. Request a new email below.");
+      setVerifying(false);
+      return;
+    }
+    window.location.href = next;
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,11 +56,30 @@ export default function SignInForm({ next }: { next: string }) {
 
   if (status === "sent") {
     return (
-      <div className="panel-lux rounded-xl p-8 text-center" role="status">
-        <h2 className="text-2xl font-display text-cream-50 mb-2">Check your email</h2>
+      <div className="panel-lux rounded-xl p-8 text-center space-y-5" role="status">
+        <h2 className="text-2xl font-display text-cream-50">Check your email</h2>
         <p className="text-cream-300">
-          We sent a sign-in link to <span className="text-cream-100">{email}</span>. Open it on this device to continue.
+          We sent a sign-in email to <span className="text-cream-100">{email}</span>. Click the link in it, or type the
+          code from the email here:
         </p>
+        <form onSubmit={handleCode} className="flex gap-3 max-w-xs mx-auto">
+          <input
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={10}
+            aria-label="Sign-in code"
+            className={inputClass + " text-center tracking-[0.3em]"}
+            placeholder="123456"
+          />
+          <button disabled={verifying} className="btn-gold px-5 rounded font-semibold disabled:opacity-60">
+            {verifying ? "…" : "Sign in"}
+          </button>
+        </form>
+        {error && <p className="text-sm text-red-300" role="alert">{error}</p>}
+        <button type="button" onClick={() => { setStatus("idle"); setError(""); }} className="text-sm text-gold-400 hover:text-gold-300">
+          Use a different email or resend
+        </button>
       </div>
     );
   }
