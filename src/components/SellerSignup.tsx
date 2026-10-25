@@ -6,7 +6,7 @@ import { useState } from "react";
 const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
 
-export default function SellerSignup() {
+export default function SellerSignup({ resume = false }: { resume?: boolean }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,6 +30,21 @@ export default function SellerSignup() {
     }
   }
 
+  if (resume) {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8 text-center">
+        <h2 className="text-2xl font-display text-cream-50">Finish your seller setup</h2>
+        <p className="text-sm text-cream-300">You&apos;ve started setting up payouts with Stripe. Pick up where you left off.</p>
+        {error && (
+          <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>
+        )}
+        <button type="submit" disabled={sending} className="btn-gold w-full py-3 rounded font-semibold disabled:opacity-60">
+          {sending ? "Connecting to Stripe…" : "Continue setup"}
+        </button>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
       <p className="text-sm text-cream-300 leading-relaxed">
@@ -40,10 +55,6 @@ export default function SellerSignup() {
       <div>
         <label htmlFor="seller-name" className="block text-sm text-cream-200 mb-1">Full name</label>
         <input id="seller-name" name="name" type="text" autoComplete="name" required className={inputClass} placeholder="Your name" />
-      </div>
-      <div>
-        <label htmlFor="seller-email" className="block text-sm text-cream-200 mb-1">Email</label>
-        <input id="seller-email" name="email" type="email" autoComplete="email" required className={inputClass} placeholder="your@email.com" />
       </div>
       <div>
         <label htmlFor="seller-phone" className="block text-sm text-cream-200 mb-1">Phone</label>
