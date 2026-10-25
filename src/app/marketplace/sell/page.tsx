@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import PageHero from "@/components/PageHero";
 import SellerSignup from "@/components/SellerSignup";
+import { getSellerAccount } from "@/lib/sellers";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Sell a Watch",
   description: "Set up your RIHOSO Watch Exchange seller account.",
 };
+export const dynamic = "force-dynamic";
 
-export default function SellPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function SellPage({ searchParams }: { searchParams: { error?: string } }) {
+  const { user } = isSupabaseConfigured() ? await getUser() : { user: null };
+  const seller = user ? await getSellerAccount(user.id) : null;
+  if (seller?.payouts_enabled) redirect("/marketplace/account");
+
   return (
     <>
       <PageHero
@@ -22,7 +32,17 @@ export default function SellPage({ searchParams }: { searchParams: { error?: str
               That sign-up link is no longer valid. Please start again below.
             </p>
           )}
-          <SellerSignup />
+          {!user ? (
+            <div className="panel-lux rounded-xl p-8 text-center">
+              <h2 className="text-2xl font-display text-cream-50 mb-3">Sign in to start selling</h2>
+              <p className="text-cream-300 mb-8">We&apos;ll email you a secure sign-in link — no password needed.</p>
+              <Link href="/marketplace/sign-in?next=/marketplace/sell" className="btn-gold inline-block px-8 py-3 font-semibold">
+                Sign in
+              </Link>
+            </div>
+          ) : (
+            <SellerSignup resume={Boolean(seller)} />
+          )}
         </div>
       </section>
     </>
