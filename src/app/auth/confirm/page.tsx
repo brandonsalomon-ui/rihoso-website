@@ -76,6 +76,7 @@ export default function ConfirmPage() {
               Sign-in links can only be used once and expire after an hour. Please request a new one — or type the
               6-digit code from the email on the sign-in page.
             </p>
+            {error && <p className="text-xs text-cream-400 mb-6">Details: {error}</p>}
             <Link href="/marketplace/sign-in" className="btn-gold inline-block px-8 py-3 font-semibold">Get a new link</Link>
           </>
         ) : state === "ready" || state === "working" ? (
