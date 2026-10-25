@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
-import { clean, EMAIL_RE, sendNotification } from "@/lib/email";
+import { clean, sendNotification } from "@/lib/email";
 import { createOnboardingLink, getStripe, isStripeConfigured } from "@/lib/stripe";
+import { getSellerAccount } from "@/lib/sellers";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 /**
- * Starts seller onboarding: creates a Stripe connected account for the seller and
- * returns a Stripe-hosted onboarding URL where they verify identity and add a bank account.
- * RIHOSO never sees or stores the seller's ID or bank details.
+ * Starts (or resumes) seller onboarding for the signed-in user: creates their Stripe
+ * connected account once, records it, and returns a Stripe-hosted onboarding URL where
+ * they verify identity and add a bank account. RIHOSO never sees ID or bank details.
  */
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: "Seller sign-up isn't open yet. Please check back soon." }, { status: 503 });
+  }
+  const { user } = await getUser();
+  if (!user?.email) {
+    return NextResponse.json({ error: "Please sign in first.", signIn: true }, { status: 401 });
   }
 
   let data: Record<string, unknown>;
@@ -20,27 +27,29 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-
   if (clean(data.website)) return NextResponse.json({ ok: true }); // honeypot
 
-  const name = clean(data.name, 120);
-  const email = clean(data.email, 200);
-  const phone = clean(data.phone, 40);
-  const member = data.member === true || data.member === "on";
-  const agreed = data.agree === true || data.agree === "on";
-
-  if (!name || !EMAIL_RE.test(email) || phone.replace(/\D/g, "").length < 7) {
-    return NextResponse.json({ error: "Please enter your name, a valid email and a phone number." }, { status: 400 });
-  }
-  if (!agreed) {
-    return NextResponse.json({ error: "Please accept the seller terms to continue." }, { status: 400 });
-  }
-
   try {
-    const stripe = getStripe();
-    const account = await stripe.accounts.create({
+    // Already started? Just send them back to Stripe to finish.
+    const existing = await getSellerAccount(user.id);
+    if (existing) {
+      return NextResponse.json({ ok: true, url: await createOnboardingLink(existing.stripe_account_id, request) });
+    }
+
+    const name = clean(data.name, 120);
+    const phone = clean(data.phone, 40);
+    const member = data.member === true || data.member === "on";
+    const agreed = data.agree === true || data.agree === "on";
+    if (!name || phone.replace(/\D/g, "").length < 7) {
+      return NextResponse.json({ error: "Please enter your name and a phone number." }, { status: 400 });
+    }
+    if (!agreed) {
+      return NextResponse.json({ error: "Please accept the seller terms to continue." }, { status: 400 });
+    }
+
+    const account = await getStripe().accounts.create({
       country: "US",
-      email,
+      email: user.email,
       // Stripe-hosted onboarding + Express dashboard for the seller.
       // RIHOSO collects the buyer's payment, then transfers the seller's share.
       controller: {
@@ -54,18 +63,26 @@ export async function POST(request: Request) {
         mcc: "5944", // Jewelry, watch, clock and silverware stores
         product_description: "Selling a personal pre-owned watch through the RIHOSO Watch Exchange",
       },
-      metadata: { rihoso_role: "seller", name, phone, member_claimed: member ? "yes" : "no" },
+      metadata: { rihoso_role: "seller", rihoso_user_id: user.id, name, phone, member_claimed: member ? "yes" : "no" },
     });
+
+    const { error } = await createAdminClient().from("seller_accounts").insert({
+      user_id: user.id,
+      stripe_account_id: account.id,
+      full_name: name,
+      phone,
+      member_claimed: member,
+    });
+    if (error) throw error;
 
     const url = await createOnboardingLink(account.id, request);
 
-    // Let RIHOSO know a new seller has started — informational, never blocks sign-up.
     sendNotification({
       subject: `New Watch Exchange seller: ${name}`,
-      replyTo: email,
+      replyTo: user.email,
       rows: [
         ["Name", name],
-        ["Email", email],
+        ["Email", user.email],
         ["Phone", phone],
         ["Says they're a member", member ? "Yes — please verify for the 10% rate" : "No"],
         ["Stripe account", account.id],
