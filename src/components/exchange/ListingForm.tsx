@@ -46,6 +46,10 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const publish = submitter?.value === "publish";
     const f = new FormData(e.currentTarget);
+    if (f.get("allows_shipping") !== "on" && f.get("allows_pickup") !== "on") {
+      setError("Choose insured shipping, local pickup, or both.");
+      return;
+    }
     if (publish) {
       const problems: string[] = [];
       if (!String(f.get("reference") ?? "").trim()) problems.push("the reference number");
@@ -83,6 +87,9 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           has_papers: f.get("has_papers") === "on",
           description: String(f.get("description") ?? "").trim(),
           price_cents: price,
+          allows_shipping: f.get("allows_shipping") === "on",
+          allows_pickup: f.get("allows_pickup") === "on",
+          pickup_area: String(f.get("pickup_area") ?? "").trim() || null,
           status: "draft",
         })
         .select("id")
@@ -154,6 +161,17 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           <label className="flex items-center gap-2"><input type="checkbox" name="has_box" className="accent-gold-400" /> Original box</label>
           <label className="flex items-center gap-2"><input type="checkbox" name="has_papers" className="accent-gold-400" /> Papers / warranty card</label>
         </div>
+        <fieldset className="sm:col-span-2 space-y-2">
+          <legend className="block text-sm text-cream-200 mb-1">How can the buyer get it? <span className="text-gold-400">*</span></legend>
+          <label className="flex items-center gap-2 text-sm text-cream-200">
+            <input type="checkbox" name="allows_shipping" defaultChecked className="accent-gold-400" />
+            I&apos;ll ship it fully insured with signature required (your price includes shipping)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-cream-200">
+            <input type="checkbox" name="allows_pickup" className="accent-gold-400" /> Local pickup is OK
+          </label>
+          <input name="pickup_area" maxLength={80} className={inputClass} placeholder="Pickup area, e.g. Providence / East Greenwich, or at a RIHOSO meeting" />
+        </fieldset>
         <div className="sm:col-span-2">
           <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-desc">
             Description <span className="text-gold-400">*</span>{" "}
