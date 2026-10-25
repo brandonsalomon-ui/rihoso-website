@@ -4,6 +4,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CONDITIONS } from "@/lib/exchange-types";
+import { LISTING_RULES } from "@/lib/marketplace";
 import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/browser";
 import { inputClass } from "./SignInForm";
@@ -44,12 +45,20 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
     e.preventDefault();
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const publish = submitter?.value === "publish";
-    if (publish && files.length === 0) {
-      setError("Please add at least one photo before publishing.");
-      return;
+    const f = new FormData(e.currentTarget);
+    if (publish) {
+      const problems: string[] = [];
+      if (!String(f.get("reference") ?? "").trim()) problems.push("the reference number");
+      if (String(f.get("description") ?? "").trim().length < LISTING_RULES.minDescription)
+        problems.push("a description of at least a couple of sentences (condition, service history, what's included)");
+      if (files.length < LISTING_RULES.minPhotos)
+        problems.push(`at least ${LISTING_RULES.minPhotos} photos — dial, caseback and clasp/bracelet`);
+      if (problems.length) {
+        setError(`To publish, please add ${problems.join("; ")}. You can also save as a draft and finish later.`);
+        return;
+      }
     }
     setError("");
-    const f = new FormData(e.currentTarget);
     const price = Math.round(parseFloat(String(f.get("price") ?? "").replace(/[$,]/g, "")) * 100);
     if (!Number.isFinite(price) || price < 100) {
       setError("Please enter a price of at least $1.");
@@ -97,7 +106,7 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
       if (publish) {
         setBusy("Publishing…");
         const { error: pubError } = await supabase.from("listings").update({ status: "active" }).eq("id", listing.id);
-        if (pubError) throw new Error("Saved as a draft, but couldn't publish yet — finish your seller setup first.");
+        if (pubError) throw new Error(/required to publish/.test(pubError.message) ? `Saved as a draft. ${pubError.message}` : "Saved as a draft, but couldn't publish yet — finish your seller setup first.");
       }
       router.push(`/marketplace/listings/${listing.id}`);
     } catch (err) {
@@ -110,11 +119,11 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
     <form onSubmit={handleSubmit} className="panel-lux rounded-xl p-6 sm:p-8 space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-title">Listing title</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-title">Listing title <span className="text-gold-400">*</span></label>
           <input id="lf-title" name="title" required minLength={3} maxLength={120} className={inputClass} placeholder="e.g. Omega Speedmaster Professional 311.30.42.30.01.005" />
         </div>
         <div>
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-brand">Brand</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-brand">Brand <span className="text-gold-400">*</span></label>
           <input id="lf-brand" name="brand" required maxLength={60} className={inputClass} placeholder="Omega" />
         </div>
         <div>
@@ -122,7 +131,7 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           <input id="lf-model" name="model" maxLength={80} className={inputClass} placeholder="Speedmaster Professional" />
         </div>
         <div>
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-ref">Reference number</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-ref">Reference number <span className="text-gold-400">*</span></label>
           <input id="lf-ref" name="reference" maxLength={60} className={inputClass} placeholder="311.30.42.30.01.005" />
         </div>
         <div>
@@ -130,7 +139,7 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           <input id="lf-year" name="year" type="number" min={1700} max={2100} className={inputClass} placeholder="2018" />
         </div>
         <div>
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-cond">Condition</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-cond">Condition <span className="text-gold-400">*</span></label>
           <select id="lf-cond" name="condition" required defaultValue="excellent" className={inputClass}>
             {CONDITIONS.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
@@ -138,7 +147,7 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           </select>
         </div>
         <div>
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-price">Asking price (USD)</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-price">Asking price (USD) <span className="text-gold-400">*</span></label>
           <input id="lf-price" name="price" required inputMode="decimal" className={inputClass} placeholder="5,200" />
         </div>
         <div className="flex items-center gap-6 sm:col-span-2 text-sm text-cream-200">
@@ -146,13 +155,21 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
           <label className="flex items-center gap-2"><input type="checkbox" name="has_papers" className="accent-gold-400" /> Papers / warranty card</label>
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-desc">Description</label>
+          <label className="block text-sm text-cream-200 mb-1" htmlFor="lf-desc">
+            Description <span className="text-gold-400">*</span>{" "}
+            <span className="text-cream-400">(at least a couple of sentences: condition, service history, what&apos;s included, any flaws)</span>
+          </label>
           <textarea id="lf-desc" name="description" rows={6} maxLength={8000} className={inputClass} placeholder="Condition details, service history, what's included, any flaws…" />
         </div>
       </div>
 
       <div>
-        <p className="block text-sm text-cream-200 mb-2">Photos <span className="text-cream-400">(up to {MAX_PHOTOS}; the first is the cover)</span></p>
+        <p className="block text-sm text-cream-200 mb-2">
+          Photos <span className="text-gold-400">*</span>{" "}
+          <span className="text-cream-400">
+            (at least {LISTING_RULES.minPhotos}: dial, caseback, clasp/bracelet — up to {MAX_PHOTOS}; the first is the cover)
+          </span>
+        </p>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
           {previews.map((src, i) => (
             <div key={src} className="relative aspect-square rounded overflow-hidden bg-forest-900">
@@ -171,6 +188,7 @@ export default function ListingForm({ userId, canPublish }: { userId: string; ca
         </div>
       </div>
 
+      <p className="text-xs text-cream-400"><span className="text-gold-400">*</span> Required to publish. Drafts can be saved anytime.</p>
       <p className="text-xs text-cream-400">
         By listing, you confirm you own this watch, the description is accurate, and you&apos;ll ship it insured with
         tracking once a buyer pays. RIHOSO is the venue, not the seller.

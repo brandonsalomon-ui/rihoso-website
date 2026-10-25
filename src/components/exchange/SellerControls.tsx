@@ -24,7 +24,7 @@ export default function SellerControls({
     setBusy(true);
     setError("");
     const { error } = await createClient().from("listings").update({ status: next }).eq("id", listingId);
-    if (error) setError(next === "active" ? "Finish your seller setup before publishing." : error.message);
+    if (error) setError(/required to publish/.test(error.message) ? error.message : next === "active" ? "Finish your seller setup before publishing." : error.message);
     setBusy(false);
     router.refresh();
   }
