@@ -23,6 +23,12 @@ export const SERVICES = {
   },
 } as const;
 
+/** What a listing needs before it can be published (enforced in the form and the database). */
+export const LISTING_RULES = {
+  minPhotos: 3,
+  minDescription: 80, // characters — roughly two sentences
+} as const;
+
 export function commissionCents(salePriceCents: number, isMember: boolean) {
   const rate = isMember ? COMMISSION.member : COMMISSION.standard;
   return Math.round(salePriceCents * rate);
