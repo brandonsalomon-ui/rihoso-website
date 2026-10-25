@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import ExchangeNav from "@/components/exchange/ExchangeNav";
+import ListingCard from "@/components/exchange/ListingCard";
 import { COMMISSION, SERVICES, formatUsd } from "@/lib/marketplace";
+import { LISTING_SELECT, type Listing } from "@/lib/exchange-types";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Watch Exchange",
   description:
     "The RIHOSO Watch Exchange — a marketplace for collectors to list and sell watches, with optional member validation and repair.",
 };
+export const dynamic = "force-dynamic";
 
 const STEPS = [
   {
@@ -24,22 +30,75 @@ const STEPS = [
   },
 ];
 
-export default function MarketplacePage() {
+async function loadListings(q: string) {
+  const { supabase, user } = await getUser();
+  let query = supabase
+    .from("listings")
+    .select(LISTING_SELECT)
+    .in("status", ["active", "reserved"])
+    .order("published_at", { ascending: false })
+    .limit(48);
+  if (q) {
+    const term = q.replace(/[%_,()]/g, " ").trim();
+    if (term) query = query.or(`brand.ilike.%${term}%,title.ilike.%${term}%,reference.ilike.%${term}%`);
+  }
+  const { data } = await query;
+  return { listings: (data ?? []) as unknown as Listing[], signedIn: Boolean(user) };
+}
+
+export default async function MarketplacePage({ searchParams }: { searchParams: { q?: string } }) {
+  const live = isSupabaseConfigured();
+  const q = (searchParams.q ?? "").slice(0, 60);
+  const { listings, signedIn } = live ? await loadListings(q) : { listings: [], signedIn: false };
+
   return (
     <>
       <PageHero
-        eyebrow="Coming Soon"
+        eyebrow={live ? "RIHOSO" : "Coming Soon"}
         title="Watch Exchange"
         subtitle="A marketplace for watches only — run by collectors, for collectors."
       />
+      {live && <ExchangeNav signedIn={signedIn} />}
 
-      <section className="py-20 sm:py-24 bg-forest-800">
+      {live && (
+        <section className="py-14 bg-forest-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <form className="flex gap-3 max-w-xl mb-10" action="/marketplace">
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Search brand, model or reference"
+                className="flex-1 bg-forest-900 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60"
+              />
+              <button className="btn-gold px-6 rounded font-semibold">Search</button>
+            </form>
+
+            {listings.length ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {listings.map((l) => (
+                  <ListingCard key={l.id} listing={l} />
+                ))}
+              </div>
+            ) : (
+              <div className="panel-lux rounded-xl p-10 text-center">
+                <p className="text-cream-200 text-lg mb-2">
+                  {q ? `No watches match “${q}” yet.` : "No watches listed yet — be the first."}
+                </p>
+                <Link href="/marketplace/sell" className="text-gold-400 hover:text-gold-300">List a watch</Link>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      <section className="py-20 sm:py-24 bg-forest-800 border-t border-gold-400/10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-3xl font-display font-bold text-cream-50 mb-10">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {STEPS.map((s, i) => (
               <div key={s.title} className="card-lux rounded-xl p-8">
                 <p className="text-gold-400 font-display text-3xl mb-3">{i + 1}</p>
-                <h2 className="text-xl font-display text-cream-50 mb-2">{s.title}</h2>
+                <h3 className="text-xl font-display text-cream-50 mb-2">{s.title}</h3>
                 <p className="text-sm text-cream-300 leading-relaxed">{s.body}</p>
               </div>
             ))}
@@ -48,15 +107,20 @@ export default function MarketplacePage() {
           <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="panel-lux rounded-xl p-8">
               <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Optional</p>
-              <h2 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.validation.name}</h2>
+              <h3 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.validation.name}</h3>
               <p className="font-display text-3xl text-gold-foil mb-4">{formatUsd(SERVICES.validation.priceCents)}</p>
               <p className="text-cream-300 text-sm leading-relaxed">{SERVICES.validation.summary}</p>
             </div>
             <div className="panel-lux rounded-xl p-8">
               <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Optional</p>
-              <h2 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.repair.name}</h2>
+              <h3 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.repair.name}</h3>
               <p className="font-display text-3xl text-gold-foil mb-4">By quote</p>
               <p className="text-cream-300 text-sm leading-relaxed">{SERVICES.repair.summary}</p>
+              {live && (
+                <Link href="/marketplace/repair" className="inline-block mt-4 text-gold-400 hover:text-gold-300 text-sm">
+                  Request a repair quote →
+                </Link>
+              )}
             </div>
           </div>
 
