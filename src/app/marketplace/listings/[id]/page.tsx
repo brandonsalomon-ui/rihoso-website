@@ -96,6 +96,12 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 <Detail label="Condition" value={conditionLabel(listing.condition)} />
                 <Detail label="Box" value={listing.has_box ? "Included" : "Not included"} />
                 <Detail label="Papers" value={listing.has_papers ? "Included" : "Not included"} />
+                <Detail
+                  label="Delivery"
+                  value={[listing.allows_shipping && "Insured shipping (included)", listing.allows_pickup && `Local pickup${listing.pickup_area ? ` — ${listing.pickup_area}` : ""}`]
+                    .filter(Boolean)
+                    .join(" · ")}
+                />
                 <Detail label="Seller" value={seller ? `${seller.display_name}${seller.is_member ? " · RIHOSO member" : ""}` : null} />
               </dl>
 
@@ -134,8 +140,9 @@ export default async function ListingPage({ params }: { params: { id: string } }
           )}
 
           <p className="mt-12 text-xs text-cream-400 max-w-3xl leading-relaxed">
-            Sold by an independent seller. RIHOSO is not the seller and does not guarantee this item. Payment is made
-            through RIHOSO and held until you confirm the watch arrived as described. RIHOSO&apos;s fee (
+            Sold by an independent seller. RIHOSO is not the seller and does not guarantee this item. Agree a price with
+            the seller in messages, then pay through RIHOSO — your payment is held until you confirm the watch arrived as
+            described. Returns only if not as described. RIHOSO&apos;s fee (
             {COMMISSION.standard * 100}%, or {COMMISSION.member * 100}% for members) is paid by the seller.
           </p>
         </div>
