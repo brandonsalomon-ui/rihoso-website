@@ -4,8 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import OrderActions from "@/components/exchange/OrderActions";
 import { formatUsd } from "@/lib/marketplace";
-import { AUTO_RELEASE_DAYS, getOrder } from "@/lib/orders";
+import { AUTO_RELEASE_DAYS, getOrder, isAdmin } from "@/lib/orders";
 import { getUser } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = { title: "Order", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -27,10 +28,13 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   if (!user) redirect(`/marketplace/sign-in?next=/marketplace/orders/${params.id}`);
   if (!/^[0-9a-f-]{36}$/i.test(params.id)) notFound();
   const order = await getOrder(params.id);
-  if (!order || (order.buyer_id !== user.id && order.seller_id !== user.id)) notFound();
-  const isSeller = order.seller_id === user.id;
+  if (!order) notFound();
+  const viewerIsAdmin = order.buyer_id !== user.id && order.seller_id !== user.id ? await isAdmin(user.id) : false;
+  if (order.buyer_id !== user.id && order.seller_id !== user.id && !viewerIsAdmin) notFound();
+  // Admins viewing someone else's order see the seller's view (payout + address), read-only.
+  const isSeller = order.seller_id === user.id || viewerIsAdmin;
 
-  const { data: listing } = await supabase.from("listings").select("id, title, brand").eq("id", order.listing_id).maybeSingle();
+  const { data: listing } = await (viewerIsAdmin ? createAdminClient() : supabase).from("listings").select("id, title, brand").eq("id", order.listing_id).maybeSingle();
   const pickup = order.fulfillment === "pickup";
   const steps = pickup ? STEPS_PICKUP : STEPS_SHIP;
   const current = stepIndex(order.status, pickup);
@@ -42,7 +46,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
       <section className="py-12 bg-forest-800 min-h-[70vh]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div>
-            <p className="text-gold-400 text-xs uppercase tracking-[0.2em]">{isSeller ? "You sold" : "You bought"}</p>
+            <p className="text-gold-400 text-xs uppercase tracking-[0.2em]">{viewerIsAdmin ? "Order (admin view)" : isSeller ? "You sold" : "You bought"}</p>
             <h1 className="font-display text-3xl text-cream-50">
               {listing ? <Link href={`/marketplace/listings/${listing.id}`}>{listing.title}</Link> : "Watch"}
             </h1>
@@ -112,13 +116,18 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          <OrderActions
+          {viewerIsAdmin && (
+            <p className="text-sm text-gold-300">
+              Admin view — resolve problems from the <Link href="/marketplace/admin" className="underline">admin page</Link>.
+            </p>
+          )}
+          {!viewerIsAdmin && <OrderActions
             orderId={order.id}
             role={isSeller ? "seller" : "buyer"}
             status={order.status}
             fulfillment={order.fulfillment}
             autoReleaseDays={AUTO_RELEASE_DAYS}
-          />
+          />}
 
           {order.conversation_id && (
             <Link href={`/marketplace/messages/${order.conversation_id}`} className="inline-block text-gold-400 hover:text-gold-300 text-sm">
