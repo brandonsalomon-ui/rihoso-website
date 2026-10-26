@@ -73,7 +73,7 @@ export default function SellerSignup({ resume = false }: { resume?: boolean }) {
 
       <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">
         <input name="member" type="checkbox" className="mt-1 accent-gold-400" />
-        <span>I&apos;m a RIHOSO member (5% selling fee instead of 10%). We&apos;ll confirm your membership.</span>
+        <span>I paid my RIHOSO membership outside the website (5% selling fee instead of 10%). We&apos;ll confirm it. Members who join online get the 5% rate automatically.</span>
       </label>
 
       <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">

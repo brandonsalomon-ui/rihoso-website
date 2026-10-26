@@ -38,14 +38,18 @@ export default function MembershipSignup() {
     setError("");
     const form = new FormData(e.currentTarget);
     try {
-      const res = await fetch("/api/join", {
+      const res = await fetch("/api/membership/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Something went wrong.");
-      setStatus("sent");
+      if (res.status === 401 && body.signIn) {
+        window.location.href = body.signIn;
+        return;
+      }
+      if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
+      window.location.href = body.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStatus("error");
@@ -114,7 +118,8 @@ export default function MembershipSignup() {
           Become a Member
         </h2>
         <p className="text-center text-cream-300 mb-10">
-          Fill in your details and we&apos;ll be in touch to welcome you and arrange your membership dues.
+          Pay {selected.price} securely by card. Your membership starts right away, lasts 12 months and doesn&apos;t
+          renew automatically. You&apos;ll sign in with your email first if you haven&apos;t already.
         </p>
 
         {status === "sent" ? (
@@ -166,22 +171,14 @@ export default function MembershipSignup() {
             </div>
 
             <div>
-              <label htmlFor="join-email" className="block text-sm text-cream-200 mb-1">
-                Email
-              </label>
-              <input id="join-email" name="email" type="email" autoComplete="email" required className={inputClass} placeholder="your@email.com" />
-            </div>
-
-            <div>
               <label htmlFor="join-phone" className="block text-sm text-cream-200 mb-1">
-                Phone
+                Phone <span className="text-cream-400">(optional)</span>
               </label>
               <input
                 id="join-phone"
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                required
                 pattern="[0-9()+\-.\s]{7,}"
                 title="Please enter a valid phone number"
                 className={inputClass}
@@ -208,7 +205,7 @@ export default function MembershipSignup() {
               disabled={status === "sending"}
               className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
             >
-              {status === "sending" ? "Sending…" : MEMBERSHIP_TIERS.length > 1 ? `Join as ${selected.name} — ${selected.price}/yr` : `Join RIHOSO — ${selected.price}/yr`}
+              {status === "sending" ? "Opening secure payment…" : `Continue to payment — ${selected.price}`}
             </button>
           </form>
         )}
