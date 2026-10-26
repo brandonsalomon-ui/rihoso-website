@@ -4,51 +4,20 @@ import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
 import BlogCover from "@/components/BlogCover";
 import { Icon } from "@/components/ornaments";
+import { getPublishedPosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog",
   description: "Articles, stories, and insights from the Rhode Island Horological Society.",
 };
 
-const posts = [
-  {
-    slug: "art-of-mechanical-timekeeping",
-    title: "The Art of Mechanical Timekeeping",
-    excerpt:
-      "An exploration of what makes mechanical watches and clocks enduring marvels of engineering and artistry.",
-    date: "2026-02-15",
-    author: "RIHOSO",
-  },
-  {
-    slug: "new-england-clockmaking-heritage",
-    title: "New England's Clockmaking Heritage",
-    excerpt:
-      "From the earliest colonial clockmakers to industrial-era factories, New England shaped American horology.",
-    date: "2026-01-20",
-    author: "RIHOSO",
-  },
-  {
-    slug: "getting-started-with-watch-collecting",
-    title: "Getting Started with Watch Collecting",
-    excerpt:
-      "A beginner's guide to building a meaningful watch collection — what to look for, where to start, and how to learn.",
-    date: "2025-12-10",
-    author: "RIHOSO",
-  },
-  {
-    slug: "restoring-antique-clocks",
-    title: "Restoring Antique Clocks: A Labor of Love",
-    excerpt:
-      "Members share their experiences bringing centuries-old timepieces back to life, one gear at a time.",
-    date: "2025-11-05",
-    author: "RIHOSO",
-  },
-];
+export const revalidate = 300;
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const posts = await getPublishedPosts();
   const [featured, ...rest] = posts;
-  const fmt = (d: string) =>
-    new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" });
 
   return (
     <>
@@ -60,15 +29,17 @@ export default function BlogPage() {
 
       <section className="py-20 sm:py-24 bg-forest-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {!featured && <p className="text-center text-cream-300">New articles are on their way.</p>}
           {/* Featured */}
+          {featured && (
           <Reveal>
             <Link
               href={`/blog/${featured.slug}`}
               className="card-lux group grid md:grid-cols-2 rounded-2xl overflow-hidden"
             >
-              <BlogCover slug={featured.slug} className="aspect-[16/10] md:aspect-auto md:min-h-[340px]" />
+              <BlogCover slug={featured.slug} variant={featured.cover} className="aspect-[16/10] md:aspect-auto md:min-h-[340px]" />
               <div className="p-8 sm:p-10 flex flex-col justify-center">
-                <p className="text-xs uppercase tracking-[0.3em] text-gold-400">Latest · {fmt(featured.date)}</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-gold-400">Latest · {fmt(featured.published_at)}</p>
                 <h2 className="mt-4 font-display text-3xl sm:text-4xl text-cream-50 leading-tight group-hover:text-gold-200 transition-colors">
                   {featured.title}
                 </h2>
@@ -80,6 +51,7 @@ export default function BlogPage() {
               </div>
             </Link>
           </Reveal>
+          )}
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             {rest.map((post, i) => (
@@ -88,9 +60,9 @@ export default function BlogPage() {
                   href={`/blog/${post.slug}`}
                   className="card-lux group flex flex-col h-full rounded-xl overflow-hidden"
                 >
-                  <BlogCover slug={post.slug} className="aspect-[16/10]" />
+                  <BlogCover slug={post.slug} variant={post.cover} className="aspect-[16/10]" />
                   <div className="p-6 flex flex-col flex-1">
-                    <p className="text-xs uppercase tracking-[0.25em] text-gold-400">{fmt(post.date)}</p>
+                    <p className="text-xs uppercase tracking-[0.25em] text-gold-400">{fmt(post.published_at)}</p>
                     <h2 className="mt-3 text-xl font-display text-cream-50 leading-snug group-hover:text-gold-200 transition-colors">
                       {post.title}
                     </h2>
