@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { finalizeCheckout, releaseOrder } from "@/lib/orders";
+import { finalizeServiceCheckout } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -31,6 +32,21 @@ export async function GET(request: Request) {
       if (order && order.status !== "pending_payment") confirmed.push(row.id);
     } catch (err) {
       console.error("[cron] finalize failed", row.id, err);
+    }
+  }
+
+  const { data: pendingServices } = await admin
+    .from("service_requests")
+    .select("id, stripe_checkout_session_id")
+    .eq("status", "awaiting_payment")
+    .not("stripe_checkout_session_id", "is", null)
+    .limit(50);
+  for (const row of pendingServices ?? []) {
+    try {
+      const req = await finalizeServiceCheckout(row.stripe_checkout_session_id as string, base);
+      if (req && req.status === "paid") confirmed.push(row.id);
+    } catch (err) {
+      console.error("[cron] service finalize failed", row.id, err);
     }
   }
 
