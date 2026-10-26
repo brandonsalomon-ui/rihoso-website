@@ -4,19 +4,33 @@ import { notFound, redirect } from "next/navigation";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import OrderActions from "@/components/exchange/OrderActions";
 import { formatUsd } from "@/lib/marketplace";
-import { AUTO_RELEASE_DAYS, getOrder, isAdmin } from "@/lib/orders";
+import { INSPECTION_HOURS, fmtWhen, getOrder, isAdmin } from "@/lib/orders";
 import { getUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = { title: "Order", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
-const STEPS_SHIP = ["Paid — held by RIHOSO", "Shipped", "Delivered", "Payment released"];
-const STEPS_PICKUP = ["Paid — held by RIHOSO", "Picked up & confirmed", "Payment released"];
+const STEPS_SHIP = ["Paid — held by RIHOSO", "Shipped", `Received — ${INSPECTION_HOURS}h inspection`, "Payment released"];
+const STEPS_PICKUP = ["Paid — held by RIHOSO", `Collected — ${INSPECTION_HOURS}h inspection`, "Payment released"];
 
 function stepIndex(status: string, pickup: boolean) {
-  if (pickup) return status === "released" ? 2 : 0;
+  if (pickup) return { paid_held: 0, delivered: 1, released: 2 }[status] ?? 0;
   return { paid_held: 0, shipped: 1, delivered: 2, released: 3 }[status] ?? 0;
+}
+
+function Decision({ note, at }: { note: string | null; at: string | null }) {
+  if (!note) return null;
+  return (
+    <div className="mt-3 border-l-2 border-gold-400 pl-3 text-sm">
+      <p className="text-gold-300 text-xs uppercase tracking-widest mb-1">RIHOSO&apos;s decision{at ? ` · ${fmtWhen(at)}` : ""}</p>
+      <p className="text-cream-100 whitespace-pre-line">{note}</p>
+      <p className="text-cream-400 text-xs mt-2">
+        Disagree? Email info@rihoso.com within 7 days with the order number and any new evidence, and we&apos;ll reconsider.
+        This review isn&apos;t arbitration and doesn&apos;t affect your rights with your card issuer or in court.
+      </p>
+    </div>
+  );
 }
 
 function fmtDate(iso: string | null) {
@@ -59,12 +73,26 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
             <p className="panel-lux rounded-xl p-6 text-cream-200">Waiting for payment.</p>
           ) : order.status === "disputed" ? (
             <div className="rounded-xl border border-red-400/40 bg-red-900/20 p-6 text-cream-100">
-              <p className="font-semibold mb-1">Problem reported — payment on hold</p>
-              <p className="text-sm text-cream-300">RIHOSO is reviewing this order and will contact both of you.</p>
-              {order.dispute_reason && <p className="mt-3 text-sm whitespace-pre-line">“{order.dispute_reason}”</p>}
+              <p className="font-semibold mb-1">
+                {order.return_approved_at ? "Return approved — payment on hold until the watch is back" : "Problem reported — payment on hold"}
+              </p>
+              <p className="text-sm text-cream-300">
+                {order.return_approved_at
+                  ? "The buyer is refunded in full once the seller confirms the return, or 2 business days after verified delivery to the seller unless they report a specific problem."
+                  : "RIHOSO is reviewing this order. Both sides can send evidence (photos, tracking, messages); sellers should respond within 2 business days. You'll get a written decision."}
+              </p>
+              {order.dispute_reason && <p className="mt-3 text-sm whitespace-pre-line">Buyer&apos;s report: “{order.dispute_reason}”</p>}
+              {order.return_tracking && (
+                <p className="mt-2 text-sm text-cream-200">Return shipped: {order.return_carrier} {order.return_tracking}</p>
+              )}
+              {order.return_problem && <p className="mt-2 text-sm text-cream-200">Seller&apos;s report on the return: “{order.return_problem}”</p>}
+              <Decision note={order.decision_note} at={order.decided_at} />
             </div>
-          ) : order.status === "refunded" ? (
-            <p className="panel-lux rounded-xl p-6 text-cream-200">This order was refunded to the buyer.</p>
+          ) : order.status === "refunded" || order.status === "cancelled" ? (
+            <div className="panel-lux rounded-xl p-6 text-cream-200">
+              <p>{order.status === "cancelled" ? "This order was cancelled and the buyer refunded in full." : "This order was refunded to the buyer in full."}</p>
+              <Decision note={order.decision_note} at={order.decided_at} />
+            </div>
           ) : (
             <ol className="panel-lux rounded-xl p-6 grid gap-3" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
               {steps.map((s, i) => (
@@ -82,15 +110,28 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
             <div>
               <h2 className="text-gold-400 uppercase tracking-widest text-xs mb-2">Payment</h2>
               <p className="text-cream-200">Sale price: {formatUsd(order.amount_cents)}</p>
+              {order.refunded_amount_cents > 0 && order.refunded_amount_cents < order.amount_cents && (
+                <p className="text-cream-300">Refunded to buyer: −{formatUsd(order.refunded_amount_cents)}</p>
+              )}
               {isSeller && (
                 <>
                   <p className="text-cream-300">RIHOSO fee: −{formatUsd(order.commission_cents)}</p>
-                  <p className="text-cream-100 font-semibold">Your payout: {formatUsd(order.amount_cents - order.commission_cents)}</p>
+                  <p className="text-cream-100 font-semibold">
+                    Your payout: {formatUsd(order.seller_payout_cents ?? order.amount_cents - order.refunded_amount_cents - order.commission_cents)}
+                  </p>
                 </>
               )}
               {order.released_at && <p className="text-cream-300 mt-2">Released {fmtDate(order.released_at)}</p>}
+              {order.status === "paid_held" && order.ship_by && (
+                <p className="text-cream-300 mt-2">Ship by {fmtWhen(order.ship_by)}</p>
+              )}
+              {order.status === "paid_held" && order.pickup_deadline && (
+                <p className="text-cream-300 mt-2">Pickup by {fmtWhen(order.pickup_deadline)}, or the order is cancelled and refunded.</p>
+              )}
               {order.status === "delivered" && order.auto_release_at && (
-                <p className="text-cream-300 mt-2">Releases automatically {fmtDate(order.auto_release_at)} unless a problem is reported.</p>
+                <p className="text-cream-200 mt-2">
+                  Inspection ends {fmtWhen(order.auto_release_at)}. Payment releases then unless a problem is reported.
+                </p>
               )}
             </div>
             <div>
@@ -121,13 +162,22 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
               Admin view — resolve problems from the <Link href="/marketplace/admin" className="underline">admin page</Link>.
             </p>
           )}
-          {!viewerIsAdmin && <OrderActions
-            orderId={order.id}
-            role={isSeller ? "seller" : "buyer"}
-            status={order.status}
-            fulfillment={order.fulfillment}
-            autoReleaseDays={AUTO_RELEASE_DAYS}
-          />}
+          {order.status === "released" && <Decision note={order.decision_note} at={order.decided_at} />}
+          {!viewerIsAdmin && (
+            <OrderActions
+              orderId={order.id}
+              role={isSeller ? "seller" : "buyer"}
+              status={order.status}
+              fulfillment={order.fulfillment}
+              inspectionHours={INSPECTION_HOURS}
+              shipOverdue={Boolean(order.ship_by && new Date(order.ship_by) < new Date())}
+              deliveryReported={Boolean(order.delivery_reported_at)}
+              handoverReported={Boolean(order.handover_reported_at)}
+              returnApproved={Boolean(order.return_approved_at)}
+              returnShipped={Boolean(order.return_shipped_at)}
+              returnProblem={Boolean(order.return_problem_at)}
+            />
+          )}
 
           {order.conversation_id && (
             <Link href={`/marketplace/messages/${order.conversation_id}`} className="inline-block text-gold-400 hover:text-gold-300 text-sm">
@@ -135,9 +185,10 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
             </Link>
           )}
           <p className="text-xs text-cream-400 leading-relaxed">
-            RIHOSO holds the buyer&apos;s payment until the buyer confirms the watch arrived as described
-            {pickup ? "" : `, or ${AUTO_RELEASE_DAYS} days after delivery if no problem is reported`}. Returns are only accepted if the
-            watch is not as described. RIHOSO is the venue, not the seller.
+            RIHOSO holds the buyer&apos;s payment until the buyer accepts the watch, or until {INSPECTION_HOURS} hours after
+            verified {pickup ? "handover" : "receipt"} with no problem reported. Returns are accepted only if the watch is
+            materially not as described. RIHOSO runs the Exchange; the seller sells the watch. See the{" "}
+            <Link href="/terms" className="underline">Terms of Use</Link>.
           </p>
         </div>
       </section>
