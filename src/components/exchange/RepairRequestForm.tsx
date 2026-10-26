@@ -31,7 +31,7 @@ export default function RepairRequestForm() {
     return (
       <div className="panel-lux rounded-xl p-8 text-center" role="status">
         <h2 className="text-2xl font-display text-cream-50 mb-2">Request received</h2>
-        <p className="text-cream-300">RIHOSO will email you to arrange an inspection and a written quote.</p>
+        <p className="text-cream-300">RIHOSO will review it and email you a written quote. You can pay the quote online to book the repair.</p>
       </div>
     );
   }

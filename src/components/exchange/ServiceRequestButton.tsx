@@ -22,9 +22,13 @@ export default function ServiceRequestButton({
       body: JSON.stringify({ type, listingId }),
     });
     const json = await res.json().catch(() => ({}));
+    if (res.ok && json.url) {
+      window.location.href = json.url; // secure Stripe checkout
+      return;
+    }
     if (res.ok) {
       setState("done");
-      setMessage("Request received — RIHOSO will email you to arrange the validation and payment.");
+      setMessage("Request received — RIHOSO will email you.");
     } else {
       setState("error");
       setMessage(json.error || "Couldn't send the request. Please try again.");
