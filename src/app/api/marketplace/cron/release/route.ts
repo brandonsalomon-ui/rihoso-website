@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { finalizeMembershipCheckout, runMembershipHousekeeping } from "@/lib/memberships";
-import { finalizeCheckout, releaseOrder } from "@/lib/orders";
+import { addBusinessDays } from "@/lib/business-days";
+import { finalizeCheckout, getOrder, notifyOrderEvent, refundOrder, releaseOrder } from "@/lib/orders";
+import { PICKUP_DAYS, RETURN_REVIEW_BUSINESS_DAYS } from "@/lib/policies";
 import { finalizeServiceCheckout } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -10,7 +12,9 @@ export const runtime = "nodejs";
 /**
  * Runs daily (Vercel Cron).
  *  1. Safety net: confirms any paid checkouts the webhook may have missed.
- *  2. Releases payment for delivered orders whose 3-day problem window has passed without a dispute.
+ *  2. Releases payment for orders whose 72-hour inspection (from verified receipt) passed without a problem.
+ *  2a. Missed deadlines: tells buyers they can cancel late shipments; cancels and refunds pickups not done in 7 days.
+ *  2b. Refunds approved returns 2 business days after verified delivery to the seller, unless the seller reported a problem.
  *  3. Membership renewal reminders, and ends the member fee rate when an online membership lapses.
  */
 export async function GET(request: Request) {
@@ -75,6 +79,74 @@ export async function GET(request: Request) {
     membership = { error: "failed" };
   }
 
+  const nowIso = new Date().toISOString();
+  const deadlines: Record<string, string> = {};
+
+  // Shipping deadline passed: tell the buyer they may cancel (once).
+  const { data: lateShips } = await admin
+    .from("orders")
+    .select("id")
+    .eq("status", "paid_held")
+    .eq("fulfillment", "ship")
+    .lt("ship_by", nowIso)
+    .is("ship_overdue_notified_at", null)
+    .limit(50);
+  for (const row of lateShips ?? []) {
+    try {
+      const order = await getOrder(row.id as string);
+      if (!order) continue;
+      await admin.from("orders").update({ ship_overdue_notified_at: nowIso }).eq("id", order.id);
+      await notifyOrderEvent(order, "ship_overdue", base);
+      deadlines[order.id] = "ship_overdue_notified";
+    } catch (err) {
+      console.error("[cron] ship overdue failed", row.id, err);
+    }
+  }
+
+  // Pickup not done within 7 days and no handover recorded: cancel and refund.
+  const { data: latePickups } = await admin
+    .from("orders")
+    .select("id")
+    .eq("status", "paid_held")
+    .eq("fulfillment", "pickup")
+    .lt("pickup_deadline", nowIso)
+    .is("handover_reported_at", null)
+    .limit(50);
+  for (const row of latePickups ?? []) {
+    try {
+      await refundOrder(row.id as string, base, `Cancelled automatically: pickup wasn't completed within ${PICKUP_DAYS} days of payment.`, {
+        outcome: "cancelled",
+        buyerText: `Pickup wasn't completed within ${PICKUP_DAYS} days, so the order was cancelled and your payment refunded in full. It usually appears on your card within 5–10 business days.`,
+        sellerText: `Pickup wasn't completed within ${PICKUP_DAYS} days of payment, so the order was cancelled and the buyer refunded. Please don't hand over the watch for this order.`,
+      });
+      deadlines[row.id as string] = "pickup_cancelled";
+    } catch (err) {
+      console.error("[cron] pickup cancel failed", row.id, err);
+    }
+  }
+
+  // Approved returns delivered to the seller: refund after the seller's review window unless they reported a problem.
+  const { data: returns } = await admin
+    .from("orders")
+    .select("id, return_received_at")
+    .eq("status", "disputed")
+    .not("return_received_at", "is", null)
+    .is("return_problem_at", null)
+    .limit(50);
+  for (const row of returns ?? []) {
+    try {
+      const due = addBusinessDays(new Date(row.return_received_at as string), RETURN_REVIEW_BUSINESS_DAYS);
+      if (due > new Date()) continue;
+      await refundOrder(row.id as string, base, undefined, {
+        buyerText: "Your return was delivered to the seller and the review period has passed, so RIHOSO refunded your payment in full. It usually appears on your card within 5–10 business days.",
+        sellerText: `The returned watch was delivered to you ${RETURN_REVIEW_BUSINESS_DAYS} business days ago with no problem reported, so the buyer has been refunded in full. No fee is charged on this sale.`,
+      });
+      deadlines[row.id as string] = "return_refunded";
+    } catch (err) {
+      console.error("[cron] return refund failed", row.id, err);
+    }
+  }
+
   const { data } = await admin
     .from("orders")
     .select("id")
@@ -91,5 +163,5 @@ export async function GET(request: Request) {
       results[row.id] = "failed";
     }
   }
-  return NextResponse.json({ ok: true, confirmed, results, membership });
+  return NextResponse.json({ ok: true, confirmed, deadlines, results, membership });
 }
