@@ -17,3 +17,7 @@ export const MEMBERSHIP_TIERS = [
 ] as const;
 
 export type TierId = (typeof MEMBERSHIP_TIERS)[number]["id"];
+
+/** Online membership: one payment covers this many months; it does not renew automatically. */
+export const MEMBERSHIP_PRICE_CENTS = 12000;
+export const MEMBERSHIP_TERM_MONTHS = 12;
