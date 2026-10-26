@@ -25,6 +25,7 @@ export default function Footer() {
                 { href: "/about", label: "About RIHOSO" },
                 { href: "/events", label: "Events" },
                 { href: "/memberships", label: "Memberships" },
+                { href: "/marketplace", label: "Watch Exchange" },
                 { href: "/blog", label: "Blog" },
                 { href: "/contact", label: "Contact" },
               ].map((link) => (
