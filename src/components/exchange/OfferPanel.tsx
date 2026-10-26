@@ -35,6 +35,7 @@ export default function OfferPanel({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [fulfillment, setFulfillment] = useState<"ship" | "pickup">(offer?.allowsShipping === false ? "pickup" : "ship");
 
   async function createOffer(e: FormEvent<HTMLFormElement>) {
@@ -73,7 +74,7 @@ export default function OfferPanel({
     const res = await fetch("/api/marketplace/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ offerId: offer.id, fulfillment }),
+      body: JSON.stringify({ offerId: offer.id, fulfillment, accept: agreed }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.url) {
@@ -115,12 +116,30 @@ export default function OfferPanel({
             </label>
           )}
         </div>
-        <button onClick={pay} disabled={busy} className="btn-gold px-8 py-3 rounded font-semibold disabled:opacity-60">
+        <ul className="text-xs text-cream-300 space-y-1 list-disc pl-5">
+          <li>Price {openOffer.amount}{fulfillment === "ship" ? ", including insured shipping" : ""}; any sales tax is shown before you pay.</li>
+          <li>
+            {fulfillment === "ship"
+              ? "The seller ships within 3 business days, or you can cancel for a full refund."
+              : "Collect within 7 days, or the order is cancelled and refunded."}
+          </li>
+          <li>RIHOSO holds your payment. After you confirm {fulfillment === "ship" ? "receipt" : "collection"}, you have 72 hours to inspect the watch and report a problem.</li>
+          <li>Returns only if the watch is materially not as described. The seller sells the watch; RIHOSO runs the Exchange.</li>
+        </ul>
+        <label className="flex items-start gap-3 text-sm text-cream-200 cursor-pointer">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1 accent-gold-400" />
+          <span>
+            I agree to the{" "}
+            <a href="/terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Terms of Use</a>, including the
+            inspection and returns rules above.
+          </span>
+        </label>
+        <button onClick={pay} disabled={busy || !agreed} className="btn-gold px-8 py-3 rounded font-semibold disabled:opacity-60">
           {busy ? "Opening secure checkout…" : `Pay ${openOffer.amount}`}
         </button>
         <p className="text-xs text-cream-400">
-          Paid securely by card through Stripe. RIHOSO holds your payment until you confirm the watch arrived as described.
-          Offer expires {new Date(openOffer.expiresAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })}.
+          Paid securely by card through Stripe. Offer expires{" "}
+          {new Date(openOffer.expiresAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })}.
         </p>
         {error && <p className="text-sm text-red-300" role="alert">{error}</p>}
       </div>

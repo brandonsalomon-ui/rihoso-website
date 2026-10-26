@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/browser";
+import { POLICIES } from "@/lib/policies";
 
 export const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -50,7 +51,12 @@ export default function SignInForm({ next }: { next: string }) {
       email: addr,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
-        data: name ? { display_name: name } : undefined,
+        // Recorded against new accounts (database trigger) as acceptance of these versions.
+        data: {
+          ...(name ? { display_name: name } : {}),
+          terms_version: POLICIES.terms.version,
+          privacy_version: POLICIES.privacy.version,
+        },
       },
     });
     if (error) {
@@ -103,6 +109,15 @@ export default function SignInForm({ next }: { next: string }) {
         <label htmlFor="si-email" className="block text-sm text-cream-200 mb-1">Email</label>
         <input id="si-email" name="email" type="email" autoComplete="email" required className={inputClass} placeholder="your@email.com" />
       </div>
+      <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">
+        <input name="agree" type="checkbox" required className="mt-1 accent-gold-400" />
+        <span>
+          I agree to the{" "}
+          <a href={POLICIES.terms.href} target="_blank" className="text-gold-400 hover:text-gold-300 underline">Website and Watch Exchange Terms of Use</a>{" "}
+          and have read the{" "}
+          <a href={POLICIES.privacy.href} target="_blank" className="text-gold-400 hover:text-gold-300 underline">Privacy Policy</a>. I&apos;m 18 or older and in the United States.
+        </span>
+      </label>
       {error && (
         <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>
       )}
