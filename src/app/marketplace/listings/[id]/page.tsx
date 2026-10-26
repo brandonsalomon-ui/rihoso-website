@@ -125,9 +125,10 @@ export default async function ListingPage({ params }: { params: { id: string } }
           )}
 
           <p className="mt-12 text-xs text-cream-400 max-w-3xl leading-relaxed">
-            Sold by an independent seller. RIHOSO is not the seller and does not guarantee this item. Agree a price with
-            the seller in messages, then pay through RIHOSO — your payment is held until you confirm the watch arrived as
-            described. Returns only if not as described. RIHOSO&apos;s fee (
+            Sold by an independent seller. RIHOSO runs the Exchange; it is not the seller and does not inspect or guarantee
+            this item. Agree a price with the seller in messages, then pay through RIHOSO — your payment is held, and once
+            the watch arrives you have 72 hours to inspect it. Returns only if it is materially not as described. See the{" "}
+            <Link href="/terms" className="underline">Terms of Use</Link>. RIHOSO&apos;s fee (
             {COMMISSION.standard * 100}%, or {COMMISSION.member * 100}% for members) is paid by the seller.
           </p>
         </div>
