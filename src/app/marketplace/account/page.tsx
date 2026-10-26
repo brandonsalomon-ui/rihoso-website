@@ -25,7 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
 const ORDER_LABEL: Record<string, string> = {
   paid_held: "Paid — held",
   shipped: "Shipped",
-  delivered: "Delivered",
+  delivered: "Received — inspecting",
   released: "Complete",
   disputed: "Problem reported",
   refunded: "Refunded",
