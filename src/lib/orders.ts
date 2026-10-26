@@ -348,3 +348,33 @@ export async function notifyOrderEvent(
     ]);
   }
 }
+
+/** Admin: refund the buyer in full and close the order (only before the seller has been paid). */
+export async function refundOrder(orderId: string, base: string, note?: string) {
+  const order = await getOrder(orderId);
+  if (!order) throw new UserError("Order not found.");
+  if (!["paid_held", "shipped", "delivered", "disputed"].includes(order.status)) {
+    throw new UserError("Only orders whose payment is still held can be refunded here.");
+  }
+  if (!order.stripe_payment_intent_id) throw new UserError("No payment found for this order.");
+  await getStripe().refunds.create(
+    { payment_intent: order.stripe_payment_intent_id, metadata: { order_id: order.id } },
+    { idempotencyKey: `refund_${order.id}` }
+  );
+  const admin = createAdminClient();
+  await Promise.all([
+    admin.from("orders").update({ status: "refunded", refunded_at: new Date().toISOString(), auto_release_at: null }).eq("id", order.id),
+    // Put the watch back on the market as withdrawn; the seller can re-list it.
+    admin.from("listings").update({ status: "withdrawn" }).eq("id", order.listing_id),
+  ]);
+  const title = await listingTitle(order.listing_id);
+  await Promise.all([
+    notify(order.buyer_id, `Refund issued: ${title}`, `RIHOSO has refunded your ${formatUsd(order.amount_cents)} payment. It usually appears on your card within 5–10 business days.`, order.id, base, note),
+    notify(order.seller_id, `Order refunded: ${title}`, "RIHOSO reviewed this order and refunded the buyer. Please arrange the watch's return with the buyer in your messages if needed.", order.id, base, note),
+  ]);
+}
+
+export async function isAdmin(userId: string) {
+  const { data } = await createAdminClient().from("admins").select("user_id").eq("user_id", userId).maybeSingle();
+  return Boolean(data);
+}
