@@ -41,7 +41,7 @@ export default function MembershipSignup() {
       const res = await fetch("/api/membership/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier }),
+        body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier, accept: form.get("agree") === "on" }),
       });
       const body = await res.json().catch(() => ({}));
       if (res.status === 401 && body.signIn) {
@@ -193,6 +193,16 @@ export default function MembershipSignup() {
                 <input name="website" type="text" tabIndex={-1} autoComplete="off" />
               </label>
             </div>
+
+            <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">
+              <input name="agree" type="checkbox" required className="mt-1 accent-gold-400" />
+              <span>
+                I agree to the{" "}
+                <a href="/membership-terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Membership and Event Terms</a>{" "}
+                and the <a href="/terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Terms of Use</a>.{" "}
+                {selected.price} for 12 months; no automatic renewal. Full refund within 14 days if no member benefit has been used.
+              </span>
+            </label>
 
             {status === "error" && (
               <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">

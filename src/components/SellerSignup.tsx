@@ -79,8 +79,11 @@ export default function SellerSignup({ resume = false }: { resume?: boolean }) {
       <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">
         <input name="agree" type="checkbox" required className="mt-1 accent-gold-400" />
         <span>
-          I understand RIHOSO is a venue, not the seller. I&apos;m responsible for my listings and for shipping each watch
-          as described, and RIHOSO&apos;s fee is deducted from each completed sale.
+          I agree to the{" "}
+          <a href="/seller-agreement" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Seller Agreement</a>, including
+          the commission schedule (10%, or 5% for members) and the refund and recovery obligations, and to the{" "}
+          <a href="/terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Terms of Use</a>. I sell the watch; RIHOSO runs
+          the Exchange and handles payment.
         </span>
       </label>
 
