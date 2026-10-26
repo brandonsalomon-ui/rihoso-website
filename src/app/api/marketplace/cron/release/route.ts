@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { finalizeMembershipCheckout, runMembershipHousekeeping } from "@/lib/memberships";
 import { finalizeCheckout, releaseOrder } from "@/lib/orders";
 import { finalizeServiceCheckout } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
  * Runs daily (Vercel Cron).
  *  1. Safety net: confirms any paid checkouts the webhook may have missed.
  *  2. Releases payment for delivered orders whose 3-day problem window has passed without a dispute.
+ *  3. Membership renewal reminders, and ends the member fee rate when an online membership lapses.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -50,6 +52,29 @@ export async function GET(request: Request) {
     }
   }
 
+  const { data: pendingMemberships } = await admin
+    .from("memberships")
+    .select("id, stripe_checkout_session_id")
+    .eq("status", "pending")
+    .not("stripe_checkout_session_id", "is", null)
+    .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+    .limit(50);
+  for (const row of pendingMemberships ?? []) {
+    try {
+      const m = await finalizeMembershipCheckout(row.stripe_checkout_session_id as string, base);
+      if (m && m.status === "paid") confirmed.push(row.id);
+    } catch (err) {
+      console.error("[cron] membership finalize failed", row.id, err);
+    }
+  }
+  let membership: Awaited<ReturnType<typeof runMembershipHousekeeping>> | { error: string };
+  try {
+    membership = await runMembershipHousekeeping(base);
+  } catch (err) {
+    console.error("[cron] membership housekeeping failed", err);
+    membership = { error: "failed" };
+  }
+
   const { data } = await admin
     .from("orders")
     .select("id")
@@ -66,5 +91,5 @@ export async function GET(request: Request) {
       results[row.id] = "failed";
     }
   }
-  return NextResponse.json({ ok: true, confirmed, results });
+  return NextResponse.json({ ok: true, confirmed, results, membership });
 }
