@@ -94,7 +94,7 @@ export default async function AdminPage() {
   const ORDER_SELECT =
     "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
 
-  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes] = await Promise.all([
+  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes] = await Promise.all([
     admin.from("orders").select(ORDER_SELECT).eq("status", "disputed").order("disputed_at", { ascending: true }),
     admin.from("orders").select(ORDER_SELECT).neq("status", "pending_payment").order("created_at", { ascending: false }).limit(50),
     admin
@@ -107,6 +107,12 @@ export default async function AdminPage() {
       .order("created_at", { ascending: false })
       .limit(50),
     admin.auth.admin.listUsers({ perPage: 1000 }),
+    admin
+      .from("memberships")
+      .select("id, user_id, full_name, phone, amount_cents, paid_at, period_end")
+      .eq("status", "paid")
+      .order("paid_at", { ascending: false })
+      .limit(200),
   ]);
 
   const emails = new Map((emailsRes.data?.users ?? []).map((u) => [u.id, u.email ?? ""]));
@@ -115,6 +121,18 @@ export default async function AdminPage() {
   const sellers = (sellersRes.data ?? []) as unknown as SellerRow[];
   const requests = (requestsRes.data ?? []) as unknown as RequestRow[];
   const memberQueue = sellers.filter((s) => s.member_claimed && !s.profiles?.is_member);
+  const memberships = (membersRes.data ?? []) as {
+    id: string;
+    user_id: string;
+    full_name: string;
+    phone: string | null;
+    amount_cents: number;
+    paid_at: string;
+    period_end: string;
+  }[];
+  const nowMs = Date.now();
+  const activeMembers = new Set(memberships.filter((m) => new Date(m.period_end).getTime() > nowMs).map((m) => m.user_id));
+  const fmtDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { timeZone: "America/New_York", dateStyle: "medium" });
   const openRequests = requests.filter((r) => ["requested", "paid", "in_progress"].includes(r.status));
 
   const held = orders.filter((o) => ["paid_held", "shipped", "delivered", "disputed"].includes(o.status));
@@ -134,7 +152,7 @@ export default async function AdminPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               ["Problems to resolve", String(disputes.length)],
-              ["Member approvals", String(memberQueue.length)],
+              ["Paid members (active)", String(activeMembers.size)],
               ["Money held now", formatUsd(heldTotal)],
               ["Fees earned (completed)", formatUsd(feesEarned)],
             ].map(([k, v]) => (
@@ -183,9 +201,49 @@ export default async function AdminPage() {
             )}
           </Section>
 
+          <Section title="Members paid online" count={activeMembers.size}>
+            <p className="text-sm text-cream-400 mb-4">
+              $120 for 12 months, no automatic renewal. Members get the 5% fee automatically; it ends when their term does.
+            </p>
+            {memberships.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-left text-cream-400">
+                    <tr>
+                      <th className="py-2 pr-4 font-normal">Name</th>
+                      <th className="py-2 pr-4 font-normal">Contact</th>
+                      <th className="py-2 pr-4 font-normal">Paid</th>
+                      <th className="py-2 font-normal">Member until</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-forest-600/30">
+                    {memberships.map((m) => (
+                      <tr key={m.id}>
+                        <td className="py-2 pr-4 text-cream-100">{m.full_name}</td>
+                        <td className="py-2 pr-4 text-cream-300">
+                          {emails.get(m.user_id)}
+                          <span className="block text-xs">{m.phone}</span>
+                        </td>
+                        <td className="py-2 pr-4 text-cream-300">
+                          {formatUsd(m.amount_cents)} · {fmtDay(m.paid_at)}
+                        </td>
+                        <td className={`py-2 ${new Date(m.period_end).getTime() > nowMs ? "text-cream-200" : "text-cream-400 line-through"}`}>
+                          {fmtDay(m.period_end)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-cream-400 text-sm">No online memberships yet.</p>
+            )}
+          </Section>
+
           <Section title="Member rate approvals" count={memberQueue.length}>
             <p className="text-sm text-cream-400 mb-4">
-              Sellers who said they&apos;re RIHOSO members. Approving gives them the 5% member fee on new sales.
+              For members who paid outside the website: sellers who said they&apos;re RIHOSO members. Approving gives them
+              the 5% member fee on new sales. Members who pay online are approved automatically.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
