@@ -67,6 +67,27 @@ export default function WatchmakingSchoolsPage() {
           <SchoolsExplorer schools={SCHOOLS} home={MAP_POINTS.ri} mapBase={<MapBase />} />
 
           <Reveal className="mt-16">
+            <Link
+              href="/students"
+              className="group card-lux rounded-xl px-6 py-8 sm:px-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left"
+            >
+              <span className="shrink-0 flex items-center justify-center w-16 h-16 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors duration-300">
+                <Icon name="mentor" className="w-8 h-8" />
+              </span>
+              <span className="flex-1">
+                <span className="block font-display text-2xl text-cream-50">Still in high school or college?</span>
+                <span className="block mt-2 text-cream-300 text-lg">
+                  RIHOSO&apos;s after-school program offers mentors, watchmaking basics, trips and scholarship guidance.
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-2 text-gold-400 tracking-wide group-hover:text-gold-300">
+                Students &amp; Schools
+                <Icon name="arrow" className="w-4 h-4" />
+              </span>
+            </Link>
+          </Reveal>
+
+          <Reveal className="mt-8">
             <div className="relative overflow-hidden rounded-xl panel-lux px-6 py-10 sm:px-12 text-center">
               <div className="pointer-events-none absolute -left-10 -top-10 text-gold-400/10">
                 <Gear className="w-40 h-40 animate-rotate-slow" teeth={20} />
