@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clean } from "@/lib/email";
 import { startMembershipCheckout } from "@/lib/memberships";
+import { recordAcceptance } from "@/lib/policy-acceptance";
 import { UserError } from "@/lib/orders";
 import { isStripeConfigured, siteUrl } from "@/lib/stripe";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -30,11 +31,15 @@ export async function POST(request: Request) {
   const name = clean(data.name, 120);
   const phone = clean(data.phone, 40);
   if (!name) return NextResponse.json({ error: "Please enter your name." }, { status: 400 });
+  if (data.accept !== true) {
+    return NextResponse.json({ error: "Please confirm you agree to the Membership Terms." }, { status: 400 });
+  }
   if (phone && phone.replace(/\D/g, "").length < 7) {
     return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
   }
   try {
-    const url = await startMembershipCheckout(user.id, name, phone, siteUrl(request));
+    const { url, membershipId } = await startMembershipCheckout(user.id, name, phone, siteUrl(request));
+    await recordAcceptance(user.id, ["membership", "terms"], "membership", { membershipId, request });
     return NextResponse.json({ ok: true, url });
   } catch (err) {
     if (err instanceof UserError) return NextResponse.json({ error: err.message }, { status: 409 });
