@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         ["Name", name],
         ["Email", user.email],
         ["Phone", phone],
-        ["Says they're a member", member ? "Yes — please verify for the 10% rate" : "No"],
+        ["Says they're a member", member ? "Yes — please verify for the 5% member rate" : "No"],
         ["Stripe account", account.id],
         ["Submitted", new Date().toLocaleString("en-US", { timeZone: "America/New_York" }) + " ET"],
       ],
