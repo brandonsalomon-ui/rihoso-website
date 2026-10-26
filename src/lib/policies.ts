@@ -1,14 +1,14 @@
 // Versions of the public policies people accept. Bump a version when its text changes.
 // The text lives in src/content/policies/*.md and is shown at /terms, /seller-agreement,
-// /membership-terms and /privacy. Status: DRAFT pending legal review.
+// /membership-terms and /privacy. Status: final (reviewed), effective October 26, 2026.
 
-export const POLICY_STATUS = "draft" as const;
+export const POLICY_STATUS: "draft" | "final" = "final";
 
 export const POLICIES = {
-  terms: { title: "Website and Watch Exchange Terms of Use", href: "/terms", version: "2026-10-26-draft" },
-  seller: { title: "Seller Agreement", href: "/seller-agreement", version: "2026-10-26-draft" },
-  membership: { title: "Membership and Event Terms", href: "/membership-terms", version: "2026-10-26-draft" },
-  privacy: { title: "Privacy Policy", href: "/privacy", version: "2026-10-26-draft" },
+  terms: { title: "Website and Watch Exchange Terms of Use", href: "/terms", version: "2026-10-26" },
+  seller: { title: "Seller Agreement", href: "/seller-agreement", version: "2026-10-26" },
+  membership: { title: "Membership and Event Terms", href: "/membership-terms", version: "2026-10-26" },
+  privacy: { title: "Privacy Policy", href: "/privacy", version: "2026-10-26" },
 } as const;
 
 export type PolicyKey = keyof typeof POLICIES;

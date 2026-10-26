@@ -11,7 +11,7 @@ export const COMMISSION = {
  * customers' watches, the written service order and warranty are settled. Set to false to hide the
  * repair offer and stop new requests (existing requests and payments keep working).
  */
-export const REPAIRS_OPEN = true;
+export const REPAIRS_OPEN = false;
 
 /** Fixed-price services RIHOSO offers alongside the marketplace. */
 export const SERVICES = {
