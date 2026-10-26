@@ -55,7 +55,10 @@ export async function startServiceCheckout(requestId: string, userId: string, ba
         price_data: {
           currency: "usd",
           unit_amount: req.price_cents,
-          product: req.type === "validation" ? SERVICES.validation.stripeProductId : SERVICES.repair.stripeProductId,
+          product_data: {
+            name: `RIHOSO ${SERVICES[req.type === "validation" ? "validation" : "repair"].name}`,
+            ...(title ? { description: title.slice(0, 200) } : {}),
+          },
         },
       },
     ],
