@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clean, sendNotification } from "@/lib/email";
 import { createOnboardingLink, getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getSellerAccount } from "@/lib/sellers";
+import { recordAcceptance } from "@/lib/policy-acceptance";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
@@ -44,8 +45,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Please enter your name and a phone number." }, { status: 400 });
     }
     if (!agreed) {
-      return NextResponse.json({ error: "Please accept the seller terms to continue." }, { status: 400 });
+      return NextResponse.json({ error: "Please accept the Seller Agreement to continue." }, { status: 400 });
     }
+    await recordAcceptance(user.id, ["seller", "terms"], "seller_signup", { request });
 
     const account = await getStripe().accounts.create({
       country: "US",
