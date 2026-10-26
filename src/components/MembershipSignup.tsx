@@ -79,7 +79,7 @@ export default function MembershipSignup() {
               <h3 className="relative text-2xl font-display text-cream-50 mb-1">{t.name}</h3>
               <div className="relative mb-6">
                 <span className="font-display text-4xl font-bold text-gold-foil">{t.price}</span>
-                <span className="text-cream-400 text-sm ml-1">/{t.period}</span>
+                <span className="text-cream-400 text-sm ml-1">{t.period}</span>
               </div>
               <ul className="relative space-y-3 mb-8 flex-1">
                 {t.features.map((feature) => (
