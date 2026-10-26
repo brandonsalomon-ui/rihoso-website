@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { finalizeCheckout } from "@/lib/orders";
+import { finalizeServiceCheckout } from "@/lib/services";
 import { getStripe, siteUrl } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -18,7 +19,9 @@ export async function POST(request: Request) {
   }
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-      await finalizeCheckout(event.data.object.id, siteUrl(request));
+      const session = event.data.object;
+      if (session.metadata?.kind === "service") await finalizeServiceCheckout(session.id, siteUrl(request));
+      else await finalizeCheckout(session.id, siteUrl(request));
     }
   } catch (err) {
     console.error("[webhook] failed", event.type, err);
