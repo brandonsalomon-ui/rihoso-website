@@ -89,6 +89,16 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 </div>
               )}
 
+              {listing.validation_status === "concerns" && (
+                <div className="mt-4 rounded border border-red-300/40 bg-red-900/20 px-4 py-3 text-sm text-cream-100">
+                  <strong className="text-red-200">Validation raised concerns.</strong> A RIHOSO member examined this watch and noted:
+                  {listing.validation_notes && <span className="block mt-1 text-cream-300">{listing.validation_notes}</span>}
+                </div>
+              )}
+              {(listing.validation_status === "requested" || listing.validation_status === "in_progress") && (
+                <p className="mt-4 text-sm text-gold-300">A RIHOSO member validation is underway for this watch.</p>
+              )}
+
               <dl className="mt-6">
                 <Detail label="Model" value={listing.model} />
                 <Detail label="Reference" value={listing.reference} />
