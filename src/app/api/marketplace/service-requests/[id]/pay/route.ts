@@ -6,7 +6,7 @@ import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-/** Requester pays a quoted repair (or retries an unpaid validation). */
+/** Requester pays a quoted repair. */
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const { user } = await getUser();
   if (!user) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
