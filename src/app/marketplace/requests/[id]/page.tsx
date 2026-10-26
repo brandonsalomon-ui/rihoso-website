@@ -81,8 +81,8 @@ export default async function RequestPage({
             )}
           </div>
           <p className="text-xs text-cream-400 leading-relaxed">
-            Member validations are an expert opinion from an experienced RIHOSO member, not a warranty of authenticity.
-            Repairs are quoted in writing before any work begins.
+            Repairs are quoted in writing before any work begins. All RIHOSO proceeds support the society&apos;s
+            scholarships and operating expenses.
           </p>
         </div>
       </section>
