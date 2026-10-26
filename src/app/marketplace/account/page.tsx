@@ -44,7 +44,7 @@ export default async function AccountPage() {
     } catch {}
   }
 
-  const [{ data: profile }, { data: listings }, { data: requests }, { data: orders }] = await Promise.all([
+  const [{ data: profile }, { data: listings }, { data: requests }, { data: orders }, { data: membership }] = await Promise.all([
     supabase.from("profiles").select("display_name, is_member").eq("id", user.id).single(),
     supabase
       .from("listings")
@@ -63,7 +63,18 @@ export default async function AccountPage() {
       .neq("status", "pending_payment")
       .order("created_at", { ascending: false })
       .limit(25),
+    supabase
+      .from("memberships")
+      .select("period_end")
+      .eq("user_id", user.id)
+      .eq("status", "paid")
+      .order("period_end", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+  const memberUntil = membership?.period_end ? new Date(membership.period_end as string) : null;
+  const memberActive = Boolean(memberUntil && memberUntil > new Date());
+  const fmtLong = (d: Date) => d.toLocaleDateString("en-US", { timeZone: "America/New_York", dateStyle: "long" });
   const orderRows = (orders ?? []) as unknown as {
     id: string;
     buyer_id: string;
@@ -91,7 +102,24 @@ export default async function AccountPage() {
           <div className="panel-lux rounded-xl p-6 sm:p-8">
             <h2 className="font-display text-2xl text-cream-50 mb-1">Profile</h2>
             <p className="text-sm text-cream-400 mb-5">
-              Signed in as {user.email}. {profile?.is_member ? "Verified RIHOSO member." : ""}
+              Signed in as {user.email}.
+            </p>
+            <p className="text-sm text-cream-200 mb-5">
+              {memberActive && memberUntil ? (
+                <>
+                  RIHOSO member until {fmtLong(memberUntil)} (doesn&apos;t renew automatically).{" "}
+                  <Link href="/memberships#join" className="text-gold-400 hover:text-gold-300">Renew early →</Link>
+                </>
+              ) : profile?.is_member ? (
+                "RIHOSO member."
+              ) : (
+                <>
+                  {memberUntil ? `Your membership ended ${fmtLong(memberUntil)}. ` : "Not a RIHOSO member yet. "}
+                  <Link href="/memberships#join" className="text-gold-400 hover:text-gold-300">
+                    {memberUntil ? "Renew" : "Join"} for $120/year — 5% selling fee →
+                  </Link>
+                </>
+              )}
             </p>
             <DisplayNameForm userId={user.id} initial={profile?.display_name ?? ""} />
             <form action="/auth/sign-out" method="post" className="mt-6">
