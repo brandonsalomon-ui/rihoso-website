@@ -2,19 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { ListingStatus, ValidationStatus } from "@/lib/exchange-types";
+import type { ListingStatus } from "@/lib/exchange-types";
 import { createClient } from "@/lib/supabase/browser";
-import ServiceRequestButton from "./ServiceRequestButton";
-import { SERVICES, formatUsd } from "@/lib/marketplace";
 
 export default function SellerControls({
   listingId,
   status,
-  validationStatus,
 }: {
   listingId: string;
   status: ListingStatus;
-  validationStatus: ValidationStatus;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -48,14 +44,6 @@ export default function SellerControls({
           </button>
         )}
       </div>
-      {validationStatus === "none" && (status === "active" || status === "draft") && (
-        <ServiceRequestButton
-          type="validation"
-          listingId={listingId}
-          label={`Have a RIHOSO member validate it (${formatUsd(SERVICES.validation.priceCents)})`}
-        />
-      )}
-      {validationStatus === "requested" && <p className="text-sm text-gold-300">Member validation requested.</p>}
       {error && <p className="text-sm text-red-300" role="alert">{error}</p>}
     </div>
   );

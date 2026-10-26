@@ -26,11 +26,6 @@ export default function ListingCard({ listing }: { listing: Listing }) {
             {badge}
           </span>
         )}
-        {listing.validation_status === "passed" && (
-          <span className="absolute top-3 right-3 bg-gold-400 text-forest-950 text-[11px] uppercase tracking-widest px-2 py-1 rounded font-semibold">
-            Member validated
-          </span>
-        )}
       </div>
       <div className="p-5">
         <p className="text-gold-400 text-xs uppercase tracking-[0.2em] mb-1">{listing.brand}</p>
