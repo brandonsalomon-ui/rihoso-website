@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/about", label: "About" },
   { href: "/events", label: "Events" },
   { href: "/memberships", label: "Memberships" },
+  { href: "/marketplace", label: "Watch Exchange" },
   { href: "/blog", label: "Blog" },
   { href: "/watchmaking-schools", label: "Schools" },
   { href: "/sponsors", label: "Sponsors" },
@@ -29,13 +30,13 @@ export default function Header() {
             <Logo size="small" />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
-                className={`relative px-3 py-2 text-sm font-body tracking-wide transition-colors duration-300 hover:text-gold-400 after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-400 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100 ${
+                className={`relative whitespace-nowrap px-3 py-2 text-sm font-body tracking-wide transition-colors duration-300 hover:text-gold-400 after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-400 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100 ${
                   isActive(item.href) ? "text-gold-300 after:scale-x-100" : "text-cream-200 after:scale-x-0"
                 }`}
               >
@@ -52,7 +53,7 @@ export default function Header() {
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 text-cream-200 hover:text-gold-400 transition-colors"
+            className="xl:hidden p-2 text-cream-200 hover:text-gold-400 transition-colors"
             aria-label="Toggle menu"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -67,7 +68,7 @@ export default function Header() {
       </div>
 
       {isOpen && (
-        <div className="lg:hidden bg-forest-900/98 border-t border-forest-700/50">
+        <div className="xl:hidden bg-forest-900/98 border-t border-forest-700/50">
           <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
             {NAV_ITEMS.map((item) => (
               <Link

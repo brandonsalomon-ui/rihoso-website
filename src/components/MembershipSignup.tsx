@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { MEMBERSHIP_TIERS, type TierId } from "@/lib/membership";
 import { GuillocheRosette, Icon, type IconName } from "./ornaments";
 
-const TIER_ICON: Record<string, IconName> = { individual: "time", family: "users", patron: "tradition" };
+const TIER_ICON: Record<string, IconName> = { member: "tradition" };
 
 const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -13,7 +13,7 @@ const inputClass =
 type Status = "idle" | "sending" | "sent" | "error";
 
 export default function MembershipSignup() {
-  const [tier, setTier] = useState<TierId>("individual");
+  const [tier, setTier] = useState<TierId>(MEMBERSHIP_TIERS[0].id);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
@@ -38,14 +38,18 @@ export default function MembershipSignup() {
     setError("");
     const form = new FormData(e.currentTarget);
     try {
-      const res = await fetch("/api/join", {
+      const res = await fetch("/api/membership/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier }),
+        body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier, accept: form.get("agree") === "on" }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Something went wrong.");
-      setStatus("sent");
+      if (res.status === 401 && body.signIn) {
+        window.location.href = body.signIn;
+        return;
+      }
+      if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
+      window.location.href = body.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStatus("error");
@@ -56,30 +60,30 @@ export default function MembershipSignup() {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={MEMBERSHIP_TIERS.length > 1 ? "grid grid-cols-1 md:grid-cols-3 gap-6" : "max-w-md mx-auto"}>
         {MEMBERSHIP_TIERS.map((t) => {
           const isSelected = t.id === tier;
           return (
             <div
               key={t.id}
               data-active={t.highlighted}
-              className={`card-lux group flex flex-col rounded-xl p-8 overflow-hidden ${t.highlighted ? "md:-mt-4 md:pb-12" : ""}`}
+              className={`card-lux group flex flex-col rounded-xl p-8 overflow-hidden ${t.highlighted && MEMBERSHIP_TIERS.length > 1 ? "md:-mt-4 md:pb-12" : ""}`}
             >
               <div className="pointer-events-none absolute -right-16 -top-16 text-gold-400/[0.08]">
                 <GuillocheRosette className="w-56 h-56 group-hover:animate-rotate-medium" />
               </div>
-              {t.highlighted && (
+              {t.highlighted && MEMBERSHIP_TIERS.length > 1 && (
                 <p className="absolute top-0 left-1/2 -translate-x-1/2 bg-gradient-to-br from-gold-300 via-gold-400 to-gold-500 text-forest-950 whitespace-nowrap text-[11px] uppercase tracking-[0.25em] font-semibold px-4 py-1 rounded-b-md">
                   Most Popular
                 </p>
               )}
-              <span className={`relative flex items-center justify-center w-14 h-14 rounded-full border mb-5 ${t.highlighted ? "mt-4 border-gold-300 text-gold-200 bg-gold-400/10" : "border-gold-400/40 text-gold-400"}`}>
+              <span className={`relative flex items-center justify-center w-14 h-14 rounded-full border mb-5 ${t.highlighted ? "border-gold-300 text-gold-200 bg-gold-400/10" : "border-gold-400/40 text-gold-400"}`}>
                 <Icon name={TIER_ICON[t.id]} className="w-7 h-7" />
               </span>
               <h3 className="relative text-2xl font-display text-cream-50 mb-1">{t.name}</h3>
               <div className="relative mb-6">
                 <span className="font-display text-4xl font-bold text-gold-foil">{t.price}</span>
-                <span className="text-cream-400 text-sm ml-1">/{t.period}</span>
+                <span className="text-cream-400 text-sm ml-1">{t.period}</span>
               </div>
               <ul className="relative space-y-3 mb-8 flex-1">
                 {t.features.map((feature) => (
@@ -101,7 +105,7 @@ export default function MembershipSignup() {
                     : "border border-cream-200/30 text-cream-100 hover:border-gold-400 hover:text-gold-200 hover:bg-gold-400/5"
                 }`}
               >
-                Join as {t.name}
+                {MEMBERSHIP_TIERS.length > 1 ? `Join as ${t.name}` : "Join RIHOSO"}
               </button>
             </div>
           );
@@ -114,19 +118,21 @@ export default function MembershipSignup() {
           Become a Member
         </h2>
         <p className="text-center text-cream-300 mb-10">
-          Fill in your details and we&apos;ll be in touch to welcome you and arrange your membership dues.
+          Pay {selected.price} securely by card. Your membership starts right away, lasts 12 months and doesn&apos;t
+          renew automatically. You&apos;ll sign in with your email first if you haven&apos;t already.
         </p>
 
         {status === "sent" ? (
           <div className="text-center bg-forest-800/60 border border-gold-400/30 rounded-lg p-8" role="status">
             <h3 className="text-2xl font-display text-cream-50 mb-2">Thank you!</h3>
             <p className="text-cream-300">
-              We&apos;ve received your {selected.name} membership sign-up. A member of RIHOSO will contact you
+              We&apos;ve received your membership sign-up. A member of RIHOSO will contact you
               shortly with next steps.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
+            {MEMBERSHIP_TIERS.length > 1 && (
             <fieldset>
               <legend className="block text-sm text-cream-200 mb-2">Membership type</legend>
               <div className="grid grid-cols-3 gap-2">
@@ -155,6 +161,7 @@ export default function MembershipSignup() {
                 ))}
               </div>
             </fieldset>
+            )}
 
             <div>
               <label htmlFor="join-name" className="block text-sm text-cream-200 mb-1">
@@ -164,22 +171,14 @@ export default function MembershipSignup() {
             </div>
 
             <div>
-              <label htmlFor="join-email" className="block text-sm text-cream-200 mb-1">
-                Email
-              </label>
-              <input id="join-email" name="email" type="email" autoComplete="email" required className={inputClass} placeholder="your@email.com" />
-            </div>
-
-            <div>
               <label htmlFor="join-phone" className="block text-sm text-cream-200 mb-1">
-                Phone
+                Phone <span className="text-cream-400">(optional)</span>
               </label>
               <input
                 id="join-phone"
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                required
                 pattern="[0-9()+\-.\s]{7,}"
                 title="Please enter a valid phone number"
                 className={inputClass}
@@ -195,6 +194,16 @@ export default function MembershipSignup() {
               </label>
             </div>
 
+            <label className="flex items-start gap-3 text-sm text-cream-300 cursor-pointer">
+              <input name="agree" type="checkbox" required className="mt-1 accent-gold-400" />
+              <span>
+                I agree to the{" "}
+                <a href="/membership-terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Membership and Event Terms</a>{" "}
+                and the <a href="/terms" target="_blank" className="text-gold-400 hover:text-gold-300 underline">Terms of Use</a>.{" "}
+                {selected.price} for 12 months; no automatic renewal. Full refund within 14 days if no member benefit has been used.
+              </span>
+            </label>
+
             {status === "error" && (
               <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">
                 {error}
@@ -206,7 +215,7 @@ export default function MembershipSignup() {
               disabled={status === "sending"}
               className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
             >
-              {status === "sending" ? "Sending…" : `Join as ${selected.name} — ${selected.price}/yr`}
+              {status === "sending" ? "Opening secure payment…" : `Continue to payment — ${selected.price}`}
             </button>
           </form>
         )}

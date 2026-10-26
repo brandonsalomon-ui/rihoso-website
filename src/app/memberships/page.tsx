@@ -5,7 +5,7 @@ import MembershipSignup from "@/components/MembershipSignup";
 
 export const metadata: Metadata = {
   title: "Memberships",
-  description: "Join the Rhode Island Horological Society. Explore membership tiers and benefits.",
+  description: "Join the Rhode Island Horological Society. Membership is $120 a year and supports the society, its scholarships and its programs.",
 };
 
 export default function MembershipsPage() {

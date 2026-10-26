@@ -25,6 +25,7 @@ export default function Footer() {
                 { href: "/about", label: "About RIHOSO" },
                 { href: "/events", label: "Events" },
                 { href: "/memberships", label: "Memberships" },
+                { href: "/marketplace", label: "Watch Exchange" },
                 { href: "/blog", label: "Blog" },
                 { href: "/contact", label: "Contact" },
               ].map((link) => (
@@ -64,6 +65,11 @@ export default function Footer() {
         <div className="mt-16 pt-8 border-t border-forest-700/30 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-cream-400 font-body text-sm">
             &copy; {new Date().getFullYear()} Rhode Island Horological Society. All rights reserved.
+            <span className="block sm:inline sm:ml-4">
+              <Link href="/terms" className="hover:text-gold-400">Terms</Link>
+              <span className="mx-2">·</span>
+              <Link href="/privacy" className="hover:text-gold-400">Privacy</Link>
+            </span>
           </p>
           <div className="flex items-center gap-1 text-cream-400 font-body text-sm">
             <span>Dedicated to the art and science of horology</span>

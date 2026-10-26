@@ -74,3 +74,47 @@ export async function sendNotification({
   }
   return { ok: true as const };
 }
+
+/** Sends a plain notification email to a member (e.g. "you have a new message"). */
+export async function sendMemberEmail({
+  to,
+  subject,
+  intro,
+  quote,
+  ctaLabel,
+  ctaUrl,
+}: {
+  to: string;
+  subject: string;
+  intro: string;
+  quote?: string;
+  ctaLabel: string;
+  ctaUrl: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error("[email] RESEND_API_KEY is not set — member email not sent", { subject });
+    return { ok: false as const };
+  }
+  const html = `
+    <div style="font-family:Georgia,serif;color:#1a2e1a;max-width:560px">
+      <p style="font-size:16px">${escapeHtml(intro)}</p>
+      ${quote ? `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #c9a84c;background:#f5f0e8;white-space:pre-wrap">${escapeHtml(quote)}</blockquote>` : ""}
+      <p><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;background:#c9a84c;color:#0f1d0f;padding:10px 18px;text-decoration:none;border-radius:4px">${escapeHtml(ctaLabel)}</a></p>
+      <p style="margin-top:24px;color:#666;font-size:12px">RIHOSO Watch Exchange · Please keep all conversations and payments on RIHOSO.</p>
+    </div>`;
+  const text = `${intro}\n\n${quote ? `"${quote}"\n\n` : ""}${ctaLabel}: ${ctaUrl}`;
+  const res = await fetch(process.env.RESEND_API_URL || "https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: process.env.EXCHANGE_FROM_EMAIL || process.env.FORM_FROM_EMAIL || "RIHOSO Watch Exchange <website@rihoso.com>",
+      to: [to],
+      subject,
+      html,
+      text,
+    }),
+  });
+  if (!res.ok) console.error("[email] Resend error", res.status, await res.text().catch(() => ""));
+  return { ok: res.ok };
+}
