@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clean } from "@/lib/email";
 import { UserError, isAdmin, refundOrder, releaseOrder } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
+import { cancelServiceRequest, quoteRepair } from "@/lib/services";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
@@ -41,9 +42,18 @@ export async function POST(request: Request) {
         await releaseOrder(id, base, "admin");
         break;
       }
+      case "quote": {
+        const cents = Math.round(parseFloat(String(data.amount ?? "").replace(/[$,]/g, "")) * 100);
+        await quoteRepair(id, cents, clean(data.note, 4000), base);
+        break;
+      }
+      case "cancel_service": {
+        await cancelServiceRequest(id, base);
+        break;
+      }
       case "service_status": {
         const status = String(data.status ?? "");
-        if (!["requested", "awaiting_payment", "paid", "in_progress", "complete", "cancelled"].includes(status)) {
+        if (!["in_progress", "complete"].includes(status)) {
           throw new UserError("Unknown status.");
         }
         const notes = clean(data.notes, 4000);
