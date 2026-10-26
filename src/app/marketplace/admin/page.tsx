@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import AdminButton from "@/components/exchange/AdminButton";
+import DecisionPanel from "@/components/exchange/DecisionPanel";
 import QuoteButton from "@/components/exchange/QuoteButton";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import { formatUsd } from "@/lib/marketplace";
+import { duesRefundCheck } from "@/lib/memberships";
 import { isAdmin } from "@/lib/orders";
+import { DUES_REFUND_DAYS } from "@/lib/policies";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
@@ -16,7 +19,7 @@ const ORDER_LABEL: Record<string, string> = {
   pending_payment: "Awaiting payment",
   paid_held: "Paid — held",
   shipped: "Shipped",
-  delivered: "Delivered",
+  delivered: "Received — inspecting",
   released: "Complete",
   disputed: "PROBLEM",
   refunded: "Refunded",
@@ -46,6 +49,20 @@ type OrderRow = {
   disputed_at: string | null;
   created_at: string;
   auto_release_at: string | null;
+  paid_at: string | null;
+  ship_by: string | null;
+  pickup_deadline: string | null;
+  shipping_carrier: string | null;
+  tracking_number: string | null;
+  delivery_reported_at: string | null;
+  handover_reported_at: string | null;
+  return_approved_at: string | null;
+  return_carrier: string | null;
+  return_tracking: string | null;
+  return_shipped_at: string | null;
+  return_received_at: string | null;
+  return_problem: string | null;
+  decision_note: string | null;
   listings: { id: string; title: string } | null;
   buyer: { display_name: string } | null;
   seller: { display_name: string } | null;
@@ -92,9 +109,9 @@ export default async function AdminPage() {
 
   const admin = createAdminClient();
   const ORDER_SELECT =
-    "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
+    "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, paid_at, ship_by, pickup_deadline, shipping_carrier, tracking_number, delivery_reported_at, handover_reported_at, return_approved_at, return_carrier, return_tracking, return_shipped_at, return_received_at, return_problem, decision_note, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
 
-  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes] = await Promise.all([
+  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes] = await Promise.all([
     admin.from("orders").select(ORDER_SELECT).eq("status", "disputed").order("disputed_at", { ascending: true }),
     admin.from("orders").select(ORDER_SELECT).neq("status", "pending_payment").order("created_at", { ascending: false }).limit(50),
     admin
@@ -113,6 +130,7 @@ export default async function AdminPage() {
       .eq("status", "paid")
       .order("paid_at", { ascending: false })
       .limit(200),
+    admin.from("orders").select(ORDER_SELECT).in("status", ["paid_held", "shipped"]).order("created_at", { ascending: true }).limit(100),
   ]);
 
   const emails = new Map((emailsRes.data?.users ?? []).map((u) => [u.id, u.email ?? ""]));
@@ -131,6 +149,19 @@ export default async function AdminPage() {
     period_end: string;
   }[];
   const nowMs = Date.now();
+  const openOrders = (openRes.data ?? []) as unknown as OrderRow[];
+  const toVerify = openOrders.filter(
+    (o) => (o.status === "shipped" && o.delivery_reported_at) || (o.status === "paid_held" && o.fulfillment === "pickup" && o.handover_reported_at)
+  );
+  const overdue = openOrders.filter(
+    (o) =>
+      o.status === "paid_held" &&
+      ((o.ship_by && new Date(o.ship_by).getTime() < nowMs) || (o.pickup_deadline && new Date(o.pickup_deadline).getTime() < nowMs))
+  );
+  const recentMemberships = memberships.filter((m) => nowMs - new Date(m.paid_at).getTime() < DUES_REFUND_DAYS * 86400000);
+  const refundChecks = new Map(
+    await Promise.all(recentMemberships.map(async (m) => [m.id, await duesRefundCheck(m.id)] as const))
+  );
   const activeMembers = new Set(memberships.filter((m) => new Date(m.period_end).getTime() > nowMs).map((m) => m.user_id));
   const fmtDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { timeZone: "America/New_York", dateStyle: "medium" });
   const openRequests = requests.filter((r) => ["requested", "paid", "in_progress"].includes(r.status));
@@ -151,7 +182,7 @@ export default async function AdminPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              ["Problems to resolve", String(disputes.length)],
+              ["Problems to resolve", String(disputes.length + toVerify.length)],
               ["Paid members (active)", String(activeMembers.size)],
               ["Money held now", formatUsd(heldTotal)],
               ["Fees earned (completed)", formatUsd(feesEarned)],
@@ -178,21 +209,25 @@ export default async function AdminPage() {
                       Buyer: {o.buyer?.display_name} · Seller: {o.seller?.display_name}
                     </p>
                     {o.dispute_reason && <p className="mt-2 text-sm text-cream-100 whitespace-pre-line">“{o.dispute_reason}”</p>}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <AdminButton
-                        label="Refund buyer in full"
-                        variant="danger"
-                        body={{ action: "refund", id: o.id }}
-                        confirmText={`Refund ${formatUsd(o.amount_cents)} to the buyer? This can't be undone.`}
-                        promptText="Optional note to buyer and seller (shown in the email):"
-                      />
-                      <AdminButton
-                        label="Release payment to seller"
-                        variant="gold"
-                        body={{ action: "release", id: o.id }}
-                        confirmText="Release the held payment to the seller? This can't be undone."
-                      />
-                    </div>
+                    {o.tracking_number && (
+                      <p className="mt-1 text-xs text-cream-400">Outbound: {o.shipping_carrier} {o.tracking_number}</p>
+                    )}
+                    {o.return_approved_at && (
+                      <p className="mt-2 text-sm text-gold-200">
+                        Return approved {fmt(o.return_approved_at)}
+                        {o.return_tracking ? ` · shipped ${o.return_carrier} ${o.return_tracking}` : " · not shipped yet"}
+                        {o.return_received_at ? ` · delivered to seller ${fmt(o.return_received_at)} (auto-refund after 2 business days unless the seller reports a problem)` : ""}
+                      </p>
+                    )}
+                    {o.return_problem && <p className="mt-1 text-sm text-red-200">Seller says: “{o.return_problem}”</p>}
+                    {o.decision_note && <p className="mt-1 text-xs text-cream-400">Last decision: {o.decision_note}</p>}
+                    <DecisionPanel
+                      orderId={o.id}
+                      amountLabel={formatUsd(o.amount_cents)}
+                      returnApproved={Boolean(o.return_approved_at)}
+                      returnShipped={Boolean(o.return_shipped_at)}
+                      returnReceived={Boolean(o.return_received_at)}
+                    />
                   </li>
                 ))}
               </ul>
@@ -200,6 +235,56 @@ export default async function AdminPage() {
               <p className="text-cream-400 text-sm">No open problems.</p>
             )}
           </Section>
+
+          <Section title="Receipt or handover to verify" count={toVerify.length}>
+            <p className="text-sm text-cream-400 mb-4">
+              The seller reports delivery or handover but the buyer hasn&apos;t confirmed. Check the carrier tracking (delivered,
+              signed) or with both parties, then verify — the buyer&apos;s 72-hour inspection starts at that point.
+            </p>
+            {toVerify.length ? (
+              <ul className="divide-y divide-forest-600/30 text-sm">
+                {toVerify.map((o) => (
+                  <li key={o.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-cream-200">
+                      <Link href={`/marketplace/orders/${o.id}`} className="hover:text-gold-300">{o.listings?.title ?? "Watch"}</Link>
+                      <span className="block text-xs text-cream-400">
+                        {o.fulfillment === "pickup"
+                          ? `Seller reports handover ${fmt(o.handover_reported_at)}`
+                          : `${o.shipping_carrier} ${o.tracking_number} · seller reports delivered ${fmt(o.delivery_reported_at)}`}
+                      </span>
+                    </span>
+                    <AdminButton
+                      label={o.fulfillment === "pickup" ? "Handover verified" : "Delivery verified"}
+                      variant="gold"
+                      body={{ action: "verify_delivery", id: o.id }}
+                      confirmText="Verified? The buyer's 72-hour inspection starts now and both parties are emailed."
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-cream-400 text-sm">Nothing to verify.</p>
+            )}
+          </Section>
+
+          {overdue.length > 0 && (
+            <Section title="Past a deadline" count={overdue.length}>
+              <p className="text-sm text-cream-400 mb-4">
+                Shipping (3 business days) or pickup (7 days) deadline has passed. Buyers can cancel overdue shipments themselves;
+                unpicked orders are cancelled and refunded automatically by the daily job.
+              </p>
+              <ul className="divide-y divide-forest-600/30 text-sm">
+                {overdue.map((o) => (
+                  <li key={o.id} className="py-2 text-cream-200">
+                    <Link href={`/marketplace/orders/${o.id}`} className="hover:text-gold-300">{o.listings?.title ?? "Watch"}</Link>
+                    <span className="text-xs text-cream-400">
+                      {" "}· {o.fulfillment === "pickup" ? `pickup by ${fmt(o.pickup_deadline)}` : `ship by ${fmt(o.ship_by)}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
 
           <Section title="Members paid online" count={activeMembers.size}>
             <p className="text-sm text-cream-400 mb-4">
@@ -213,7 +298,8 @@ export default async function AdminPage() {
                       <th className="py-2 pr-4 font-normal">Name</th>
                       <th className="py-2 pr-4 font-normal">Contact</th>
                       <th className="py-2 pr-4 font-normal">Paid</th>
-                      <th className="py-2 font-normal">Member until</th>
+                      <th className="py-2 pr-4 font-normal">Member until</th>
+                      <th className="py-2 font-normal" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-forest-600/30">
@@ -227,8 +313,21 @@ export default async function AdminPage() {
                         <td className="py-2 pr-4 text-cream-300">
                           {formatUsd(m.amount_cents)} · {fmtDay(m.paid_at)}
                         </td>
-                        <td className={`py-2 ${new Date(m.period_end).getTime() > nowMs ? "text-cream-200" : "text-cream-400 line-through"}`}>
+                        <td className={`py-2 pr-4 ${new Date(m.period_end).getTime() > nowMs ? "text-cream-200" : "text-cream-400 line-through"}`}>
                           {fmtDay(m.period_end)}
+                        </td>
+                        <td className="py-2 text-right">
+                          {refundChecks.has(m.id) && (
+                            <>
+                              <AdminButton
+                                label={refundChecks.get(m.id)!.eligible ? "Refund dues" : "Refund anyway"}
+                                variant="danger"
+                                body={{ action: "refund_membership", id: m.id, override: !refundChecks.get(m.id)!.eligible }}
+                                confirmText={`Refund ${formatUsd(m.amount_cents)} dues to ${m.full_name}? ${refundChecks.get(m.id)!.reason}`}
+                              />
+                              <span className="block text-xs text-cream-400">{refundChecks.get(m.id)!.reason}</span>
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))}
