@@ -185,7 +185,7 @@ export default async function AdminPage() {
 
           <Section title="Member rate approvals" count={memberQueue.length}>
             <p className="text-sm text-cream-400 mb-4">
-              Sellers who said they&apos;re RIHOSO members. Approving gives them the 10% fee on new sales.
+              Sellers who said they&apos;re RIHOSO members. Approving gives them the 5% member fee on new sales.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -227,7 +227,7 @@ export default async function AdminPage() {
             </div>
           </Section>
 
-          <Section title="Validation & repair requests" count={openRequests.length}>
+          <Section title="Repair requests" count={openRequests.length}>
             {requests.length ? (
               <ul className="divide-y divide-forest-600/30">
                 {requests.map((r) => (
