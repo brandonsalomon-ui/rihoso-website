@@ -85,7 +85,7 @@ export default async function AccountPage() {
           {showAdmin && (
             <Link href="/marketplace/admin" className="block panel-lux rounded-xl px-6 py-4 border border-gold-400/40 hover:bg-gold-400/5">
               <span className="text-gold-300 font-semibold">RIHOSO admin →</span>
-              <span className="block text-sm text-cream-400">Member approvals, problems & refunds, all orders, validation and repair requests</span>
+              <span className="block text-sm text-cream-400">Member approvals, problems & refunds, all orders, repair requests</span>
             </Link>
           )}
           <div className="panel-lux rounded-xl p-6 sm:p-8">
@@ -108,7 +108,7 @@ export default async function AccountPage() {
               </p>
             ) : seller.payouts_enabled ? (
               <p className="text-cream-300">
-                Payouts are set up. Selling fee: {profile?.is_member ? "10% (member rate)" : "20%"}
+                Payouts are set up. Selling fee: {profile?.is_member ? "5% (member rate)" : "10%"}
                 {!profile?.is_member && seller.member_claimed ? " — member rate pending verification" : ""}.
               </p>
             ) : (
@@ -162,7 +162,7 @@ export default async function AccountPage() {
 
           {requests?.length ? (
             <div className="panel-lux rounded-xl p-6 sm:p-8">
-              <h2 className="font-display text-2xl text-cream-50 mb-3">Validation & repair requests</h2>
+              <h2 className="font-display text-2xl text-cream-50 mb-3">Repair requests</h2>
               <ul className="divide-y divide-forest-600/30 text-sm">
                 {requests.map((r) => (
                   <li key={r.id} className="py-3 flex justify-between gap-4 text-cream-200">
