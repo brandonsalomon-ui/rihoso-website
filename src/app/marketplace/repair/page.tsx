@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import RepairRequestForm from "@/components/exchange/RepairRequestForm";
-import { SERVICES } from "@/lib/marketplace";
+import { REPAIRS_OPEN, SERVICES } from "@/lib/marketplace";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Watch Repair", description: SERVICES.repair.summary };
@@ -17,7 +17,11 @@ export default async function RepairPage() {
       <ExchangeNav signedIn={Boolean(user)} />
       <section className="py-14 bg-forest-800">
         <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
-          {user ? (
+          {!REPAIRS_OPEN ? (
+            <div className="panel-lux rounded-xl p-8 text-center text-cream-200">
+              Repair requests aren&apos;t open yet. Please check back soon.
+            </div>
+          ) : user ? (
             <RepairRequestForm />
           ) : (
             <div className="panel-lux rounded-xl p-8 text-center">
