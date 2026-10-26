@@ -1,4 +1,4 @@
-Effective [date]. Membership is a paid program supporting RIHOSO's horological community and educational mission. Accept these Terms at enrollment. The Website Terms apply to site use and the Exchange.
+Effective October 26, 2026. Membership is a paid program supporting RIHOSO's horological community and educational mission. Accept these Terms at enrollment. The Website Terms apply to site use and the Exchange.
 
 ## 1. Dues duration and renewal
 

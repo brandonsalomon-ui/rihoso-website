@@ -1,4 +1,4 @@
-Effective [date]. This Agreement supplements the Website and Watch Exchange Terms of Use and is accepted separately during seller onboarding. Defined terms and buyer protections in those Terms apply.
+Effective October 26, 2026. This Agreement supplements the Website and Watch Exchange Terms of Use and is accepted separately during seller onboarding. Defined terms and buyer protections in those Terms apply.
 
 ## 1. Seller status and payment appointment
 
