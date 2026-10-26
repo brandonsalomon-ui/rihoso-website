@@ -3,7 +3,8 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import ListingCard from "@/components/exchange/ListingCard";
-import { COMMISSION, SERVICES, formatUsd } from "@/lib/marketplace";
+import { COMMISSION, SERVICES } from "@/lib/marketplace";
+import { MEMBERSHIP_TIERS } from "@/lib/membership";
 import { LISTING_SELECT, type Listing } from "@/lib/exchange-types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getUser } from "@/lib/supabase/server";
@@ -11,7 +12,7 @@ import { getUser } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Watch Exchange",
   description:
-    "The RIHOSO Watch Exchange — a marketplace for collectors to list and sell watches, with optional member validation and repair.",
+    "The RIHOSO Watch Exchange — a marketplace for collectors to list and sell watches, with repair and service by quote.",
 };
 export const dynamic = "force-dynamic";
 
@@ -106,10 +107,19 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="panel-lux rounded-xl p-8">
-              <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Optional</p>
-              <h3 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.validation.name}</h3>
-              <p className="font-display text-3xl text-gold-foil mb-4">{formatUsd(SERVICES.validation.priceCents)}</p>
-              <p className="text-cream-300 text-sm leading-relaxed">{SERVICES.validation.summary}</p>
+              <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Members sell for less</p>
+              <h3 className="text-2xl font-display text-cream-50 mb-1">RIHOSO Membership</h3>
+              <p className="font-display text-3xl text-gold-foil mb-4">
+                {MEMBERSHIP_TIERS[0].price}
+                <span className="text-cream-400 text-sm font-body ml-1">/year</span>
+              </p>
+              <p className="text-cream-300 text-sm leading-relaxed">
+                Members pay a {COMMISSION.member * 100}% selling fee instead of {COMMISSION.standard * 100}%, plus monthly
+                meetings, events and the newsletter.
+              </p>
+              <Link href="/memberships#join" className="inline-block mt-4 text-gold-400 hover:text-gold-300 text-sm">
+                Become a member →
+              </Link>
             </div>
             <div className="panel-lux rounded-xl p-8">
               <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Optional</p>
@@ -134,6 +144,10 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
               </Link>
               .
             </p>
+            <p className="text-cream-300 max-w-xl mx-auto mt-3">
+              All proceeds go to the Rhode Island Horological Society, funding scholarships and the society&apos;s
+              operating expenses.
+            </p>
             <Link href="/marketplace/sell" className="btn-gold inline-block mt-8 px-8 py-3 font-semibold tracking-widest uppercase text-sm">
               Become a seller
             </Link>
@@ -141,8 +155,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
 
           <p className="mt-16 text-xs text-cream-400 max-w-3xl mx-auto text-center leading-relaxed">
             RIHOSO provides the venue and payment handling. Watches are sold by independent sellers, who are responsible
-            for their listings. RIHOSO is not the seller and does not guarantee any item. Member validations are an
-            expert opinion, not a warranty of authenticity.
+            for their listings. RIHOSO is not the seller and does not guarantee any item.
           </p>
         </div>
       </section>
