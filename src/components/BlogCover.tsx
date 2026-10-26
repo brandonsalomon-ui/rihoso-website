@@ -1,6 +1,6 @@
 import { Gear, GuillocheRosette, WatchDial } from "./ornaments";
 
-type Variant = "dial" | "pendulum" | "pocket" | "gears";
+export type Variant = "dial" | "pendulum" | "pocket" | "gears";
 
 const BY_SLUG: Record<string, Variant> = {
   "art-of-mechanical-timekeeping": "dial",
@@ -10,8 +10,8 @@ const BY_SLUG: Record<string, Variant> = {
 };
 
 /** Illustrated cover for a blog post, drawn in the site's gold-on-green engraving style. */
-export default function BlogCover({ slug, className = "" }: { slug: string; className?: string }) {
-  const variant = BY_SLUG[slug] ?? "dial";
+export default function BlogCover({ slug, variant: given, className = "" }: { slug: string; variant?: string; className?: string }) {
+  const variant: Variant = (["dial", "pendulum", "pocket", "gears"] as const).find((v) => v === given) ?? BY_SLUG[slug] ?? "dial";
   return (
     <div className={`relative overflow-hidden bg-forest-950 ${className}`} aria-hidden="true">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_55%,rgba(201,168,76,0.18),transparent_60%)]" />
