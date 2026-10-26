@@ -166,9 +166,11 @@ export default async function AccountPage() {
               <ul className="divide-y divide-forest-600/30 text-sm">
                 {requests.map((r) => (
                   <li key={r.id} className="py-3 flex justify-between gap-4 text-cream-200">
-                    <span>{r.type === "validation" ? "Member validation" : "Repair quote"}</span>
+                    <Link href={`/marketplace/requests/${r.id}`} className="hover:text-gold-300">
+                      {r.type === "validation" ? "Member validation" : "Repair"}
+                    </Link>
                     <span className="text-cream-400">
-                      {r.status.replace("_", " ")} · {new Date(r.created_at).toLocaleDateString("en-US")}
+                      {r.status === "awaiting_payment" ? "ready to pay" : r.status === "requested" ? "awaiting quote" : r.status.replace("_", " ")} · {new Date(r.created_at).toLocaleDateString("en-US")}
                     </span>
                   </li>
                 ))}
