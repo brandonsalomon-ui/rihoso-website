@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import ListingCard from "@/components/exchange/ListingCard";
-import { COMMISSION, SERVICES } from "@/lib/marketplace";
+import { COMMISSION, REPAIRS_OPEN, SERVICES } from "@/lib/marketplace";
 import { MEMBERSHIP_TIERS } from "@/lib/membership";
 import { LISTING_SELECT, type Listing } from "@/lib/exchange-types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -27,7 +27,7 @@ const STEPS = [
   },
   {
     title: "Get paid safely",
-    body: "The buyer pays through RIHOSO. Payment is held until the buyer confirms the watch arrived as described, then released to the seller.",
+    body: "The buyer pays through RIHOSO and the payment is held. Once the watch arrives, the buyer has 72 hours to inspect it; then the seller is paid.",
   },
 ];
 
@@ -121,6 +121,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
                 Become a member →
               </Link>
             </div>
+            {REPAIRS_OPEN && (
             <div className="panel-lux rounded-xl p-8">
               <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Optional</p>
               <h3 className="text-2xl font-display text-cream-50 mb-1">{SERVICES.repair.name}</h3>
@@ -132,6 +133,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
                 </Link>
               )}
             </div>
+            )}
           </div>
 
           <div className="mt-16 text-center">
@@ -145,8 +147,8 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
               .
             </p>
             <p className="text-cream-300 max-w-xl mx-auto mt-3">
-              All proceeds go to the Rhode Island Horological Society, funding scholarships and the society&apos;s
-              operating expenses.
+              Sellers receive the sale price minus the fee. RIHOSO&apos;s fees and membership dues support the society&apos;s
+              education programs, watchmaking scholarships and operating costs.
             </p>
             <Link href="/marketplace/sell" className="btn-gold inline-block mt-8 px-8 py-3 font-semibold tracking-widest uppercase text-sm">
               Become a seller
