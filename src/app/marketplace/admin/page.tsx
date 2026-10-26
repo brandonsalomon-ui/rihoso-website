@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import AdminButton from "@/components/exchange/AdminButton";
+import QuoteButton from "@/components/exchange/QuoteButton";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import { formatUsd } from "@/lib/marketplace";
 import { isAdmin } from "@/lib/orders";
@@ -20,6 +21,15 @@ const ORDER_LABEL: Record<string, string> = {
   disputed: "PROBLEM",
   refunded: "Refunded",
   cancelled: "Cancelled",
+};
+
+const SERVICE_LABEL: Record<string, string> = {
+  requested: "needs quote",
+  awaiting_payment: "awaiting payment",
+  paid: "PAID — to do",
+  in_progress: "in progress",
+  complete: "complete",
+  cancelled: "cancelled",
 };
 
 function fmt(iso: string | null) {
@@ -105,7 +115,7 @@ export default async function AdminPage() {
   const sellers = (sellersRes.data ?? []) as unknown as SellerRow[];
   const requests = (requestsRes.data ?? []) as unknown as RequestRow[];
   const memberQueue = sellers.filter((s) => s.member_claimed && !s.profiles?.is_member);
-  const openRequests = requests.filter((r) => !["complete", "cancelled"].includes(r.status));
+  const openRequests = requests.filter((r) => ["requested", "paid", "in_progress"].includes(r.status));
 
   const held = orders.filter((o) => ["paid_held", "shipped", "delivered", "disputed"].includes(o.status));
   const heldTotal = held.reduce((s, o) => s + o.amount_cents, 0);
@@ -236,17 +246,21 @@ export default async function AdminPage() {
                         )}
                       </p>
                       <span className="text-xs text-cream-400">
-                        {r.requester?.display_name} · {fmt(r.created_at)} · <strong className="text-cream-200">{r.status.replace("_", " ")}</strong>
+                        {r.requester?.display_name} · {fmt(r.created_at)} · <strong className="text-cream-200">{SERVICE_LABEL[r.status] ?? r.status}</strong>
                       </span>
                     </div>
                     {r.description && <p className="text-sm text-cream-300 mt-1 whitespace-pre-line">{r.description}</p>}
                     {r.result_notes && <p className="text-sm text-gold-200 mt-1">Result: {r.result_notes}</p>}
+                    {r.price_cents ? <p className="text-sm text-cream-200 mt-1">Price: {formatUsd(r.price_cents)}</p> : null}
                     {!["complete", "cancelled"].includes(r.status) && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {r.status !== "in_progress" && (
+                        {r.type === "repair" && ["requested", "awaiting_payment"].includes(r.status) && (
+                          <QuoteButton id={r.id} hasQuote={r.status === "awaiting_payment"} />
+                        )}
+                        {["paid"].includes(r.status) && (
                           <AdminButton label="Mark in progress" body={{ action: "service_status", id: r.id, status: "in_progress" }} />
                         )}
-                        {r.type === "validation" ? (
+                        {!["paid", "in_progress"].includes(r.status) ? null : r.type === "validation" ? (
                           <>
                             <AdminButton
                               label="Complete — passed"
@@ -269,7 +283,12 @@ export default async function AdminPage() {
                             promptText="Notes (quote, work done):"
                           />
                         )}
-                        <AdminButton label="Cancel" body={{ action: "service_status", id: r.id, status: "cancelled" }} confirmText="Cancel this request?" />
+                        <AdminButton
+                          label={["paid", "in_progress"].includes(r.status) ? "Cancel & refund" : "Cancel"}
+                          variant="danger"
+                          body={{ action: "cancel_service", id: r.id }}
+                          confirmText={["paid", "in_progress"].includes(r.status) ? "Cancel this request and refund the payment in full?" : "Cancel this request?"}
+                        />
                       </div>
                     )}
                   </li>
