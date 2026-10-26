@@ -6,6 +6,13 @@ export const COMMISSION = {
   member: 0.05, // 5% for RIHOSO members
 } as const;
 
+/**
+ * Repairs: per the revised terms, keep this off for launch until the repair provider, insurance for
+ * customers' watches, the written service order and warranty are settled. Set to false to hide the
+ * repair offer and stop new requests (existing requests and payments keep working).
+ */
+export const REPAIRS_OPEN = true;
+
 /** Fixed-price services RIHOSO offers alongside the marketplace. */
 export const SERVICES = {
   validation: {

@@ -1,7 +1,9 @@
 import "server-only";
 import { sendMemberEmail, sendNotification } from "@/lib/email";
 import { formatUsd } from "@/lib/marketplace";
+import { COMMISSION } from "@/lib/marketplace";
 import { MEMBERSHIP_PRICE_CENTS, MEMBERSHIP_TERM_MONTHS } from "@/lib/membership";
+import { DUES_REFUND_DAYS } from "@/lib/policies";
 import { UserError } from "@/lib/orders";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
@@ -49,7 +51,7 @@ export async function currentMembershipEnd(userId: string) {
   return (data?.period_end as string | undefined) ?? null;
 }
 
-/** Records the sign-up and opens Stripe Checkout for $120. */
+/** Records the sign-up and opens Stripe Checkout for $120. Returns the checkout URL and the membership id. */
 export async function startMembershipCheckout(userId: string, fullName: string, phone: string, base: string) {
   if (!fullName) throw new UserError("Please enter your name.");
   const admin = createAdminClient();
@@ -93,7 +95,59 @@ export async function startMembershipCheckout(userId: string, fullName: string, 
   });
   await admin.from("memberships").update({ stripe_checkout_session_id: session.id }).eq("id", row.id);
   if (!session.url) throw new Error("Stripe did not return a checkout URL");
-  return session.url;
+  return { url: session.url, membershipId: row.id as string };
+}
+
+/**
+ * Whether a paid membership qualifies for the 14-day dues refund: paid within DUES_REFUND_DAYS
+ * and no member-rate Exchange sale paid since. (Member event use isn't tracked online — check by hand.)
+ */
+export async function duesRefundCheck(membershipId: string) {
+  const admin = createAdminClient();
+  const { data: m } = await admin.from("memberships").select(COLUMNS).eq("id", membershipId).maybeSingle();
+  const row = m as Membership | null;
+  if (!row || row.status !== "paid" || !row.paid_at) return { eligible: false, reason: "Not a paid membership." };
+  const days = (Date.now() - new Date(row.paid_at).getTime()) / 86400000;
+  const { data: sales } = await admin
+    .from("orders")
+    .select("amount_cents, commission_cents")
+    .eq("seller_id", row.user_id)
+    .gte("paid_at", row.paid_at)
+    .not("status", "in", "(pending_payment,refunded,cancelled)");
+  const memberRateUsed = (sales ?? []).some((o) => o.commission_cents < Math.round(o.amount_cents * COMMISSION.standard));
+  if (days > DUES_REFUND_DAYS) return { eligible: false, reason: `Paid more than ${DUES_REFUND_DAYS} days ago.` };
+  if (memberRateUsed) return { eligible: false, reason: "A member-rate Exchange sale has been paid since joining." };
+  return { eligible: true, reason: `Within ${DUES_REFUND_DAYS} days, no member-rate sale. Check event attendance before refunding.` };
+}
+
+/** Admin: refund a membership's dues. Without `override`, only when the 14-day rule allows it. */
+export async function refundMembership(membershipId: string, base: string, override = false) {
+  const check = await duesRefundCheck(membershipId);
+  if (!check.eligible && !override) throw new UserError(`Not eligible for the dues refund: ${check.reason}`);
+  const admin = createAdminClient();
+  const { data: m } = await admin.from("memberships").select("id, user_id, full_name, amount_cents, status, stripe_payment_intent_id").eq("id", membershipId).maybeSingle();
+  if (!m || m.status !== "paid") throw new UserError("Only paid memberships can be refunded.");
+  if (!m.stripe_payment_intent_id) throw new UserError("No payment found for this membership.");
+  await getStripe().refunds.create(
+    { payment_intent: m.stripe_payment_intent_id as string, metadata: { membership_id: m.id as string } },
+    { idempotencyKey: `membership_refund_${m.id}` }
+  );
+  const now = new Date().toISOString();
+  await admin.from("memberships").update({ status: "refunded", refunded_at: now }).eq("id", m.id);
+  const latest = await currentMembershipEnd(m.user_id as string);
+  if (!latest || new Date(latest) <= new Date()) {
+    await admin.from("profiles").update({ is_member: false }).eq("id", m.user_id);
+  }
+  const email = await getUserEmail(m.user_id as string);
+  if (email) {
+    await sendMemberEmail({
+      to: email,
+      subject: "Your RIHOSO membership dues have been refunded",
+      intro: `Hi ${m.full_name}, we've refunded your ${formatUsd(m.amount_cents as number)} membership dues. It usually appears on your card within 5–10 business days. Your Watch Exchange selling fee returns to 10%.`,
+      ctaLabel: "RIHOSO memberships",
+      ctaUrl: `${base}/memberships`,
+    });
+  }
 }
 
 /**
