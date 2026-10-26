@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { clean } from "@/lib/email";
 import { refundMembership } from "@/lib/memberships";
@@ -71,6 +72,14 @@ export async function POST(request: Request) {
         if (!order.return_received_at) {
           await admin.from("orders").update({ return_received_at: new Date().toISOString() }).eq("id", id);
         }
+        break;
+      }
+      case "blog_status": {
+        const value = data.value === "hidden" ? "hidden" : "published";
+        const { data: post, error } = await admin.from("blog_posts").update({ status: value }).eq("id", id).select("slug").single();
+        if (error) throw error;
+        revalidatePath("/blog");
+        revalidatePath(`/blog/${post.slug}`);
         break;
       }
       case "refund_membership": {
