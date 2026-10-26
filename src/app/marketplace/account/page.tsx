@@ -6,6 +6,7 @@ import ExchangeNav from "@/components/exchange/ExchangeNav";
 import DisplayNameForm from "@/components/exchange/DisplayNameForm";
 import { formatUsd } from "@/lib/marketplace";
 import { getSellerAccount, syncSellerFromStripe } from "@/lib/sellers";
+import { isAdmin } from "@/lib/orders";
 import { isStripeConfigured } from "@/lib/stripe";
 import { getUser } from "@/lib/supabase/server";
 
@@ -73,12 +74,20 @@ export default async function AccountPage() {
     listings: { title: string } | null;
   }[];
 
+  const showAdmin = await isAdmin(user.id);
+
   return (
     <>
       <PageHero eyebrow="Watch Exchange" title="My Account" />
       <ExchangeNav signedIn />
       <section className="py-14 bg-forest-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          {showAdmin && (
+            <Link href="/marketplace/admin" className="block panel-lux rounded-xl px-6 py-4 border border-gold-400/40 hover:bg-gold-400/5">
+              <span className="text-gold-300 font-semibold">RIHOSO admin →</span>
+              <span className="block text-sm text-cream-400">Member approvals, problems & refunds, all orders, validation and repair requests</span>
+            </Link>
+          )}
           <div className="panel-lux rounded-xl p-6 sm:p-8">
             <h2 className="font-display text-2xl text-cream-50 mb-1">Profile</h2>
             <p className="text-sm text-cream-400 mb-5">
