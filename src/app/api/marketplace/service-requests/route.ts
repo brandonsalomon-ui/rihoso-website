@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { clean, sendNotification } from "@/lib/email";
+import { REPAIRS_OPEN } from "@/lib/marketplace";
 import { UserError } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Member validation is no longer offered." }, { status: 410 });
   }
   if (data.type !== "repair") return NextResponse.json({ error: "Unknown request type." }, { status: 400 });
+  if (!REPAIRS_OPEN) return NextResponse.json({ error: "Repair requests aren't open yet." }, { status: 503 });
   const type = "repair" as const;
   const listingId = clean(data.listingId, 40) || null;
   const description = clean(data.description, 4000);
