@@ -1,0 +1,37 @@
+Effective [date]. Controller [exact operating legal entity], [mailing address]. Contact info@rihoso.com [confirm privacy routing]. This Policy covers RIHOSO's website, Exchange, membership, events and any active repair or scholarship program. It explains collection, use, sharing, retention and choices; it is not a promise that a particular state privacy law applies to every user.
+
+## 1. Information collected
+
+We collect information you provide, including name, email, phone if supplied, account profile, membership and event registrations, contact inquiries, listing photographs and descriptions, messages, order details, delivery and dispute evidence, and repair requests where offered. Buyers supply delivery name, address and contact details needed for fulfillment. Sellers supply information required for identity, business, tax and payout verification through our payment provider and, where necessary, to RIHOSO. Payment providers process card, bank and verification information under their own policies. RIHOSO receives transaction records and the provider account information available under its approved configuration, rather than full card credentials through ordinary checkout.
+
+We and our service providers may collect technical information such as IP address, browser and device details, request logs, sign in events, cookie identifiers and fraud prevention signals. Information may also come from the other party to a transaction, carriers, verification providers and lawful public sources when investigating fraud or ownership. If a scholarship program accepts applications, we will supply a program specific notice describing requested education, financial or eligibility information and review access before collection.
+
+## 2. Uses
+
+We use information to operate accounts, memberships and events; publish listings and deliver messages; process payments, payouts, tax reporting and shipment; review claims and prevent fraud; respond to inquiries; improve and secure services; and comply with law. We send transaction and membership administration notices. Promotional emails offer an unsubscribe option; opting out does not stop necessary account, order or legal notices. We do not use transaction contact information to enroll buyers in unrelated seller marketing.
+
+## 3. Public information and sharing
+
+Display names, listings, selected photographs and information you intentionally publish are visible to their stated audience and may be copied by others. Avoid including addresses, full serial numbers, identity documents or payment credentials in public listings. Member directory participation and fields are optional; we explain whether access is member only or public. Private messages are available to the participants and authorized administrators for operation, safety and disputes; do not treat them as inaccessible to RIHOSO.
+
+We share order information with the relevant buyer or seller as necessary for fulfillment, returns, verification and dispute resolution, and disclose seller identity and contact information when law requires. Do not promise seller anonymity. Service providers may include Stripe for payments and verification, Supabase for application data and storage, Resend for email and Vercel for hosting and technical logs [confirm current vendors and their roles before publication]. Watchmakers receive necessary repair information only where services are active. Scholarship reviewers receive only necessary application information subject to confidentiality safeguards.
+
+We may share information with professional advisers, insurers and authorities where reasonably necessary to protect rights, investigate fraud or stolen property, comply with law or respond to valid legal process. Any organizational transfer of records must be lawful and subject to appropriate protections and notice. We do not sell personal information for money. [Before publication confirm whether any analytics, advertising, sponsorship or tracking disclosure constitutes a sale, sharing or targeted advertising under applicable law; add required opt outs and disclosures if it does.]
+
+## 4. Cookies and tracking
+
+We use cookies or similar technologies for sign in, security and necessary site functions. [Insert the verified production inventory, purposes, providers and duration, including any analytics or advertising tools, and provide applicable consent and opt out controls.] Browser controls can restrict cookies, but some functions may stop working. Do not publish a statement that there is only one cookie or no analytics until a technical review supports it. Where law requires recognition of a browser based privacy signal, we will honor it through the implemented controls. This paragraph must be completed to describe actual behavior, not intended behavior.
+
+## 5. Retention and security
+
+We retain information only as reasonably necessary for its purpose, including legal, accounting, fraud prevention and dispute obligations. Proposed schedule subject to confirmation: financial and tax records generally seven years after the relevant transaction or reporting period; messages, listing archives and account records generally while active and up to two years after closure; technical logs for a shorter documented security period; identity documents only as necessary for a legal or verified compliance purpose. Legal holds can extend retention, and backups expire through a documented rotation. Information collected solely for INFORM Consumers Act compliance is restricted to permitted uses. We do not keep unnecessary copies of provider identity documents.
+
+We use reasonable administrative, technical and organizational safeguards, including appropriately limited access and provider security controls. No system is perfectly secure. We assess and provide security incident notices as required by applicable law. Do not send card credentials, Social Security numbers or identity documents through ordinary messages or email; use a designated secure process when required.
+
+## 6. Choices and requests
+
+Contact us to request access, correction, deletion or account closure, or to withdraw optional directory participation and promotional consent. We will reasonably verify identity, acknowledge requests and respond within applicable legal deadlines, ordinarily within 30 days if feasible. Depending on your location and applicable law, rights may include portability, restriction or opt out of specified processing and an appeal of a denial. We will explain a denial and any applicable appeal process; an authorized agent may act where permitted with suitable proof. We will not unlawfully discriminate for exercising rights. Some records must be retained for transactions, legal compliance or disputes, and deletion does not remove other users' lawful records.
+
+## 7. Children updates and external services
+
+The Exchange is for adults aged 18 or older. We do not knowingly collect personal information online from children under 13 without any legally required parental consent. Educational activities involving minors require a separate appropriate registration and guardian process. Please contact us if a child has supplied information improperly so that we can investigate and take appropriate action. External websites and payment providers have their own privacy practices. We post an updated effective date when this Policy changes, give appropriate notice of material changes and obtain new consent when law requires.

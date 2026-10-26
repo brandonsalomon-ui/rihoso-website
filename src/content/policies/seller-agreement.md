@@ -1,0 +1,35 @@
+Effective [date]. This Agreement supplements the Website and Watch Exchange Terms of Use and is accepted separately during seller onboarding. Defined terms and buyer protections in those Terms apply.
+
+## 1. Seller status and payment appointment
+
+Identify whether you sell personally or as a business and provide truthful identity, authority, tax and payout information. Complete provider checks and any legally required marketplace seller verification. You appoint RIHOSO as limited collection agent solely to receive buyer payment through the designated approved processor and administer the disclosed transaction process. Receipt satisfies the buyer's payment obligation as stated in the Terms. RIHOSO owes you the net proceeds subject to lawful holds, refunds, reversals and deductions under this Agreement; the collection appointment is not a guarantee that the licensing structure has been approved.
+
+If Stripe Connect is used, you must accept the applicable Stripe Connected Account Agreement at [https://stripe.com/legal/connect-account](https://stripe.com/legal/connect-account) and other processor terms actually presented during onboarding. RIHOSO's access to provider held information is described in the Privacy Policy. You authorize charges, transfers, reversals and offsets only as permitted by your provider agreements and applicable law. This Agreement alone does not authorize a bank debit requiring separate consent.
+
+## 2. Listing warranties and records
+
+You warrant lawful authority to sell, transferable title free of undisclosed claims, authenticity and materially accurate and complete descriptions. Unknown information must be identified as unknown rather than guessed. Disclose all known material faults, restoration, aftermarket parts, replacement or service parts and refinishing. Do not promise a manufacturer warranty without a valid basis. Supply an actual reference or an explanation for a legitimately unidentifiable vintage reference, an adequate description and at least three clear photographs. RIHOSO may require additional photographs and ownership records. Minimum listing fields are not proof of authenticity. Preserve the listing, private serial and ownership information and shipping evidence for the period reasonably required for disputes and law, with appropriate security.
+
+## 3. Sale commitment and fulfillment
+
+Honor paid orders, withdraw unavailable listings and do not sell a paid watch elsewhere. Final offers expire after 72 hours and may be withdrawn only before payment with prompt notice. Do not seek an undisclosed surcharge. Ship only after the Exchange authorizes fulfillment, within three business days unless a different date was accepted before payment. Comply with shipping delay consent and cancellation requirements. Use an insurer or policy expressly covering watches at the full sale value, obtain the required signature, upload tracking and retain condition and packing evidence. Standard carrier declared value may exclude or limit watches. You bear outbound risk through actual delivery and handle outbound insurance claims. For pickup, follow verified handover rules; do not request acceptance before inspection or delivery.
+
+## 4. Fees release and holds
+
+The standard commission is 10 percent, reduced to 5 percent for an eligible active seller member when the buyer pays. The base excludes sales tax and includes outbound shipping. Ordinary payment processing is included. Your payout is the amount collected less applicable tax remittance, commission and other deductions specifically authorized here or separately accepted. No commission applies to a fully refunded sale. Partial refunds receive a proportional commission adjustment. Optional fees must be agreed in advance.
+
+RIHOSO instructs release under the buyer acceptance and inspection rules, subject to available settled funds and processor timing. A documented claim, suspicious delivery, identity deficiency, legal restriction or genuine chargeback exposure may justify holding a reasonably related amount. RIHOSO will give the reason where lawful, review open holds at least every 14 days and release undisputed amounts when appropriate. Reserves must be proportionate to identifiable exposure and documented. No hold may exceed processor limits or legal requirements; if those limits prevent a pending transaction from remaining open, arrange a lawful refund or other permitted resolution rather than promise indefinite custody.
+
+## 5. Claims and recovery after payout
+
+Respond to a buyer claim within two business days with relevant evidence and cooperate in fair review. Fund approved return shipping and comply with refund decisions under the Terms, without prejudice to lawful reconsideration or court rights. You remain responsible for seller caused nonreceipt, misdescription, defective title and counterfeit goods even after payout. RIHOSO's administrative decision is not binding arbitration.
+
+You must reimburse an amount properly refunded or reversed after payout to the extent caused by your breach, fraud, failure to deliver, defective title or another obligation you accepted under applicable processor terms. RIHOSO will provide notice, an itemized basis and a reasonable opportunity to contest or supply evidence. RIHOSO may offset an established amount against future payouts, request a permitted transfer reversal or invoice you for payment within 15 calendar days after determination. It will not collect the same loss twice and will credit later recoveries. You do not automatically bear a loss caused solely by RIHOSO's own error, or every unsubstantiated buyer allegation. Only actual chargeback or recovery costs lawfully allocable to you and disclosed before acceptance may be charged; no penalty is created by this clause.
+
+Card issuers and processors control their own dispute procedures. RIHOSO will reasonably cooperate with timely evidence but cannot guarantee a result. Retain proof of delivery, description, condition and communications. Buyer remedies cannot be delayed solely because a carrier or insurer has not paid a claim.
+
+## 6. Compliance privacy and termination
+
+Comply with applicable consumer warranty, shipping, tax, sanctions and business licensing requirements. Supply information and annual certifications needed for applicable INFORM Consumers Act compliance; required seller disclosures may include business identity and contact details. RIHOSO may suspend sellers who fail required verification. Use buyer information only for fulfillment, disputes and legal compliance, not unrelated marketing or publication. Protect and appropriately delete it subject to lawful retention.
+
+The third party claims indemnity, governing law and dispute provisions of the Terms apply. Closing an account or ending selling privileges does not cancel existing fulfillment, refund, tax, privacy or repayment obligations. RIHOSO may restrict new listings for reasonable compliance grounds and must resolve outstanding funds under the agreed process. Sellers may request review through the stated contact.
