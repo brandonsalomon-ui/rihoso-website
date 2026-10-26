@@ -111,7 +111,7 @@ export default async function AdminPage() {
   const ORDER_SELECT =
     "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, paid_at, ship_by, pickup_deadline, shipping_carrier, tracking_number, delivery_reported_at, handover_reported_at, return_approved_at, return_carrier, return_tracking, return_shipped_at, return_received_at, return_problem, decision_note, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
 
-  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes] = await Promise.all([
+  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes, blogRes] = await Promise.all([
     admin.from("orders").select(ORDER_SELECT).eq("status", "disputed").order("disputed_at", { ascending: true }),
     admin.from("orders").select(ORDER_SELECT).neq("status", "pending_payment").order("created_at", { ascending: false }).limit(50),
     admin
@@ -131,7 +131,9 @@ export default async function AdminPage() {
       .order("paid_at", { ascending: false })
       .limit(200),
     admin.from("orders").select(ORDER_SELECT).in("status", ["paid_held", "shipped"]).order("created_at", { ascending: true }).limit(100),
+    admin.from("blog_posts").select("id, slug, title, status, published_at, created_by").order("published_at", { ascending: false }).limit(20),
   ]);
+  const blogPosts = (blogRes.data ?? []) as { id: string; slug: string; title: string; status: string; published_at: string; created_by: string }[];
 
   const emails = new Map((emailsRes.data?.users ?? []).map((u) => [u.id, u.email ?? ""]));
   const disputes = (disputesRes.data ?? []) as unknown as OrderRow[];
@@ -454,6 +456,31 @@ export default async function AdminPage() {
             ) : (
               <p className="text-cream-400 text-sm">No requests yet.</p>
             )}
+          </Section>
+
+          <Section title="Blog posts" count={blogPosts.filter((b) => b.status === "published").length}>
+            <p className="text-sm text-cream-400 mb-4">
+              A new educational or historical article is written and published automatically every week. Hide any post here; it
+              disappears from the site within a few minutes.
+            </p>
+            <ul className="divide-y divide-forest-600/30 text-sm">
+              {blogPosts.map((b) => (
+                <li key={b.id} className="py-2 flex flex-wrap items-center justify-between gap-3">
+                  <span className={b.status === "hidden" ? "text-cream-400 line-through" : "text-cream-200"}>
+                    <Link href={`/blog/${b.slug}`} className="hover:text-gold-300">{b.title}</Link>
+                    <span className="block text-xs text-cream-400">
+                      {fmt(b.published_at)} · {b.created_by === "weekly-writer" ? "weekly writer" : b.created_by}
+                    </span>
+                  </span>
+                  <AdminButton
+                    label={b.status === "hidden" ? "Show again" : "Hide"}
+                    variant={b.status === "hidden" ? "gold" : "danger"}
+                    body={{ action: "blog_status", id: b.id, value: b.status === "hidden" ? "published" : "hidden" }}
+                    confirmText={b.status === "hidden" ? "Put this post back on the blog?" : "Hide this post from the blog?"}
+                  />
+                </li>
+              ))}
+            </ul>
           </Section>
 
           <Section title="All orders" count={orders.length}>
