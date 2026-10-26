@@ -42,6 +42,7 @@ async function listingTitle(listingId: string | null) {
 export async function startServiceCheckout(requestId: string, userId: string, base: string) {
   const req = await getServiceRequest(requestId);
   if (!req || req.requester_id !== userId) throw new UserError("Request not found.");
+  if (req.type === "validation") throw new UserError("Member validation is no longer offered.");
   if (req.status !== "awaiting_payment" || !req.price_cents) throw new UserError("This request isn't ready for payment.");
   const title = await listingTitle(req.listing_id);
   const email = await getUserEmail(userId);
@@ -56,7 +57,7 @@ export async function startServiceCheckout(requestId: string, userId: string, ba
           currency: "usd",
           unit_amount: req.price_cents,
           product_data: {
-            name: `RIHOSO ${SERVICES[req.type === "validation" ? "validation" : "repair"].name}`,
+            name: `RIHOSO ${SERVICES.repair.name}`,
             ...(title ? { description: title.slice(0, 200) } : {}),
           },
         },

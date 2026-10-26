@@ -2,8 +2,8 @@
 
 /** RIHOSO's commission on a completed sale, as a fraction of the sale price. */
 export const COMMISSION = {
-  standard: 0.2, // 20% for non-members
-  member: 0.1, // 10% for RIHOSO members
+  standard: 0.1, // 10% for non-members
+  member: 0.05, // 5% for RIHOSO members
 } as const;
 
 /** Fixed-price services RIHOSO offers alongside the marketplace. */
