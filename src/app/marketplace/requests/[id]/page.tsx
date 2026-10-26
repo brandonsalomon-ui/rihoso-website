@@ -81,8 +81,7 @@ export default async function RequestPage({
             )}
           </div>
           <p className="text-xs text-cream-400 leading-relaxed">
-            Repairs are quoted in writing before any work begins. All RIHOSO proceeds support the society&apos;s
-            scholarships and operating expenses.
+            Repairs are quoted in writing before any work begins, and nothing beyond the quote is done without your approval.
           </p>
         </div>
       </section>
