@@ -5,8 +5,7 @@ import ExchangeNav from "@/components/exchange/ExchangeNav";
 import PhotoViewer from "@/components/exchange/PhotoViewer";
 import ContactSeller from "@/components/exchange/ContactSeller";
 import SellerControls from "@/components/exchange/SellerControls";
-import ServiceRequestButton from "@/components/exchange/ServiceRequestButton";
-import { COMMISSION, SERVICES, formatUsd } from "@/lib/marketplace";
+import { COMMISSION, formatUsd } from "@/lib/marketplace";
 import { LISTING_SELECT, conditionLabel, sortedPhotos, type Listing } from "@/lib/exchange-types";
 import { isSupabaseConfigured, photoUrl } from "@/lib/supabase/config";
 import { getUser } from "@/lib/supabase/server";
@@ -82,22 +81,6 @@ export default async function ListingPage({ params }: { params: { id: string } }
                   {listing.status === "draft" ? "Draft — not visible to buyers" : listing.status}
                 </p>
               )}
-              {listing.validation_status === "passed" && (
-                <div className="mt-4 rounded border border-gold-400/40 bg-gold-400/10 px-4 py-3 text-sm text-cream-100">
-                  <strong className="text-gold-300">Member validated.</strong> A RIHOSO member examined this watch.
-                  {listing.validation_notes && <span className="block mt-1 text-cream-300">{listing.validation_notes}</span>}
-                </div>
-              )}
-
-              {listing.validation_status === "concerns" && (
-                <div className="mt-4 rounded border border-red-300/40 bg-red-900/20 px-4 py-3 text-sm text-cream-100">
-                  <strong className="text-red-200">Validation raised concerns.</strong> A RIHOSO member examined this watch and noted:
-                  {listing.validation_notes && <span className="block mt-1 text-cream-300">{listing.validation_notes}</span>}
-                </div>
-              )}
-              {(listing.validation_status === "requested" || listing.validation_status === "in_progress") && (
-                <p className="mt-4 text-sm text-gold-300">A RIHOSO member validation is underway for this watch.</p>
-              )}
 
               <dl className="mt-6">
                 <Detail label="Model" value={listing.model} />
@@ -117,7 +100,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
               <div className="mt-8 space-y-4">
                 {isSeller ? (
-                  <SellerControls listingId={listing.id} status={listing.status} validationStatus={listing.validation_status} />
+                  <SellerControls listingId={listing.id} status={listing.status} />
                 ) : open ? (
                   user ? (
                     <ContactSeller listingId={listing.id} conversationId={conversationId} />
@@ -130,14 +113,6 @@ export default async function ListingPage({ params }: { params: { id: string } }
                     </Link>
                   )
                 ) : null}
-
-                {!isSeller && open && user && listing.validation_status === "none" && (
-                  <ServiceRequestButton
-                    type="validation"
-                    listingId={listing.id}
-                    label={`Ask a RIHOSO member to validate this watch (${formatUsd(SERVICES.validation.priceCents)})`}
-                  />
-                )}
               </div>
             </div>
           </div>
