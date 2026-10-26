@@ -105,7 +105,7 @@ export default async function MarketplacePage({ searchParams }: { searchParams: 
             ))}
           </div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={REPAIRS_OPEN ? "mt-16 grid grid-cols-1 md:grid-cols-2 gap-6" : "mt-16 max-w-xl mx-auto"}>
             <div className="panel-lux rounded-xl p-8">
               <p className="text-gold-400 text-sm uppercase tracking-[0.2em] mb-2">Members sell for less</p>
               <h3 className="text-2xl font-display text-cream-50 mb-1">RIHOSO Membership</h3>
