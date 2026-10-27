@@ -13,6 +13,8 @@ const BASE_PATH = "/us/en/rolex-certified-pre-owned/watches";
 const PAGE_LIMIT = 200; // the most one page will return
 const PACE_MS = 2500; // pause between requests
 const MAX_REQUESTS = 40; // hard ceiling per run
+// Without a browser session the site returns every country's selection; this limits it to the US one.
+const US_ONLY = "c_att_Customer_groups_Per_Country_vis_online=US Everyone";
 
 type Hit = {
   productId?: string;
@@ -87,6 +89,11 @@ export function normalizeHit(hit: Hit): SourceListing | null {
   };
 }
 
+function isUsListing(hit: Hit) {
+  const groups = hit.representedProduct?.c_att_Customer_groups_Per_Country_vis_online;
+  return !Array.isArray(groups) || groups.includes("US Everyone");
+}
+
 /** The collection slug in a product path: /watches/{slug}/{id}.html */
 function lineSlug(hit: Hit) {
   const path = hit.c_en_urlPath ?? hit.c_urlPath ?? "";
@@ -102,7 +109,7 @@ export async function collectBucherer(): Promise<SourceSnapshot> {
   let requests = 0;
 
   async function page(path: string, sort: string): Promise<PageResult | null> {
-    const pathWithQuery = `${path}?limit=${PAGE_LIMIT}&sort=${sort}`;
+    const pathWithQuery = `${path}?limit=${PAGE_LIMIT}&sort=${sort}&refine=${encodeURIComponent(US_ONLY)}`;
     if (!isAllowed(rules, pathWithQuery)) {
       notes.push(`skipped (robots.txt): ${pathWithQuery}`);
       return null;
@@ -131,7 +138,7 @@ export async function collectBucherer(): Promise<SourceSnapshot> {
   const visited = new Set<string>();
   const add = (r: PageResult | null) => {
     for (const h of r?.hits ?? []) {
-      if (!h.productId) continue;
+      if (!h.productId || !isUsListing(h)) continue;
       byId.set(h.productId, h);
       const s = lineSlug(h);
       if (s) slugs.add(s);
