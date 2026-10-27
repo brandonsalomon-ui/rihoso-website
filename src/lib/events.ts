@@ -1,3 +1,5 @@
+import { PHOTOS, type Photo } from "@/lib/photos";
+
 export type SocietyEvent = {
   title: string;
   shortTitle?: string;
@@ -10,6 +12,12 @@ export type SocietyEvent = {
   description: string;
   shortDescription?: string;
   recurring?: boolean;
+  /** Small tag next to the date, e.g. "Members". */
+  badge?: string;
+  /** Photos shown with the event; the first one also leads the home-page card. */
+  photos?: Photo[];
+  /** Optional call to action shown under the details. */
+  link?: { href: string; label: string };
 };
 
 // Add new events here. Each dated event disappears from the site automatically
@@ -29,6 +37,21 @@ export type SocietyEvent = {
 // For a monthly meeting, set `recurring: true` (and leave out `endsOn`); the site
 // then also shows the next first-Thursday date.
 export const EVENTS: SocietyEvent[] = [
+  {
+    title: "Late Fall Members' Meet-Up at Capriccio",
+    shortTitle: "Late Fall Meet-Up at Capriccio",
+    date: "Tuesday, November 24, 2026",
+    endsOn: "2026-11-24",
+    time: "7:00 – 9:00 PM",
+    location: "Capriccio (bar area), 2 Pine Street, Providence",
+    badge: "Members",
+    description:
+      "Close out the season with friends and fine watches in the candlelit bar at Capriccio, the downtown Providence landmark on the Riverwalk. Wear something from your collection, talk shop with working watchmakers, and get a first look at the new RIHOSO Watch Exchange, the Society's marketplace for buying and selling fine watches.",
+    shortDescription:
+      "Friends, fine watches, and watchmakers in the bar at Capriccio, plus a first look at our new Watch Exchange.",
+    photos: [PHOTOS.capriccioBar, PHOTOS.capriccioAwning, PHOTOS.demoConversation, PHOTOS.membersMingle],
+    link: { href: "/marketplace", label: "Preview the Watch Exchange" },
+  },
   {
     title: "Monthly Meetings Begin",
     date: "January 2027",
