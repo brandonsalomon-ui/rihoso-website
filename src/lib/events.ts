@@ -51,7 +51,7 @@ export const EVENTS: SocietyEvent[] = [
       "Close out the season with friends and fine watches in the candlelit bar at Capriccio, the downtown Providence landmark on the Riverwalk. Wear something from your collection, talk shop with working watchmakers, and get a first look at the new RIHOSO Watch Exchange, the Society's marketplace for buying and selling fine watches.",
     shortDescription:
       "Friends, fine watches, and watchmakers in the bar at Capriccio, plus a first look at our new Watch Exchange.",
-    photos: [PHOTOS.capriccioBar, PHOTOS.capriccioAwning, PHOTOS.demoConversation, PHOTOS.membersMingle],
+    photos: [PHOTOS.capriccioBar, PHOTOS.capriccioAwning, PHOTOS.membersWatches, PHOTOS.demoConversation, PHOTOS.membersMingle],
     link: { href: "/marketplace", label: "Preview the Watch Exchange" },
     rsvp: { slug: "capriccio-2026-11-24", closesOn: "2026-11-20" },
   },

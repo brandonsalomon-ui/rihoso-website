@@ -82,6 +82,14 @@ export const PHOTOS = {
     height: 366,
     focus: "50% 50%",
   },
+  membersWatches: {
+    src: "/photos/members-watches.webp",
+    alt: "Members stack their wrists to show off a circle of Rolex watches",
+    caption: "Wrist check",
+    width: 1200,
+    height: 1600,
+    focus: "50% 50%",
+  },
   membersMingle: {
     src: "/photos/members-mingle.webp",
     alt: "Two guests smile for a photo at a RIHOSO evening while live music plays behind them",

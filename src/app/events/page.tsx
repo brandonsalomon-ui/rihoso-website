@@ -114,7 +114,7 @@ export default function EventsPage() {
                     <PhotoGallery
                       className="mt-6"
                       photos={event.photos}
-                      layout={["row-span-2", "md:col-span-3", "", "col-span-2"]}
+                      layout={["row-span-2", "md:col-span-2", "row-span-2", "", "col-span-2 md:col-span-1"]}
                     />
                   )}
                   {event.rsvp && (
