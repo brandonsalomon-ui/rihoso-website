@@ -4,7 +4,8 @@ interface NewsArticle {
   title: string;
   description?: string;
   summary?: string;
-  url: string;
+  url?: string;
+  link?: string;
   source?: string;
   publishedAt?: string;
   published_at?: string;
@@ -21,7 +22,11 @@ async function fetchNews(): Promise<NewsArticle[]> {
     if (!res.ok) return [];
     const data = await res.json();
     const articles = Array.isArray(data) ? data : data.articles || [];
-    return articles.slice(0, 6);
+    // The feed sends the article address as `link`; older feeds used `url`.
+    return (articles as NewsArticle[])
+      .map((a) => ({ ...a, url: a.url || a.link }))
+      .filter((a) => typeof a.url === "string" && /^https?:\/\//.test(a.url))
+      .slice(0, 6);
   } catch {
     return [];
   }
@@ -44,6 +49,8 @@ export default async function NewsGrid() {
         const imageUrl = article.image || article.imageUrl || article.urlToImage;
         const description = article.description || article.summary || "";
         const date = article.publishedAt || article.published_at;
+        const sourceName =
+          typeof article.source === "string" ? article.source : (article.source as { name?: string } | undefined)?.name || "";
 
         return (
           <a
@@ -51,6 +58,7 @@ export default async function NewsGrid() {
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`Read article: ${article.title}${sourceName ? ` (${sourceName})` : ""}, opens in a new tab`}
             className="card-lux group flex flex-col rounded-xl overflow-hidden"
           >
             {!imageUrl && (
@@ -70,12 +78,10 @@ export default async function NewsGrid() {
                 />
               </div>
             )}
-            <div className="p-5">
+            <div className="p-5 flex flex-col flex-1">
               <div className="flex items-center gap-2 mb-3">
-                {article.source && (
-                  <span className="text-gold-400 font-body text-xs tracking-widest uppercase">
-                    {typeof article.source === "string" ? article.source : (article.source as { name?: string }).name || ""}
-                  </span>
+                {sourceName && (
+                  <span className="text-gold-400 font-body text-xs tracking-widest uppercase">{sourceName}</span>
                 )}
                 {date && (
                   <span className="text-cream-400 font-body text-xs">
@@ -94,6 +100,12 @@ export default async function NewsGrid() {
                   {description}
                 </p>
               )}
+              <span className="mt-auto pt-4 inline-flex items-center gap-2 text-gold-400 font-body text-sm tracking-widest uppercase group-hover:text-gold-300 transition-colors">
+                Read article
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7-7 7M21 12H3" />
+                </svg>
+              </span>
             </div>
           </a>
         );
