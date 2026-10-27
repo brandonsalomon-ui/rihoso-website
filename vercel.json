@@ -6,6 +6,10 @@
     {
       "path": "/api/marketplace/cron/release",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/market/cron/collect",
+      "schedule": "14 11 * * *"
     }
   ]
 }

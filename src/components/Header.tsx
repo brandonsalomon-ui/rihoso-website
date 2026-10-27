@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/events", label: "Events" },
   { href: "/memberships", label: "Memberships" },
   { href: "/marketplace", label: "Watch Exchange" },
+  { href: "/market", label: "Market" },
   { href: "/blog", label: "Blog" },
   { href: "/watchmaking-schools", label: "Schools" },
   { href: "/sponsors", label: "Sponsors" },
