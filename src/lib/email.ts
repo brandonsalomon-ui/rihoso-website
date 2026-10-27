@@ -118,3 +118,70 @@ export async function sendMemberEmail({
   if (!res.ok) console.error("[email] Resend error", res.status, await res.text().catch(() => ""));
   return { ok: res.ok };
 }
+
+/** Confirms an event RSVP to the person who sent it. Replies go to info@rihoso.com. */
+export async function sendRsvpConfirmation({
+  to,
+  name,
+  eventTitle,
+  when,
+  where,
+  guests,
+  joinNote,
+}: {
+  to: string;
+  name: string;
+  eventTitle: string;
+  when: string;
+  where: string;
+  guests: number;
+  /** Extra paragraph, e.g. a reminder to join before a members' evening. */
+  joinNote?: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.error("[email] RESEND_API_KEY is not set — RSVP confirmation not sent");
+    return { ok: false as const };
+  }
+  const first = name.split(/\s+/)[0] || name;
+  const party = guests > 0 ? "you and your guest" : "you";
+  const html = `
+    <div style="font-family:Georgia,serif;color:#1a2e1a;max-width:560px">
+      <p style="font-size:16px">Dear ${escapeHtml(first)},</p>
+      <p style="font-size:16px">Thank you for your RSVP. We look forward to seeing ${party} at the ${escapeHtml(eventTitle)}.</p>
+      <table style="border-collapse:collapse;margin:16px 0;border-left:3px solid #c9a84c;background:#f5f0e8">
+        <tr><td style="padding:10px 16px 4px;font-weight:bold">When</td><td style="padding:10px 16px 4px">${escapeHtml(when)}</td></tr>
+        <tr><td style="padding:4px 16px 10px;font-weight:bold">Where</td><td style="padding:4px 16px 10px">${escapeHtml(where)}</td></tr>
+      </table>
+      ${joinNote ? `<p style="font-size:16px">${escapeHtml(joinNote)}</p>` : ""}
+      <p style="font-size:16px">If your plans change, simply reply to this email and let us know.</p>
+      <p style="font-size:16px">With warm regards,<br/>The Rhode Island Horological Society</p>
+      <p style="margin-top:24px;color:#666;font-size:12px">rihoso.com · info@rihoso.com</p>
+    </div>`;
+  const text = `Dear ${first},
+
+Thank you for your RSVP. We look forward to seeing ${party} at the ${eventTitle}.
+
+When: ${when}
+Where: ${where}
+${joinNote ? `\n${joinNote}\n` : ""}
+If your plans change, simply reply to this email and let us know.
+
+With warm regards,
+The Rhode Island Horological Society
+rihoso.com · info@rihoso.com`;
+  const res = await fetch(process.env.RESEND_API_URL || "https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: process.env.FORM_FROM_EMAIL || DEFAULT_FROM,
+      to: [to],
+      reply_to: "info@rihoso.com",
+      subject: `You're on the list: ${eventTitle}`,
+      html,
+      text,
+    }),
+  });
+  if (!res.ok) console.error("[email] Resend error", res.status, await res.text().catch(() => ""));
+  return { ok: res.ok };
+}

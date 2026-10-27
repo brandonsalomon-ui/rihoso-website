@@ -18,6 +18,8 @@ export type SocietyEvent = {
   photos?: Photo[];
   /** Optional call to action shown under the details. */
   link?: { href: string; label: string };
+  /** Turns on the RSVP form. `slug` keys the saved RSVPs; `closesOn` is the last day to RSVP (YYYY-MM-DD). */
+  rsvp?: { slug: string; closesOn: string };
 };
 
 // Add new events here. Each dated event disappears from the site automatically
@@ -51,6 +53,7 @@ export const EVENTS: SocietyEvent[] = [
       "Friends, fine watches, and watchmakers in the bar at Capriccio, plus a first look at our new Watch Exchange.",
     photos: [PHOTOS.capriccioBar, PHOTOS.capriccioAwning, PHOTOS.demoConversation, PHOTOS.membersMingle],
     link: { href: "/marketplace", label: "Preview the Watch Exchange" },
+    rsvp: { slug: "capriccio-2026-11-24", closesOn: "2026-11-20" },
   },
   {
     title: "Monthly Meetings Begin",
@@ -65,7 +68,7 @@ export const EVENTS: SocietyEvent[] = [
 ];
 
 /** Today's date in Rhode Island as YYYY-MM-DD. */
-function todayInRI(now = new Date()) {
+export function todayInRI(now = new Date()) {
   return now.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 }
 

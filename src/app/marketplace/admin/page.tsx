@@ -11,6 +11,8 @@ import { isAdmin } from "@/lib/orders";
 import { DUES_REFUND_DAYS } from "@/lib/policies";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
+import { EVENTS } from "@/lib/events";
+import type { RsvpRow } from "@/lib/rsvps";
 
 export const metadata: Metadata = { title: "Watch Exchange Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -111,7 +113,7 @@ export default async function AdminPage() {
   const ORDER_SELECT =
     "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, paid_at, ship_by, pickup_deadline, shipping_carrier, tracking_number, delivery_reported_at, handover_reported_at, return_approved_at, return_carrier, return_tracking, return_shipped_at, return_received_at, return_problem, decision_note, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
 
-  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes, blogRes] = await Promise.all([
+  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes, blogRes, rsvpRes] = await Promise.all([
     admin.from("orders").select(ORDER_SELECT).eq("status", "disputed").order("disputed_at", { ascending: true }),
     admin.from("orders").select(ORDER_SELECT).neq("status", "pending_payment").order("created_at", { ascending: false }).limit(50),
     admin
@@ -132,7 +134,17 @@ export default async function AdminPage() {
       .limit(200),
     admin.from("orders").select(ORDER_SELECT).in("status", ["paid_held", "shipped"]).order("created_at", { ascending: true }).limit(100),
     admin.from("blog_posts").select("id, slug, title, status, published_at, created_by").order("published_at", { ascending: false }).limit(20),
+    admin
+      .from("event_rsvps")
+      .select("id, event_slug, full_name, email, phone, says_member, member_verified, guests, created_at")
+      .order("created_at", { ascending: true })
+      .limit(500),
   ]);
+  const rsvps = (rsvpRes.data ?? []) as RsvpRow[];
+  const rsvpEvents = EVENTS.filter((e) => e.rsvp).map((e) => {
+    const list = rsvps.filter((r) => r.event_slug === e.rsvp!.slug);
+    return { event: e, list, people: list.reduce((n, r) => n + 1 + r.guests, 0) };
+  });
   const blogPosts = (blogRes.data ?? []) as { id: string; slug: string; title: string; status: string; published_at: string; created_by: string }[];
 
   const emails = new Map((emailsRes.data?.users ?? []).map((u) => [u.id, u.email ?? ""]));
@@ -287,6 +299,53 @@ export default async function AdminPage() {
               </ul>
             </Section>
           )}
+
+          {rsvpEvents.map(({ event, list, people }) => (
+            <Section key={event.rsvp!.slug} title={`RSVPs — ${event.shortTitle || event.title}`} count={people}>
+              <p className="text-sm text-cream-400 mb-4">
+                {event.date}, {event.time} · {list.length} {list.length === 1 ? "reply" : "replies"}, {people} people including guests ·
+                RSVPs close {event.rsvp!.closesOn}
+              </p>
+              {list.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-left text-cream-400">
+                      <tr>
+                        <th className="py-2 pr-4 font-normal">Name</th>
+                        <th className="py-2 pr-4 font-normal">Email</th>
+                        <th className="py-2 pr-4 font-normal">Phone</th>
+                        <th className="py-2 pr-4 font-normal">Member</th>
+                        <th className="py-2 pr-4 font-normal">Guest</th>
+                        <th className="py-2 font-normal">Replied</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-forest-600/30 text-cream-200">
+                      {list.map((r) => (
+                        <tr key={r.id}>
+                          <td className="py-2 pr-4">{r.full_name}</td>
+                          <td className="py-2 pr-4"><a href={`mailto:${r.email}`} className="hover:text-gold-300">{r.email}</a></td>
+                          <td className="py-2 pr-4">{r.phone || "—"}</td>
+                          <td className="py-2 pr-4">
+                            {r.member_verified ? (
+                              <span className="text-gold-300">Verified</span>
+                            ) : r.says_member ? (
+                              <span className="text-cream-300">Says yes — check</span>
+                            ) : (
+                              <span className="text-red-300">Not a member</span>
+                            )}
+                          </td>
+                          <td className="py-2 pr-4">{r.guests ? "+1" : "—"}</td>
+                          <td className="py-2 text-cream-400">{fmt(r.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-cream-400 text-sm">No RSVPs yet.</p>
+              )}
+            </Section>
+          ))}
 
           <Section title="Members paid online" count={activeMembers.size}>
             <p className="text-sm text-cream-400 mb-4">

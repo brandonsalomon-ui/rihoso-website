@@ -183,6 +183,15 @@ export default function HomePage() {
               <p className="mt-4 text-cream-300 font-body leading-relaxed">
                 {event.shortDescription || event.description}
               </p>
+              {event.rsvp && (
+                <Link
+                  href={`/events#rsvp-${event.rsvp.slug}`}
+                  className="relative mt-5 inline-flex items-center gap-2 text-gold-400 tracking-widest uppercase text-sm hover:text-gold-300 transition-colors"
+                >
+                  RSVP
+                  <Icon name="arrow" className="w-4 h-4" />
+                </Link>
+              )}
             </div>
             </Reveal>
           ))}
