@@ -5,7 +5,12 @@ import Reveal from "@/components/Reveal";
 import { Icon, OrnamentDivider } from "@/components/ornaments";
 import PhotoGallery from "@/components/PhotoGallery";
 import { PHOTOS } from "@/lib/photos";
-import { nextMonthlyMeeting, upcomingEvents } from "@/lib/events";
+import EventRsvp from "@/components/EventRsvp";
+import { nextMonthlyMeeting, todayInRI, upcomingEvents } from "@/lib/events";
+
+function dayLabel(iso: string) {
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+}
 
 // Re-check dates every hour so past events drop off automatically.
 export const revalidate = 3600;
@@ -79,9 +84,9 @@ export default function EventsPage() {
                 <div className="card-lux group rounded-xl p-6 sm:p-8">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     <p className="text-gold-400 font-semibold tracking-[0.12em] uppercase text-sm">{event.date}</p>
-                    {event.recurring && (
+                    {(event.recurring || event.badge) && (
                       <span className="text-[11px] uppercase tracking-[0.2em] bg-gold-400/15 text-gold-300 border border-gold-400/30 px-2.5 py-0.5 rounded-full">
-                        Recurring
+                        {event.badge ?? "Recurring"}
                       </span>
                     )}
                   </div>
@@ -105,6 +110,30 @@ export default function EventsPage() {
                       </span>
                     )}
                   </div>
+                  {event.photos && event.photos.length > 0 && (
+                    <PhotoGallery
+                      className="mt-6"
+                      photos={event.photos}
+                      layout={["row-span-2", "md:col-span-3", "", "col-span-2"]}
+                    />
+                  )}
+                  {event.rsvp && (
+                    <EventRsvp
+                      slug={event.rsvp.slug}
+                      closesLabel={dayLabel(event.rsvp.closesOn)}
+                      closed={todayInRI() > event.rsvp.closesOn}
+                      membersOnly={event.badge === "Members"}
+                    />
+                  )}
+                  {event.link && (
+                    <Link
+                      href={event.link.href}
+                      className="mt-6 ml-0 mr-6 inline-flex items-center gap-2 text-gold-400 tracking-wide hover:text-gold-300 transition-colors"
+                    >
+                      {event.link.label}
+                      <Icon name="arrow" className="w-4 h-4" />
+                    </Link>
+                  )}
                 </div>
               </Reveal>
             ))}

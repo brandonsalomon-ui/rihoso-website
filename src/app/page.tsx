@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -153,6 +154,18 @@ export default function HomePage() {
             <Reveal key={i} delay={i * 120} className="h-full">
             <div className="card-lux group h-full rounded-xl p-8 overflow-hidden">
               <span className="absolute left-8 right-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-300 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
+              {event.photos?.[0] && (
+                <div className="relative -mx-8 -mt-8 mb-6 h-48 overflow-hidden border-b border-gold-400/20">
+                  <Image
+                    src={event.photos[0].src}
+                    alt={event.photos[0].alt}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{ objectPosition: event.photos[0].focus }}
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-3 mb-5">
                 <span className="flex items-center justify-center w-11 h-11 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors duration-300">
                   <Icon name={event.recurring ? "repeat" : "calendar"} className="w-5 h-5" />
@@ -171,6 +184,15 @@ export default function HomePage() {
               <p className="mt-4 text-cream-300 font-body leading-relaxed">
                 {event.shortDescription || event.description}
               </p>
+              {event.rsvp && (
+                <Link
+                  href={`/events#rsvp-${event.rsvp.slug}`}
+                  className="relative mt-5 inline-flex items-center gap-2 text-gold-400 tracking-widest uppercase text-sm hover:text-gold-300 transition-colors"
+                >
+                  RSVP
+                  <Icon name="arrow" className="w-4 h-4" />
+                </Link>
+              )}
             </div>
             </Reveal>
           ))}
