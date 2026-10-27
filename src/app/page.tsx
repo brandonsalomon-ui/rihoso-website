@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import NewsGrid from "@/components/NewsGrid";
 import SectionHeading from "@/components/SectionHeading";
