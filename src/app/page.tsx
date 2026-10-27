@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import NewsGrid from "@/components/NewsGrid";
 import SectionHeading from "@/components/SectionHeading";
@@ -239,7 +240,7 @@ export default function HomePage() {
           <SectionHeading title="Inside the Society" subtitle="Demonstrations, dinners, and evenings among fellow collectors" />
           <Reveal className="mt-14">
             <PhotoGallery
-              photos={[PHOTOS.microscope, PHOTOS.membersEvening, PHOTOS.movementDemo, PHOTOS.membersDinner]}
+              photos={[PHOTOS.microscope, PHOTOS.garageTalk, PHOTOS.movementDemo, PHOTOS.membersDinner]}
               layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2"]}
             />
           </Reveal>
@@ -249,6 +250,40 @@ export default function HomePage() {
               <Icon name="arrow" className="w-4 h-4" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Students & Schools */}
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-forest-900/40 border-y border-gold-400/10 overflow-hidden">
+        <div className="absolute inset-0 bg-guilloche opacity-40 pointer-events-none" />
+        <div className="relative max-w-6xl mx-auto grid md:grid-cols-[1fr_1.15fr] gap-12 items-center">
+          <Reveal className="grid grid-cols-2 gap-4">
+            {[PHOTOS.workshopVisit, PHOTOS.screwdrivers].map((p, i) => (
+              <div
+                key={p.src}
+                className={`relative aspect-[3/4] rounded-2xl p-[1px] bg-gradient-to-br from-gold-300/80 via-gold-500/30 to-gold-400/60 ${i === 1 ? "mt-10" : ""}`}
+              >
+                <div className="relative w-full h-full rounded-[15px] overflow-hidden">
+                  <Image src={p.src} alt={p.alt} fill sizes="(min-width: 768px) 260px, 45vw" className="object-cover" style={{ objectPosition: p.focus }} />
+                </div>
+              </div>
+            ))}
+          </Reveal>
+          <Reveal delay={150}>
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">RIHOSO for Schools</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-cream-50 font-bold leading-tight">
+              The next generation of <span className="text-gold-foil">watchmakers</span>
+            </h2>
+            <p className="mt-6 text-lg text-cream-300 leading-relaxed">
+              Our after-school program gives high school and college students a pathway into horology: mentors, an
+              introduction to watchmaking and its history, events with industry leaders, trips to businesses and museums, and
+              scholarship guidance.
+            </p>
+            <Link href="/students" className="btn-gold mt-8 inline-flex items-center gap-3 px-8 py-4 tracking-widest uppercase">
+              Students &amp; Schools
+              <Icon name="arrow" className="w-5 h-5" />
+            </Link>
+          </Reveal>
         </div>
       </section>
 

@@ -13,8 +13,8 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-4 text-cream-300 font-body text-lg leading-relaxed max-w-md">
-              Time, History, Art, Science, Education, and Tradition.
-              Preserving the Legacy of Horology.
+              Preserving the history, culture and traditions of watchmaking through local community
+              outreach, support and continued education.
             </p>
           </div>
 
@@ -45,6 +45,7 @@ export default function Footer() {
             <h4 className="text-gold-400 font-display text-sm tracking-widest uppercase mb-4">Resources</h4>
             <ul className="space-y-2">
               {[
+                { href: "/students", label: "Students & Schools" },
                 { href: "/watchmaking-schools", label: "Watchmaking Schools" },
                 { href: "/sponsors", label: "Sponsors" },
                 { href: "/memberships#join", label: "Join Now" },
