@@ -3,7 +3,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import { useState } from "react";
-import { CONTACT_METHODS, REPAIR_RULES, type ContactMethod } from "@/lib/marketplace";
+import { CONTACT_METHODS, EXCLUDED_BRANDS_NOTE, REPAIR_RULES, excludedRepairBrand, type ContactMethod } from "@/lib/marketplace";
 import { createClient } from "@/lib/supabase/browser";
 import { REPAIR_PHOTO_BUCKET } from "@/lib/supabase/config";
 import { inputClass } from "./SignInForm";
@@ -48,6 +48,11 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
     const f = new FormData(e.currentTarget);
     const issue = String(f.get("issue") ?? "").trim();
     const phone = String(f.get("phone") ?? "").trim();
+    const excluded = excludedRepairBrand(String(f.get("brand") ?? ""));
+    if (excluded) {
+      setError(`Sorry — we don't take ${excluded} watches in for repair. ${EXCLUDED_BRANDS_NOTE}`);
+      return;
+    }
     const problems: string[] = [];
     if (!String(f.get("brand") ?? "").trim()) problems.push("the watch brand");
     if (issue.length < REPAIR_RULES.minIssue) problems.push("a few words about what's wrong with the watch");
@@ -122,6 +127,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
     <form onSubmit={handleSubmit} noValidate className="panel-lux rounded-xl p-6 sm:p-8 space-y-8">
       <fieldset className="space-y-4">
         <legend className="font-display text-xl text-cream-50 mb-2">Your watch</legend>
+        <p className="text-sm text-cream-400 -mt-1">{EXCLUDED_BRANDS_NOTE}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={label} htmlFor="rp-brand">Brand {req}</label>

@@ -8,7 +8,7 @@ export default function ExchangeNav({ signedIn }: { signedIn: boolean }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between text-sm">
         <Link href="/marketplace" className="text-gold-300 tracking-widest uppercase text-xs">Watch Exchange</Link>
         <nav className="flex items-center gap-5 text-cream-300">
-          {REPAIRS_OPEN && <Link href="/marketplace/repair" className="hover:text-gold-300">Repairs</Link>}
+          {REPAIRS_OPEN && <Link href="/repairs" className="hover:text-gold-300">Repairs</Link>}
           {signedIn ? (
             <>
               <Link href="/marketplace/messages" className="hover:text-gold-300">Messages</Link>
