@@ -4,6 +4,7 @@ import { sendMemberEmail, sendNotification } from "@/lib/email";
 import { SERVICES, formatUsd } from "@/lib/marketplace";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
+import { REPAIR_PHOTO_BUCKET } from "@/lib/supabase/config";
 import { UserError } from "@/lib/orders";
 
 export type ServiceRequest = {
@@ -20,14 +21,36 @@ export type ServiceRequest = {
   paid_at: string | null;
   refunded_at: string | null;
   created_at: string;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_method: "email" | "phone" | "text" | null;
+  watch_brand: string | null;
+  watch_model: string | null;
+  watch_reference: string | null;
+  watch_year: number | null;
+  photo_paths: string[];
 };
 
 const COLUMNS =
-  "id, type, requester_id, listing_id, description, status, price_cents, stripe_checkout_session_id, stripe_payment_intent_id, result_notes, paid_at, refunded_at, created_at";
+  "id, type, requester_id, listing_id, description, status, price_cents, stripe_checkout_session_id, stripe_payment_intent_id, result_notes, paid_at, refunded_at, created_at, contact_name, contact_phone, contact_method, watch_brand, watch_model, watch_reference, watch_year, photo_paths";
 
 export async function getServiceRequest(id: string) {
   const { data } = await createAdminClient().from("service_requests").select(COLUMNS).eq("id", id).maybeSingle();
   return (data as ServiceRequest | null) ?? null;
+}
+
+/** Signed links to a request's private repair photos (default: one hour). Missing files are skipped. */
+export async function repairPhotoUrls(paths: string[] | null | undefined, expiresInSeconds = 60 * 60) {
+  if (!paths?.length) return [] as string[];
+  const { data } = await createAdminClient().storage.from(REPAIR_PHOTO_BUCKET).createSignedUrls(paths, expiresInSeconds);
+  return (data ?? []).map((d) => d.signedUrl).filter((u): u is string => Boolean(u));
+}
+
+/** "Omega Speedmaster (ref. 311.30…, 2018)" — a one-line name for the watch on a repair request. */
+export function repairWatchName(r: Pick<ServiceRequest, "watch_brand" | "watch_model" | "watch_reference" | "watch_year">) {
+  const name = [r.watch_brand, r.watch_model].filter(Boolean).join(" ");
+  const extra = [r.watch_reference && `ref. ${r.watch_reference}`, r.watch_year].filter(Boolean).join(", ");
+  return name ? (extra ? `${name} (${extra})` : name) : "";
 }
 
 const LABEL = { validation: SERVICES.validation.name, repair: SERVICES.repair.name } as const;
