@@ -5,7 +5,8 @@ import AdminButton from "@/components/exchange/AdminButton";
 import DecisionPanel from "@/components/exchange/DecisionPanel";
 import QuoteButton from "@/components/exchange/QuoteButton";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
-import { formatUsd } from "@/lib/marketplace";
+import { contactMethodLabel, formatUsd } from "@/lib/marketplace";
+import { repairPhotoUrls, repairWatchName } from "@/lib/services";
 import { duesRefundCheck } from "@/lib/memberships";
 import { isAdmin } from "@/lib/orders";
 import { DUES_REFUND_DAYS } from "@/lib/policies";
@@ -83,6 +84,7 @@ type SellerRow = {
 type RequestRow = {
   id: string;
   type: "validation" | "repair";
+  requester_id: string;
   status: string;
   description: string;
   price_cents: number | null;
@@ -91,6 +93,15 @@ type RequestRow = {
   listing_id: string | null;
   listings: { title: string } | null;
   requester: { display_name: string } | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_method: string | null;
+  watch_brand: string | null;
+  watch_model: string | null;
+  watch_reference: string | null;
+  watch_year: number | null;
+  photo_paths: string[] | null;
+  photoUrls?: string[];
 };
 
 function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
@@ -122,7 +133,7 @@ export default async function AdminPage() {
       .order("created_at", { ascending: false }),
     admin
       .from("service_requests")
-      .select("id, type, status, description, price_cents, result_notes, created_at, listing_id, listings(title), requester:profiles!service_requests_requester_id_fkey(display_name)")
+      .select("id, type, requester_id, status, description, price_cents, result_notes, created_at, listing_id, listings(title), requester:profiles!service_requests_requester_id_fkey(display_name), contact_name, contact_phone, contact_method, watch_brand, watch_model, watch_reference, watch_year, photo_paths")
       .order("created_at", { ascending: false })
       .limit(50),
     admin.auth.admin.listUsers({ perPage: 1000 }),
@@ -152,6 +163,15 @@ export default async function AdminPage() {
   const orders = (ordersRes.data ?? []) as unknown as OrderRow[];
   const sellers = (sellersRes.data ?? []) as unknown as SellerRow[];
   const requests = (requestsRes.data ?? []) as unknown as RequestRow[];
+  // Signed links for repair photos (private bucket) — only for requests still open.
+  await Promise.all(
+    requests
+      .filter((r) => r.photo_paths?.length && !["complete", "cancelled"].includes(r.status))
+      .map(async (r) => {
+        r.photoUrls = await repairPhotoUrls(r.photo_paths).catch(() => []);
+      })
+  );
+  const requesterEmail = (r: RequestRow) => emails.get(r.requester_id) || "";
   const memberQueue = sellers.filter((s) => s.member_claimed && !s.profiles?.is_member);
   const memberships = (membersRes.data ?? []) as {
     id: string;
@@ -467,7 +487,37 @@ export default async function AdminPage() {
                         {r.requester?.display_name} · {fmt(r.created_at)} · <strong className="text-cream-200">{SERVICE_LABEL[r.status] ?? r.status}</strong>
                       </span>
                     </div>
+                    {r.watch_brand && (
+                      <p className="text-cream-50 mt-1">{repairWatchName(r)}</p>
+                    )}
+                    {r.contact_method && (
+                      <p className="text-sm text-cream-200 mt-1">
+                        {r.contact_name} · prefers <strong className="text-gold-300">{contactMethodLabel(r.contact_method).toLowerCase()}</strong>
+                        {r.contact_phone && (
+                          <>
+                            {" · "}
+                            <a href={`tel:${r.contact_phone.replace(/[^\d+]/g, "")}`} className="hover:text-gold-300">{r.contact_phone}</a>
+                          </>
+                        )}
+                        {requesterEmail(r) && (
+                          <>
+                            {" · "}
+                            <a href={`mailto:${requesterEmail(r)}`} className="hover:text-gold-300">{requesterEmail(r)}</a>
+                          </>
+                        )}
+                      </p>
+                    )}
                     {r.description && <p className="text-sm text-cream-300 mt-1 whitespace-pre-line">{r.description}</p>}
+                    {r.photoUrls?.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {r.photoUrls.map((u, i) => (
+                          <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="block w-16 h-16 rounded overflow-hidden bg-forest-900">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={u} alt={`Repair photo ${i + 1}`} className="w-full h-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
                     {r.result_notes && <p className="text-sm text-gold-200 mt-1">Result: {r.result_notes}</p>}
                     {r.price_cents ? <p className="text-sm text-cream-200 mt-1">Price: {formatUsd(r.price_cents)}</p> : null}
                     {!["complete", "cancelled"].includes(r.status) && (

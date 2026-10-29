@@ -7,11 +7,31 @@ export const COMMISSION = {
 } as const;
 
 /**
- * Repairs: per the revised terms, keep this off for launch until the repair provider, insurance for
- * customers' watches, the written service order and warranty are settled. Set to false to hide the
- * repair offer and stop new requests (existing requests and payments keep working).
+ * Repairs: requests are quote-only — the customer describes the watch and RIHOSO replies with a price
+ * or a call. Nothing is accepted for work until a written quote/service order is agreed (see the
+ * Terms). Set to false to hide the repair offer and stop new requests (existing requests and
+ * payments keep working).
  */
-export const REPAIRS_OPEN = false;
+export const REPAIRS_OPEN = true;
+
+/** How a repair customer would like RIHOSO to get back to them. */
+export const CONTACT_METHODS = [
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone call" },
+  { value: "text", label: "Text message" },
+] as const;
+export type ContactMethod = (typeof CONTACT_METHODS)[number]["value"];
+
+export function contactMethodLabel(value: string | null | undefined) {
+  return CONTACT_METHODS.find((m) => m.value === value)?.label ?? "Email";
+}
+
+/** What a repair request needs (enforced in the form and the API). */
+export const REPAIR_RULES = {
+  minPhotos: 1,
+  maxPhotos: 8,
+  minIssue: 20, // characters
+} as const;
 
 /** Fixed-price services RIHOSO offers alongside the marketplace. */
 export const SERVICES = {

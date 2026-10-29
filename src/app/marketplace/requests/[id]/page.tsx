@@ -4,9 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import PayServiceButton from "@/components/exchange/PayServiceButton";
-import { SERVICES, formatUsd } from "@/lib/marketplace";
+import { SERVICES, contactMethodLabel, formatUsd } from "@/lib/marketplace";
 import { isAdmin } from "@/lib/orders";
-import { finalizeServiceCheckout, getServiceRequest } from "@/lib/services";
+import { finalizeServiceCheckout, getServiceRequest, repairPhotoUrls, repairWatchName } from "@/lib/services";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
@@ -50,6 +50,8 @@ export default async function RequestPage({
     ? await createAdminClient().from("listings").select("id, title").eq("id", req.listing_id).maybeSingle()
     : { data: null };
   const name = req.type === "validation" ? SERVICES.validation.name : SERVICES.repair.name;
+  const watch = repairWatchName(req);
+  const photos = await repairPhotoUrls(req.photo_paths).catch(() => [] as string[]);
 
   return (
     <>
@@ -59,6 +61,7 @@ export default async function RequestPage({
           <div>
             <p className="text-gold-400 text-xs uppercase tracking-[0.2em]">RIHOSO service</p>
             <h1 className="font-display text-3xl text-cream-50">{name}</h1>
+            {watch && <p className="text-cream-200 mt-1">{watch}</p>}
             {listing && (
               <Link href={`/marketplace/listings/${listing.id}`} className="text-cream-300 hover:text-gold-300">
                 {listing.title}
@@ -71,7 +74,23 @@ export default async function RequestPage({
               Status: <span className="text-gold-300 font-semibold">{STATUS[req.status] ?? req.status}</span>
             </p>
             {req.price_cents ? <p className="text-cream-200">Price: {formatUsd(req.price_cents)}</p> : null}
+            {req.contact_method && (
+              <p className="text-sm text-cream-300">
+                We&apos;ll reach you by <span className="text-cream-100">{contactMethodLabel(req.contact_method).toLowerCase()}</span>
+                {req.contact_method !== "email" && req.contact_phone ? ` at ${req.contact_phone}` : ""}.
+              </p>
+            )}
             {req.description && <p className="text-sm text-cream-300 whitespace-pre-line">{req.description}</p>}
+            {photos.length ? (
+              <div className="grid grid-cols-4 gap-2 pt-1">
+                {photos.map((u, i) => (
+                  <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded overflow-hidden bg-forest-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={u} alt={`Photo ${i + 1} of your watch`} className="w-full h-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            ) : null}
             {req.result_notes && (
               <p className="text-sm text-cream-100 whitespace-pre-line border-l-2 border-gold-400 pl-3">{req.result_notes}</p>
             )}

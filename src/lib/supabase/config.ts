@@ -11,6 +11,9 @@ export function isSupabaseConfigured() {
 
 export const PHOTO_BUCKET = "listing-photos";
 
+/** Private bucket for photos customers attach to repair requests (shown via signed links only). */
+export const REPAIR_PHOTO_BUCKET = "repair-photos";
+
 export function photoUrl(storagePath: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${storagePath}`;
 }
