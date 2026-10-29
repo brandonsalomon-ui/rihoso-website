@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { clean, sendMemberEmail, sendNotification } from "@/lib/email";
-import { CONTACT_METHODS, REPAIRS_OPEN, REPAIR_RULES, contactMethodLabel, type ContactMethod } from "@/lib/marketplace";
+import { CONTACT_METHODS, EXCLUDED_BRANDS_NOTE, REPAIRS_OPEN, REPAIR_RULES, contactMethodLabel, excludedRepairBrand, type ContactMethod } from "@/lib/marketplace";
 import { UserError } from "@/lib/orders";
 import { repairPhotoUrls, repairWatchName } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
@@ -52,6 +52,10 @@ export async function POST(request: Request) {
         .slice(0, REPAIR_RULES.maxPhotos)
     : [];
 
+  const excluded = excludedRepairBrand(watchBrand);
+  if (excluded) {
+    return NextResponse.json({ error: `Sorry — we don't take ${excluded} watches in for repair. ${EXCLUDED_BRANDS_NOTE}` }, { status: 400 });
+  }
   const problems: string[] = [];
   if (!contactName) problems.push("your name");
   if (!watchBrand) problems.push("the watch brand");

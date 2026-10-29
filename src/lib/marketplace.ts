@@ -26,6 +26,20 @@ export function contactMethodLabel(value: string | null | undefined) {
   return CONTACT_METHODS.find((m) => m.value === value)?.label ?? "Email";
 }
 
+/** Brands RIHOSO does not take in for repair. */
+export const EXCLUDED_REPAIR_BRANDS = ["Rolex", "Tudor", "Patek Philippe"] as const;
+
+/** The excluded brand a customer typed, if any (forgiving of case and spelling like "Patek Phillip"). */
+export function excludedRepairBrand(brand: string) {
+  const b = brand.toLowerCase();
+  if (/\brolex\b/.test(b)) return "Rolex";
+  if (/\btudor\b/.test(b)) return "Tudor";
+  if (/\bpatek\b/.test(b)) return "Patek Philippe";
+  return null;
+}
+
+export const EXCLUDED_BRANDS_NOTE = "We service all watch brands except Rolex, Tudor and Patek Philippe.";
+
 /** What a repair request needs (enforced in the form and the API). */
 export const REPAIR_RULES = {
   minPhotos: 1,
