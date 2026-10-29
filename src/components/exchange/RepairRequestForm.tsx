@@ -49,8 +49,10 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
     const issue = String(f.get("issue") ?? "").trim();
     const phone = String(f.get("phone") ?? "").trim();
     const problems: string[] = [];
+    if (!String(f.get("brand") ?? "").trim()) problems.push("the watch brand");
     if (issue.length < REPAIR_RULES.minIssue) problems.push("a few words about what's wrong with the watch");
     if (files.length < REPAIR_RULES.minPhotos) problems.push("at least one photo of the watch (dial and caseback help most)");
+    if (!String(f.get("name") ?? "").trim()) problems.push("your name");
     if (method !== "email" && phone.replace(/\D/g, "").length < 7) problems.push("a phone number we can call or text");
     if (problems.length) {
       setError(`Please add ${problems.join("; ")}.`);
@@ -117,7 +119,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
   }
 
   return (
-    <form onSubmit={handleSubmit} className="panel-lux rounded-xl p-6 sm:p-8 space-y-8">
+    <form onSubmit={handleSubmit} noValidate className="panel-lux rounded-xl p-6 sm:p-8 space-y-8">
       <fieldset className="space-y-4">
         <legend className="font-display text-xl text-cream-50 mb-2">Your watch</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -145,7 +147,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
           What&apos;s the issue? {req}{" "}
           <span className="text-cream-400">(symptoms, when it started, last service, anything you&apos;ve noticed)</span>
         </label>
-        <textarea id="rp-issue" name="issue" required minLength={REPAIR_RULES.minIssue} maxLength={4000} rows={6} className={inputClass}
+        <textarea id="rp-issue" name="issue" maxLength={4000} rows={6} className={inputClass}
           placeholder="Running about 30 seconds a day slow and stops overnight. Last serviced around 2015. The crown feels gritty when winding…" />
       </div>
 

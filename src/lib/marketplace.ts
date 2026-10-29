@@ -30,7 +30,7 @@ export function contactMethodLabel(value: string | null | undefined) {
 export const REPAIR_RULES = {
   minPhotos: 1,
   maxPhotos: 8,
-  minIssue: 20, // characters
+  minIssue: 3, // characters — just enough to say something (e.g. "won't wind")
 } as const;
 
 /** Fixed-price services RIHOSO offers alongside the marketplace. */
