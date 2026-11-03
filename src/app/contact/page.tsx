@@ -6,6 +6,8 @@ import PageHero from "@/components/PageHero";
 import LiveDial from "@/components/LiveDial";
 import { Icon } from "@/components/ornaments";
 import { EVENTS } from "@/lib/events";
+import { SOCIAL } from "@/lib/social";
+import { FacebookIcon, InstagramIcon } from "@/components/SocialIcons";
 
 const MEETING = EVENTS.find((e) => e.recurring);
 
@@ -183,6 +185,26 @@ export default function ContactPage() {
               <span className="block font-display text-lg text-gold-300">info@rihoso.com</span>
             </span>
           </a>
+          {[
+            { href: SOCIAL.instagram.url, label: "Instagram", value: `@${SOCIAL.instagram.handle}`, Glyph: InstagramIcon },
+            { href: SOCIAL.facebook.url, label: "Facebook", value: "Rhode Island Horological Society", Glyph: FacebookIcon },
+          ].map(({ href, label, value, Glyph }) => (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="card-lux group rounded-xl p-6 flex items-center gap-4"
+            >
+              <span className="flex items-center justify-center w-12 h-12 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors">
+                <Glyph className="w-6 h-6" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs uppercase tracking-[0.25em] text-cream-400">Follow us on {label}</span>
+                <span className="block font-display text-lg text-gold-300 truncate">{value}</span>
+              </span>
+            </a>
+          ))}
         </aside>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Logo from "./Logo";
 import { GuillocheRosette } from "./ornaments";
+import SocialIcons from "./SocialIcons";
 
 export default function Footer() {
   return (
@@ -16,6 +17,7 @@ export default function Footer() {
               Preserving the history, culture and traditions of watchmaking through local community
               outreach, support and continued education.
             </p>
+            <SocialIcons className="mt-6" />
           </div>
 
           <div>

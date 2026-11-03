@@ -8,6 +8,7 @@ import { upcomingEvents } from "@/lib/events";
 import Reveal from "@/components/Reveal";
 import LiveDial from "@/components/LiveDial";
 import PhotoGallery from "@/components/PhotoGallery";
+import SocialFeed from "@/components/SocialFeed";
 import { PHOTOS } from "@/lib/photos";
 import { Gear, GuillocheRosette, Icon, WatchDial, type IconName } from "@/components/ornaments";
 
@@ -271,6 +272,29 @@ export default function HomePage() {
               <Icon name="arrow" className="w-4 h-4" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Instagram / Facebook */}
+      <section id="follow" className="pb-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <SectionHeading
+            title="Follow the Society"
+            subtitle="Watchmaker spotlights, new releases, and horological history, every week on Instagram and Facebook"
+          />
+          <Reveal className="mt-14">
+            <Suspense
+              fallback={
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="aspect-square rounded-xl bg-forest-800/50 border border-forest-600/30 animate-pulse" />
+                  ))}
+                </div>
+              }
+            >
+              <SocialFeed />
+            </Suspense>
+          </Reveal>
         </div>
       </section>
 
