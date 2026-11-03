@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { clean, sendMemberEmail, sendNotification } from "@/lib/email";
 import { CONTACT_METHODS, EXCLUDED_BRANDS_NOTE, REPAIRS_OPEN, REPAIR_RULES, contactMethodLabel, excludedRepairBrand, type ContactMethod } from "@/lib/marketplace";
 import { UserError } from "@/lib/orders";
-import { repairPhotoUrls, repairWatchName } from "@/lib/services";
+import { repairPhotoAttachments, repairPhotoUrls, repairWatchName } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
@@ -95,9 +95,19 @@ export async function POST(request: Request) {
 
     const watch = repairWatchName({ watch_brand: watchBrand, watch_model: watchModel, watch_reference: watchReference, watch_year: watchYear });
     const method = contactMethodLabel(contactMethod);
-    const photoLinks = await repairPhotoUrls(photoPaths, EMAIL_PHOTO_LINK_SECONDS).catch(() => [] as string[]);
+    const [photoLinks, photos] = await Promise.all([
+      repairPhotoUrls(photoPaths, EMAIL_PHOTO_LINK_SECONDS).catch((err) => {
+        console.error("[service-requests] photo links failed", err);
+        return [] as string[];
+      }),
+      repairPhotoAttachments(photoPaths).catch((err) => {
+        console.error("[service-requests] photo attachments failed", err);
+        return [];
+      }),
+    ]);
 
     const notified = await sendNotification({
+      images: photos,
       subject: `Repair request: ${watch} — ${contactName} prefers ${method.toLowerCase()}`,
       replyTo: user.email,
       rows: [
