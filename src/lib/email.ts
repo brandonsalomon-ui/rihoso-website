@@ -111,6 +111,7 @@ export async function sendMemberEmail({
   quote,
   ctaLabel,
   ctaUrl,
+  paragraphs = [],
 }: {
   to: string;
   subject: string;
@@ -118,6 +119,8 @@ export async function sendMemberEmail({
   quote?: string;
   ctaLabel: string;
   ctaUrl: string;
+  /** Extra paragraphs shown after the intro (and quote), before the button. */
+  paragraphs?: string[];
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -128,10 +131,11 @@ export async function sendMemberEmail({
     <div style="font-family:Georgia,serif;color:#1a2e1a;max-width:560px">
       <p style="font-size:16px">${escapeHtml(intro)}</p>
       ${quote ? `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #c9a84c;background:#f5f0e8;white-space:pre-wrap">${escapeHtml(quote)}</blockquote>` : ""}
+      ${paragraphs.map((p) => `<p style="font-size:16px;white-space:pre-wrap">${escapeHtml(p)}</p>`).join("")}
       <p><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;background:#c9a84c;color:#0f1d0f;padding:10px 18px;text-decoration:none;border-radius:4px">${escapeHtml(ctaLabel)}</a></p>
       <p style="margin-top:24px;color:#666;font-size:12px">RIHOSO Watch Exchange · Please keep all conversations and payments on RIHOSO.</p>
     </div>`;
-  const text = `${intro}\n\n${quote ? `"${quote}"\n\n` : ""}${ctaLabel}: ${ctaUrl}`;
+  const text = `${intro}\n\n${quote ? `"${quote}"\n\n` : ""}${paragraphs.map((p) => `${p}\n\n`).join("")}${ctaLabel}: ${ctaUrl}`;
   const res = await fetch(process.env.RESEND_API_URL || "https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
