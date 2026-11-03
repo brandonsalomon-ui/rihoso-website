@@ -21,14 +21,28 @@ export function clean(value: unknown, max = 500) {
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** An image sent with a notification: attached to the email and shown in its body. */
+export type EmailImage = {
+  filename: string;
+  /** Base64-encoded file contents. */
+  content: string;
+  contentType: string;
+};
+
+/** Types every major mail app (Gmail, Apple Mail, Outlook) can show inside the message body. */
+const INLINE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+
 export async function sendNotification({
   subject,
   rows,
   replyTo,
+  images = [],
 }: {
   subject: string;
   rows: [string, string][];
   replyTo?: string;
+  /** Photos to attach. Common web formats also appear in the body of the email. */
+  images?: EmailImage[];
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -50,9 +64,22 @@ export async function sendNotification({
           )
           .join("")}
       </table>
+      ${images
+        .map((img, i) =>
+          INLINE_IMAGE_TYPES.has(img.contentType)
+            ? `<p style="margin:16px 0 0"><img src="cid:photo-${i + 1}" alt="${escapeHtml(img.filename)}" style="display:block;max-width:100%;height:auto;border-radius:4px" /></p>`
+            : ""
+        )
+        .join("")}
       <p style="margin-top:24px;color:#666;font-size:12px">Sent from the form on rihoso.com</p>
     </div>`;
   const text = rows.map(([label, value]) => `${label}: ${value || "—"}`).join("\n");
+  const attachments = images.map((img, i) => ({
+    filename: img.filename,
+    content: img.content,
+    content_type: img.contentType,
+    ...(INLINE_IMAGE_TYPES.has(img.contentType) ? { content_id: `photo-${i + 1}` } : {}),
+  }));
 
   const res = await fetch(process.env.RESEND_API_URL || "https://api.resend.com/emails", {
     method: "POST",
@@ -64,6 +91,7 @@ export async function sendNotification({
       subject,
       html,
       text,
+      ...(attachments.length ? { attachments } : {}),
     }),
   });
 

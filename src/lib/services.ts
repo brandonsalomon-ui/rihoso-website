@@ -1,6 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
-import { sendMemberEmail, sendNotification } from "@/lib/email";
+import { sendMemberEmail, sendNotification, type EmailImage } from "@/lib/email";
 import { SERVICES, formatUsd } from "@/lib/marketplace";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
@@ -44,6 +44,48 @@ export async function repairPhotoUrls(paths: string[] | null | undefined, expire
   if (!paths?.length) return [] as string[];
   const { data } = await createAdminClient().storage.from(REPAIR_PHOTO_BUCKET).createSignedUrls(paths, expiresInSeconds);
   return (data ?? []).map((d) => d.signedUrl).filter((u): u is string => Boolean(u));
+}
+
+/**
+ * Email providers cap a message at about 40 MB once attachments are encoded (base64 adds a third),
+ * so photos are attached until this many raw bytes; any beyond it are reached through their links.
+ */
+const EMAIL_ATTACHMENT_BUDGET = 25 * 1024 * 1024;
+
+const PHOTO_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+
+/** Downloads a request's repair photos so they can travel with the notification email. */
+export async function repairPhotoAttachments(paths: string[] | null | undefined): Promise<EmailImage[]> {
+  if (!paths?.length) return [];
+  const storage = createAdminClient().storage.from(REPAIR_PHOTO_BUCKET);
+  const images: EmailImage[] = [];
+  let used = 0;
+  for (let i = 0; i < paths.length; i++) {
+    const path = paths[i];
+    const { data, error } = await storage.download(path);
+    if (error || !data) {
+      console.error("[services] couldn't download repair photo", { path, error: error?.message });
+      continue;
+    }
+    if (used + data.size > EMAIL_ATTACHMENT_BUDGET) continue;
+    used += data.size;
+    const ext = path.split(".").pop()?.toLowerCase() ?? "jpg";
+    const contentType = data.type && data.type !== "application/octet-stream" ? data.type : PHOTO_TYPES[ext] ?? "image/jpeg";
+    images.push({
+      filename: `photo-${i + 1}.${ext}`,
+      content: Buffer.from(await data.arrayBuffer()).toString("base64"),
+      contentType,
+    });
+  }
+  return images;
 }
 
 /** "Omega Speedmaster (ref. 311.30…, 2018)" — a one-line name for the watch on a repair request. */
