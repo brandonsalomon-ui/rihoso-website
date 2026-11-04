@@ -1,6 +1,6 @@
 import "server-only";
 import crypto from "node:crypto";
-import { escapeHtml } from "@/lib/email";
+import { brandonCopy, escapeHtml } from "@/lib/email";
 import { EVENTS } from "@/lib/events";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -280,6 +280,27 @@ export function renderEmail(msg: Message, person: { email: string; name: string 
   };
 }
 
+/**
+ * A personal note to one person (e.g. a follow-up), written as a plain letter from Brandon:
+ * no banner and no unsubscribe footer. Brandon gets a blind copy.
+ */
+export function renderPersonal(msg: Message, person: { email: string; name: string }) {
+  const body = msg.body.replace(/\{first_name\}/gi, firstName(person.name));
+  const cta =
+    msg.ctaLabel && msg.ctaUrl
+      ? `<p style="margin:8px 0 18px"><a href="${escapeHtml(msg.ctaUrl)}" style="display:inline-block;background:#c9a84c;color:#0f1d0f;padding:10px 18px;text-decoration:none;border-radius:4px">${escapeHtml(msg.ctaLabel)}</a></p>`
+      : "";
+  return {
+    from: process.env.WELCOME_FROM_EMAIL || '"Brandon Salomon, RIHOSO" <membership@rihoso.com>',
+    to: [person.email],
+    bcc: brandonCopy(),
+    reply_to: REPLY_TO(),
+    subject: msg.subject,
+    html: `<div style="font-family:Georgia,serif;color:#1a2e1a;max-width:580px">${paragraphsHtml(body)}${cta}</div>`,
+    text: `${body.trim()}${msg.ctaLabel && msg.ctaUrl ? `\n\n${msg.ctaLabel}: ${msg.ctaUrl}` : ""}`,
+  };
+}
+
 // ───────────────────────── sending ─────────────────────────
 
 const RESEND = () => (process.env.RESEND_API_URL || "https://api.resend.com/emails").replace(/\/emails\/?$/, "");
@@ -289,7 +310,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Sends one email per person (never CC/BCC), 100 at a time through Resend's batch API.
  * Returns each person's Resend id or error.
  */
-export async function sendEach(emails: ReturnType<typeof renderEmail>[]) {
+export async function sendEach(emails: { to: string[] }[]) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("RESEND_API_KEY is not set");
   const results: { email: string; id?: string; error?: string }[] = [];

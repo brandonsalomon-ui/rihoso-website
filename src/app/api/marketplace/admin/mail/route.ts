@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { clean } from "@/lib/email";
-import { loadDirectory, recipients, renderEmail, sendEach, type Message } from "@/lib/member-mail";
+import { clean, EMAIL_RE } from "@/lib/email";
+import { loadDirectory, recipients, renderEmail, renderPersonal, sendEach, type Message, type Person } from "@/lib/member-mail";
 import { isAdmin } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -39,7 +39,10 @@ export async function POST(request: Request) {
 
   if (action === "test") {
     if (!user.email) return NextResponse.json({ error: "Your account has no email address." }, { status: 400 });
-    const email = renderEmail({ ...msg, subject: `[TEST] ${msg.subject}` }, { email: user.email, name: "Brandon Salomon" }, base);
+    const testMsg = { ...msg, subject: `[TEST] ${msg.subject}` };
+    const me = { email: user.email, name: clean(data.toName, 120) || "Brandon Salomon" };
+    // A test of a personal note looks exactly like the real one, minus the blind copy.
+    const email = data.audience === "one" ? { ...renderPersonal(testMsg, me), bcc: undefined } : renderEmail(testMsg, me, base);
     const [result] = await sendEach([email]);
     if (result.error) return NextResponse.json({ error: result.error }, { status: 502 });
     return NextResponse.json({ ok: true, sentTo: user.email });
@@ -47,17 +50,31 @@ export async function POST(request: Request) {
 
   if (action !== "send") return NextResponse.json({ error: "Unknown action." }, { status: 400 });
 
-  const audienceId = clean(data.audience, 80);
   const people = await loadDirectory();
-  const list = recipients(people, audienceId);
-  if (!list) return NextResponse.json({ error: "Pick who should receive it." }, { status: 400 });
-  if (!list.to.length) return NextResponse.json({ error: "Nobody in that group to email yet." }, { status: 400 });
-  // The page shows a count and asks to confirm it; if the list changed since, show the new number first.
-  if (Number(data.expectedCount) !== list.to.length) {
-    return NextResponse.json(
-      { error: `The list changed — it's now ${list.to.length} people. Refresh the page and send again.` },
-      { status: 409 }
-    );
+  let audienceId = clean(data.audience, 80);
+  let list: { audience: { label: string }; to: Pick<Person, "email" | "name">[]; skipped: number } | null;
+  const personal = audienceId === "one";
+  if (personal) {
+    // A personal note to one address, e.g. a follow-up with someone who didn't finish joining.
+    const email = clean(data.toEmail, 200).toLowerCase();
+    const name = clean(data.toName, 120);
+    if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    if (people.some((p) => p.email === email && p.unsubscribed)) {
+      return NextResponse.json({ error: "This person unsubscribed from RIHOSO emails." }, { status: 409 });
+    }
+    audienceId = `one:${email}`.slice(0, 80);
+    list = { audience: { label: `One person: ${name || email}`.slice(0, 200) }, to: [{ email, name }], skipped: 0 };
+  } else {
+    list = recipients(people, audienceId);
+    if (!list) return NextResponse.json({ error: "Pick who should receive it." }, { status: 400 });
+    if (!list.to.length) return NextResponse.json({ error: "Nobody in that group to email yet." }, { status: 400 });
+    // The page shows a count and asks to confirm it; if the list changed since, show the new number first.
+    if (Number(data.expectedCount) !== list.to.length) {
+      return NextResponse.json(
+        { error: `The list changed — it's now ${list.to.length} people. Refresh the page and send again.` },
+        { status: 409 }
+      );
+    }
   }
 
   const admin = createAdminClient();
@@ -99,7 +116,7 @@ export async function POST(request: Request) {
     .single();
   if (error || !campaign) return NextResponse.json({ error: "Couldn't start the send. Nothing was sent." }, { status: 500 });
 
-  const results = await sendEach(list.to.map((p) => renderEmail(msg, p, base)));
+  const results = await sendEach(list.to.map((p) => (personal ? renderPersonal(msg, p) : renderEmail(msg, p, base))));
   const names = new Map(list.to.map((p) => [p.email, p.name]));
   await admin.from("email_deliveries").insert(
     results.map((r) => ({

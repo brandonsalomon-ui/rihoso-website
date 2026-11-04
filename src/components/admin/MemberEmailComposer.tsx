@@ -17,11 +17,18 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
   const [body, setBody] = useState("Dear {first_name},\n\n");
   const [ctaLabel, setCtaLabel] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
+  const [toEmail, setToEmail] = useState("");
+  const [toName, setToName] = useState("");
   const [busy, setBusy] = useState<"" | "test" | "send">("");
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [tested, setTested] = useState(false);
 
-  const audience = useMemo(() => audiences.find((a) => a.id === audienceId), [audiences, audienceId]);
+  const options = useMemo<AudienceOption[]>(
+    () => [...audiences, { id: "one", label: "One person (a personal note)", hint: "Sent as a plain letter from you, without the RIHOSO banner or unsubscribe footer", count: 1, skipped: 0 }],
+    [audiences]
+  );
+  const audience = useMemo(() => options.find((a) => a.id === audienceId), [options, audienceId]);
+  const personal = audienceId === "one";
 
   async function post(action: "test" | "send") {
     setBusy(action);
@@ -29,7 +36,7 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
     const res = await fetch("/api/marketplace/admin/mail", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, audience: audienceId, subject, body, ctaLabel, ctaUrl, expectedCount: audience?.count }),
+      body: JSON.stringify({ action, audience: audienceId, toEmail, toName, subject, body, ctaLabel, ctaUrl, expectedCount: audience?.count }),
     });
     const json = await res.json().catch(() => ({}));
     setBusy("");
@@ -45,8 +52,8 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
 
   async function send() {
     if (!audience) return;
-    const people = `${audience.count} ${audience.count === 1 ? "person" : "people"}`;
-    if (!confirm(`Send "${subject}" to ${people} (${audience.label})?\n\nThis can't be undone.`)) return;
+    const people = personal ? toEmail : `${audience.count} ${audience.count === 1 ? "person" : "people"} (${audience.label})`;
+    if (!confirm(`Send "${subject}" to ${people}?\n\nThis can't be undone.`)) return;
     const { ok, json } = await post("send");
     if (!ok) return setNotice({ kind: "error", text: json.error || "Nothing was sent." });
     setNotice({
@@ -58,21 +65,24 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
       setBody("Dear {first_name},\n\n");
       setCtaLabel("");
       setCtaUrl("");
+      setToEmail("");
+      setToName("");
       setTested(false);
     }
     router.refresh();
   }
 
-  const ready = subject.trim() && body.trim().length >= 10 && audience && audience.count > 0;
+  const ready =
+    subject.trim() && body.trim().length >= 10 && audience && audience.count > 0 && (!personal || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail.trim()));
 
   return (
     <div className="space-y-5">
       <div>
         <label htmlFor="mail-audience" className={label}>Send to</label>
         <select id="mail-audience" value={audienceId} onChange={(e) => setAudienceId(e.target.value)} className={inputClass}>
-          {audiences.map((a) => (
+          {options.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.label} — {a.count} {a.count === 1 ? "person" : "people"}
+              {a.id === "one" ? a.label : `${a.label} — ${a.count} ${a.count === 1 ? "person" : "people"}`}
             </option>
           ))}
         </select>
@@ -82,6 +92,19 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
           </p>
         )}
       </div>
+
+      {personal && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="mail-to-email" className={label}>Their email</label>
+            <input id="mail-to-email" type="email" value={toEmail} onChange={(e) => setToEmail(e.target.value)} maxLength={200} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="mail-to-name" className={label}>Their name</label>
+            <input id="mail-to-name" value={toName} onChange={(e) => setToName(e.target.value)} maxLength={120} className={inputClass} />
+          </div>
+        </div>
+      )}
 
       <div>
         <label htmlFor="mail-subject" className={label}>Subject</label>
@@ -137,7 +160,7 @@ export default function MemberEmailComposer({ audiences, adminEmail }: { audienc
           {busy === "test" ? "Sending test…" : `Email me a test${adminEmail ? ` (${adminEmail})` : ""}`}
         </button>
         <button onClick={send} disabled={!ready || busy !== ""} className="btn-gold px-5 py-2.5 rounded text-sm font-semibold disabled:opacity-50">
-          {busy === "send" ? "Sending…" : audience ? `Send to ${audience.count} ${audience.count === 1 ? "person" : "people"}` : "Send"}
+          {busy === "send" ? "Sending…" : personal ? "Send" : audience ? `Send to ${audience.count} ${audience.count === 1 ? "person" : "people"}` : "Send"}
         </button>
         {!tested && ready && <span className="text-xs text-cream-400">Tip: send yourself a test first.</span>}
       </div>
