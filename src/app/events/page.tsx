@@ -15,6 +15,30 @@ function dayLabel(iso: string) {
 // Re-check dates every hour so past events drop off automatically.
 export const revalidate = 3600;
 
+/** Photo highlights from past gatherings, one group per venue. */
+const PAST_HIGHLIGHTS = [
+  {
+    title: "Audrain",
+    photos: [PHOTOS.audrainCollection, PHOTOS.garageTalk, PHOTOS.trio],
+    layout: ["col-span-2 md:row-span-2", "md:col-span-2", "md:col-span-2"],
+  },
+  {
+    title: "University Club",
+    photos: [PHOTOS.universityClubRoom, PHOTOS.crowd, PHOTOS.membersMingle],
+    layout: ["col-span-2 md:row-span-2", "md:col-span-2", "md:col-span-2"],
+  },
+  {
+    title: "Newport",
+    photos: [PHOTOS.patio, PHOTOS.wristStack],
+    layout: ["row-span-2 md:col-span-2", "row-span-2 md:col-span-2"],
+  },
+  {
+    title: "Providence",
+    photos: [PHOTOS.providenceBarCrowd, PHOTOS.presentation, PHOTOS.providenceBarGallery],
+    layout: ["col-span-2 md:row-span-2", "md:row-span-2", "md:row-span-2"],
+  },
+];
+
 export const metadata: Metadata = {
   title: "Events & Gatherings",
   description: "Upcoming RIHOSO events, meetings, and horological gatherings in Rhode Island.",
@@ -151,17 +175,25 @@ export default function EventsPage() {
 
       <section className="py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal className="text-center mb-12">
+          <Reveal className="text-center mb-14">
             <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Past Gatherings</p>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">From Our Recent Events</h2>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">Past Event Highlights</h2>
             <OrnamentDivider className="mt-6" />
           </Reveal>
-          <Reveal>
-            <PhotoGallery
-              photos={[PHOTOS.presentation, PHOTOS.membersEvening, PHOTOS.movementDemo, PHOTOS.membersDinner, PHOTOS.demoConversation, PHOTOS.crowd]}
-              layout={["md:row-span-2", "md:col-span-2", "md:row-span-2", "md:col-span-2", "md:col-span-2", "md:col-span-2"]}
-            />
-          </Reveal>
+          <div className="space-y-16">
+            {PAST_HIGHLIGHTS.map((h) => (
+              <Reveal key={h.title}>
+                <div className="flex items-center gap-4 mb-6">
+                  <span className="flex items-center justify-center w-10 h-10 rounded-full border border-gold-400/50 text-gold-300 shrink-0">
+                    <Icon name="pin" className="w-5 h-5" />
+                  </span>
+                  <h3 className="font-display text-2xl sm:text-3xl text-cream-50">{h.title}</h3>
+                  <span aria-hidden="true" className="flex-1 h-px bg-gradient-to-r from-gold-400/40 to-transparent" />
+                </div>
+                <PhotoGallery photos={h.photos} layout={h.layout} />
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
