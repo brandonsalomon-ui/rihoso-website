@@ -64,6 +64,26 @@ export default function WatchmakingSchoolsPage() {
 
       <section id="map" className="relative py-16 sm:py-20 bg-forest-800 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="mb-14">
+            <Link
+              href="/watchmaking-clinic"
+              className="group card-lux rounded-xl px-6 py-8 sm:px-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left"
+            >
+              <span className="shrink-0 flex items-center justify-center w-16 h-16 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors duration-300">
+                <Icon name="tools" className="w-8 h-8" />
+              </span>
+              <span className="flex-1">
+                <span className="block text-gold-400 text-xs uppercase tracking-[0.3em] mb-1">New from RIHOSO</span>
+                <span className="block font-display text-2xl text-cream-50">Watchmaking Clinic for beginners</span>
+                <span className="block mt-2 text-cream-300 text-lg">
+                  Take a watch movement apart and put it back together with a RIHOSO watchmaker — for parties, corporate
+                  events, school outings and celebrations, at any location.
+                </span>
+              </span>
+              <Icon name="arrow" className="w-6 h-6 text-gold-400 shrink-0 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </Reveal>
+
           <SchoolsExplorer schools={SCHOOLS} home={MAP_POINTS.ri} mapBase={<MapBase />} />
 
           <Reveal className="mt-16">
