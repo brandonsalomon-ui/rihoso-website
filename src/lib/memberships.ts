@@ -1,12 +1,12 @@
 import "server-only";
 import { sendMemberEmail, sendNotification } from "@/lib/email";
-import { todayInRI, upcomingEvents } from "@/lib/events";
 import { formatUsd } from "@/lib/marketplace";
 import { COMMISSION } from "@/lib/marketplace";
 import { MEMBERSHIP_PRICE_CENTS, MEMBERSHIP_TERM_MONTHS } from "@/lib/membership";
 import { DUES_REFUND_DAYS } from "@/lib/policies";
 import { UserError } from "@/lib/orders";
 import { getStripe } from "@/lib/stripe";
+import { sendWelcomeEmail } from "@/lib/welcome-email";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
 
 export type Membership = {
@@ -31,17 +31,6 @@ export const REMINDER_DAYS = 14;
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { timeZone: "America/New_York", dateStyle: "long" });
-}
-
-/** The soonest upcoming event that's still taking RSVPs, for the welcome email's invitation. */
-function nextRsvpEvent() {
-  const today = todayInRI();
-  return upcomingEvents().find((e) => e.rsvp && e.rsvp.closesOn >= today) ?? null;
-}
-
-/** "Friday, November 20" from "2026-11-20". */
-function formatEventDay(ymd: string) {
-  return new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
 }
 
 function addMonths(date: Date, months: number) {
@@ -217,21 +206,7 @@ export async function finalizeMembershipCheckout(sessionId: string, base: string
     ],
   });
   if (email) {
-    const event = nextRsvpEvent();
-    await sendMemberEmail({
-      to: email,
-      subject: "Welcome to the Rhode Island Horological Society",
-      intro: `Thank you, ${row.full_name}. Your RIHOSO membership is active until ${formatDate(end.toISOString())}. It does not renew automatically — we'll email you before it ends. Your Watch Exchange selling fee is now 5%.`,
-      paragraphs: event
-        ? [
-            `You're invited to our next gathering, the ${event.title}:\n${event.date}, ${event.time}\n${event.location}`,
-            `Please RSVP by ${formatEventDay(event.rsvp!.closesOn)} so we can save you a place. You're welcome to bring a guest.`,
-            `Your account and the Watch Exchange are always at ${base}/marketplace/account.`,
-          ]
-        : [],
-      ctaLabel: event ? "RSVP for the event" : "Your account",
-      ctaUrl: event ? `${base}/events#rsvp-${event.rsvp!.slug}` : `${base}/marketplace/account`,
-    });
+    await sendWelcomeEmail({ to: email, fullName: row.full_name, memberUntil: formatDate(end.toISOString()), base });
   }
   return updated as Membership;
 }
