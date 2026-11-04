@@ -24,6 +24,8 @@ export const STATUS_LABEL: Record<PersonStatus, string> = {
 };
 
 export type Person = {
+  /** Site account id (absent for RSVP-only people). */
+  userId: string | null;
   email: string;
   name: string;
   phone: string;
@@ -88,6 +90,7 @@ export async function loadDirectory(): Promise<Person[]> {
     else if (latest) status = "expired";
     const display = (profile?.display_name as string | undefined) ?? "";
     people.set(u.email, {
+      userId: u.id,
       email: u.email,
       name: latest?.full_name || (display && display !== "Collector" ? display : ""),
       phone: latest?.phone ?? "",
@@ -109,6 +112,7 @@ export async function loadDirectory(): Promise<Person[]> {
       if (!p.phone && r.phone) p.phone = r.phone;
     } else {
       people.set(email, {
+        userId: null,
         email,
         name: r.full_name,
         phone: r.phone ?? "",

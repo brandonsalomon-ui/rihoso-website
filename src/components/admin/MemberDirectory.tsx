@@ -1,8 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import AdminButton from "@/components/exchange/AdminButton";
 
 export type DirectoryRow = {
+  userId: string | null;
+  /** Has a paid online membership, so the welcome letter can be (re)sent. */
+  canWelcome: boolean;
   email: string;
   name: string;
   phone: string;
@@ -86,7 +90,8 @@ export default function MemberDirectory({ rows }: { rows: DirectoryRow[] }) {
                 <th className="py-2 pr-4 font-normal">Email · phone</th>
                 <th className="py-2 pr-4 font-normal">Status</th>
                 <th className="py-2 pr-4 font-normal">Since</th>
-                <th className="py-2 font-normal">Member until</th>
+                <th className="py-2 pr-4 font-normal">Member until</th>
+                <th className="py-2 font-normal" />
               </tr>
             </thead>
             <tbody className="divide-y divide-forest-600/30">
@@ -103,7 +108,16 @@ export default function MemberDirectory({ rows }: { rows: DirectoryRow[] }) {
                     {r.events.length > 0 && <span className="block text-xs text-cream-400">RSVP: {r.events.join(", ")}</span>}
                   </td>
                   <td className="py-2 pr-4 text-cream-300 whitespace-nowrap">{r.since || "—"}</td>
-                  <td className="py-2 text-cream-300 whitespace-nowrap">{r.memberUntil || "—"}</td>
+                  <td className="py-2 pr-4 text-cream-300 whitespace-nowrap">{r.memberUntil || "—"}</td>
+                  <td className="py-2 text-right">
+                    {r.canWelcome && r.userId && (
+                      <AdminButton
+                        label="Send welcome letter"
+                        body={{ action: "send_welcome", id: r.userId }}
+                        confirmText={`Send the welcome letter to ${r.name || r.email}? You'll get a blind copy.`}
+                      />
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

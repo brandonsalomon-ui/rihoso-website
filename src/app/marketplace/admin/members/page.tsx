@@ -48,6 +48,8 @@ export default async function MembersAdminPage() {
 
   const eventName = new Map(EVENTS.filter((e) => e.rsvp).map((e) => [e.rsvp!.slug, e.shortTitle || e.title]));
   const rows: DirectoryRow[] = people.map((p) => ({
+    userId: p.userId,
+    canWelcome: Boolean(p.userId && p.memberUntil && (p.status === "active" || p.status === "approved")),
     email: p.email,
     name: p.name,
     phone: p.phone,

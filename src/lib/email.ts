@@ -6,6 +6,11 @@
 const DEFAULT_TO = "brandonsalomon@gmail.com";
 const DEFAULT_FROM = "RIHOSO Website <website@rihoso.com>";
 
+/** Brandon gets a blind copy of every welcome letter and RSVP confirmation. Override with COPY_TO_EMAIL (comma-separated). */
+export function brandonCopy() {
+  return (process.env.COPY_TO_EMAIL || "brandonsalomon@gmail.com").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -208,6 +213,7 @@ rihoso.com · info@rihoso.com`;
     body: JSON.stringify({
       from: process.env.FORM_FROM_EMAIL || DEFAULT_FROM,
       to: [to],
+      bcc: brandonCopy(),
       reply_to: "info@rihoso.com",
       subject: `You're on the list: ${eventTitle}`,
       html,
