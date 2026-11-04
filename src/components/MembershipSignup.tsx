@@ -2,7 +2,11 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { MEMBERSHIP_TIERS, type TierId } from "@/lib/membership";
+import { POLICIES } from "@/lib/policies";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/browser";
 import { GuillocheRosette, Icon, type IconName } from "./ornaments";
 
 const TIER_ICON: Record<string, IconName> = { member: "tradition" };
@@ -12,18 +16,123 @@ const inputClass =
 
 type Status = "idle" | "sending" | "sent" | "error";
 
+/** Name and phone kept for the few minutes it takes to confirm an email, so nobody retypes them. */
+const DRAFT_KEY = "rihoso-join-draft";
+type Draft = { name: string; phone: string };
+
+function readDraft(): Draft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    return null;
+  }
+}
+function saveDraft(d: Draft) {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {}
+}
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
+
 export default function MembershipSignup() {
   const [tier, setTier] = useState<TierId>(MEMBERSHIP_TIERS[0].id);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  // undefined = still checking; null = not signed in; string = the signed-in email.
+  const [account, setAccount] = useState<string | null | undefined>(undefined);
+  const [draft, setDraft] = useState<Draft>({ name: "", phone: "" });
+  const [codeFor, setCodeFor] = useState(""); // email a confirmation code was sent to
+  const [verifying, setVerifying] = useState(false);
 
   // Allow links like /memberships?tier=family#join to preselect a tier.
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get("tier");
     if (fromUrl && MEMBERSHIP_TIERS.some((t) => t.id === fromUrl)) setTier(fromUrl as TierId);
+    const saved = readDraft();
+    if (saved) setDraft(saved);
+    createClient()
+      .auth.getUser()
+      .then((res: { data: { user: { email?: string } | null } }) => setAccount(res.data.user?.email ?? null))
+      .catch(() => setAccount(null));
   }, []);
+
+  async function startCheckout(d: Draft) {
+    setStatus("sending");
+    setError("");
+    try {
+      const res = await fetch("/api/membership/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: d.name, phone: d.phone, tier, accept: true }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        setAccount(null);
+        throw new Error("Please confirm your email to continue.");
+      }
+      if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
+      clearDraft();
+      window.location.href = body.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setStatus("error");
+    }
+  }
+
+  async function sendCode(email: string, d: Draft) {
+    setStatus("sending");
+    setError("");
+    saveDraft(d);
+    // Implicit-flow client just for sending, so the emailed link also works in another browser.
+    const sender = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const { error } = await sender.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/memberships#join")}`,
+        data: {
+          display_name: d.name,
+          terms_version: POLICIES.terms.version,
+          privacy_version: POLICIES.privacy.version,
+        },
+      },
+    });
+    if (error) {
+      setError(error.message || "Couldn't send the confirmation email. Please try again.");
+      setStatus("error");
+      return;
+    }
+    setCodeFor(email);
+    setStatus("idle");
+  }
+
+  async function handleCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const token = String(new FormData(e.currentTarget).get("code") ?? "").replace(/\D/g, "");
+    if (token.length < 6) {
+      setError("Please enter the 6-digit code from the email.");
+      return;
+    }
+    setVerifying(true);
+    setError("");
+    const { error } = await createClient().auth.verifyOtp({ email: codeFor, token, type: "email" });
+    setVerifying(false);
+    if (error) {
+      setError("That code didn't work — it may have expired. Use “Send a new code” below.");
+      return;
+    }
+    setAccount(codeFor);
+    setCodeFor("");
+    await startCheckout(draft);
+  }
 
   function chooseTier(id: TierId) {
     setTier(id);
@@ -34,25 +143,14 @@ export default function MembershipSignup() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("sending");
-    setError("");
     const form = new FormData(e.currentTarget);
-    try {
-      const res = await fetch("/api/membership/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...Object.fromEntries(form.entries()), tier, accept: form.get("agree") === "on" }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (res.status === 401 && body.signIn) {
-        window.location.href = body.signIn;
-        return;
-      }
-      if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
-      window.location.href = body.url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-      setStatus("error");
+    if (String(form.get("website") ?? "")) return; // honeypot
+    const d: Draft = { name: String(form.get("name") ?? "").trim(), phone: String(form.get("phone") ?? "").trim() };
+    setDraft(d);
+    if (account) {
+      await startCheckout(d);
+    } else {
+      await sendCode(String(form.get("email") ?? "").trim(), d);
     }
   }
 
@@ -119,7 +217,7 @@ export default function MembershipSignup() {
         </h2>
         <p className="text-center text-cream-300 mb-10">
           Pay {selected.price} securely by card. Your membership starts right away, lasts 12 months and doesn&apos;t
-          renew automatically. You&apos;ll sign in with your email first if you haven&apos;t already.
+          renew automatically. We&apos;ll email you a 6-digit code to confirm your address before payment.
         </p>
 
         {status === "sent" ? (
@@ -130,6 +228,57 @@ export default function MembershipSignup() {
               shortly with next steps.
             </p>
           </div>
+        ) : codeFor ? (
+          <form onSubmit={handleCode} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8 text-center">
+            <h3 className="text-2xl font-display text-cream-50">Check your email</h3>
+            <p className="text-cream-300">
+              We sent a 6-digit code to <span className="text-cream-100">{codeFor}</span>. Enter it here to continue to
+              payment.
+            </p>
+            <input
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={8}
+              required
+              autoFocus
+              className={inputClass + " text-center text-2xl tracking-[0.5em]"}
+              placeholder="••••••"
+            />
+            {error && (
+              <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={verifying || status === "sending"}
+              className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
+            >
+              {verifying ? "Checking…" : status === "sending" ? "Opening secure payment…" : `Confirm and pay — ${selected.price}`}
+            </button>
+            <p className="text-sm text-cream-400">
+              No email? Check spam, or{" "}
+              <button
+                type="button"
+                onClick={() => sendCode(codeFor, draft)}
+                className="text-gold-400 hover:text-gold-300 underline"
+              >
+                send a new code
+              </button>{" "}
+              ·{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setCodeFor("");
+                  setError("");
+                }}
+                className="text-gold-400 hover:text-gold-300 underline"
+              >
+                use a different email
+              </button>
+            </p>
+          </form>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
             {MEMBERSHIP_TIERS.length > 1 && (
@@ -167,8 +316,42 @@ export default function MembershipSignup() {
               <label htmlFor="join-name" className="block text-sm text-cream-200 mb-1">
                 Full name
               </label>
-              <input ref={nameRef} id="join-name" name="name" type="text" autoComplete="name" required className={inputClass} placeholder="Your name" />
+              <input
+                ref={nameRef}
+                id="join-name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                maxLength={120}
+                defaultValue={draft.name}
+                key={`name-${draft.name}`}
+                className={inputClass}
+                placeholder="Your name"
+              />
             </div>
+
+            {account ? (
+              <p className="text-sm text-cream-300 bg-forest-800/60 border border-gold-400/20 rounded px-4 py-3">
+                Signed in as <span className="text-cream-100">{account}</span>. Your membership will be linked to this email.
+              </p>
+            ) : (
+              <div>
+                <label htmlFor="join-email" className="block text-sm text-cream-200 mb-1">
+                  Email
+                </label>
+                <input
+                  id="join-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={200}
+                  className={inputClass}
+                  placeholder="you@example.com"
+                />
+              </div>
+            )}
 
             <div>
               <label htmlFor="join-phone" className="block text-sm text-cream-200 mb-1">
@@ -181,6 +364,8 @@ export default function MembershipSignup() {
                 autoComplete="tel"
                 pattern="[0-9()+\-.\s]{7,}"
                 title="Please enter a valid phone number"
+                defaultValue={draft.phone}
+                key={`phone-${draft.phone}`}
                 className={inputClass}
                 placeholder="(401) 555-0123"
               />
@@ -212,10 +397,16 @@ export default function MembershipSignup() {
 
             <button
               type="submit"
-              disabled={status === "sending"}
+              disabled={status === "sending" || account === undefined}
               className="btn-gold w-full py-3 rounded font-semibold tracking-wide disabled:opacity-60"
             >
-              {status === "sending" ? "Opening secure payment…" : `Continue to payment — ${selected.price}`}
+              {status === "sending"
+                ? account
+                  ? "Opening secure payment…"
+                  : "Sending code…"
+                : account === null
+                  ? "Email me a code to continue"
+                  : `Continue to payment — ${selected.price}`}
             </button>
           </form>
         )}
