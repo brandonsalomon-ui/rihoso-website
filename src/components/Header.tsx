@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/repairs", label: "Repairs" },
   { href: "/blog", label: "Blog" },
   { href: "/watchmaking-schools", label: "Schools" },
+  { href: "/watchmaking-clinic", label: "Clinic" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/contact", label: "Contact" },
 ];

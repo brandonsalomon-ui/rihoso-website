@@ -205,8 +205,7 @@ export default function WatchmakingClinicPage() {
       <section className="relative py-20 sm:py-24 bg-forest-900 border-y border-gold-400/10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal className="text-center">
-            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Pricing</p>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">Simple, per person</h2>
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-50">Pricing</h2>
             <OrnamentDivider className="mt-6" />
           </Reveal>
           <div className="mt-14 grid md:grid-cols-2 gap-6">
