@@ -49,6 +49,7 @@ export default function Footer() {
               {[
                 { href: "/students", label: "Students & Schools" },
                 { href: "/watchmaking-schools", label: "Watchmaking Schools" },
+                { href: "/watchmaking-clinic", label: "Watchmaking Clinic" },
                 { href: "/sponsors", label: "Sponsors" },
                 { href: "/memberships#join", label: "Join Now" },
               ].map((link) => (
