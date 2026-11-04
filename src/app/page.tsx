@@ -12,13 +12,14 @@ import SocialFeed from "@/components/SocialFeed";
 import { PHOTOS } from "@/lib/photos";
 import { Gear, GuillocheRosette, Icon, WatchDial, type IconName } from "@/components/ornaments";
 
-const PILLARS: { label: string; icon: IconName }[] = [
-  { label: "Time", icon: "time" },
-  { label: "History", icon: "history" },
-  { label: "Art", icon: "art" },
-  { label: "Science", icon: "science" },
-  { label: "Education", icon: "education" },
-  { label: "Tradition", icon: "tradition" },
+// Homepage tiles: the motto's six icons, each linking to a section of the site.
+const PILLARS: { label: string; icon: IconName; href: string }[] = [
+  { label: "Repairs", icon: "time", href: "/repairs" },
+  { label: "About", icon: "history", href: "/about" },
+  { label: "Events", icon: "art", href: "/events" },
+  { label: "Blog", icon: "science", href: "/blog" },
+  { label: "Schools", icon: "education", href: "/watchmaking-schools" },
+  { label: "Watch Exchange", icon: "tradition", href: "/marketplace" },
 ];
 
 // Re-check dates every hour so past events drop off automatically.
@@ -108,12 +109,17 @@ export default function HomePage() {
           <ul className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-gold-400/10">
             {PILLARS.map((p, i) => (
               <Reveal as="li" key={p.label} delay={i * 90} className="group">
-                <div className="flex flex-col items-center gap-3 py-8 sm:py-10 text-center">
-                  <span className="flex items-center justify-center w-14 h-14 rounded-full border border-gold-400/30 text-gold-400 group-hover:border-gold-300 group-hover:bg-gold-400/10 group-hover:text-gold-200 transition-all duration-500 group-hover:-translate-y-1">
+                <Link
+                  href={p.href}
+                  className="flex flex-col items-center gap-3 py-8 sm:py-10 text-center focus:outline-none focus-visible:ring-1 focus-visible:ring-gold-400/60 rounded"
+                >
+                  <span className="flex items-center justify-center w-14 h-14 rounded-full border border-gold-400/30 text-gold-400 group-hover:border-gold-300 group-hover:bg-gold-400/10 group-hover:text-gold-200 group-focus-within:border-gold-300 group-focus-within:text-gold-200 transition-all duration-500 group-hover:-translate-y-1">
                     <Icon name={p.icon} className="w-7 h-7" />
                   </span>
-                  <span className="font-display text-cream-100 tracking-[0.15em] uppercase text-xs sm:text-sm">{p.label}</span>
-                </div>
+                  <span className="font-display text-cream-100 group-hover:text-gold-200 transition-colors duration-500 tracking-[0.15em] uppercase text-xs sm:text-sm">
+                    {p.label}
+                  </span>
+                </Link>
               </Reveal>
             ))}
           </ul>
