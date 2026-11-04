@@ -1,5 +1,5 @@
 import "server-only";
-import { escapeHtml } from "@/lib/email";
+import { brandonCopy, escapeHtml } from "@/lib/email";
 import { todayInRI } from "@/lib/events";
 
 /**
@@ -102,6 +102,7 @@ Your membership is active until ${memberUntil} and doesn't renew automatically â
   return {
     from: process.env.WELCOME_FROM_EMAIL || '"Brandon Salomon, RIHOSO" <membership@rihoso.com>',
     to: [to],
+    bcc: brandonCopy(),
     reply_to: "membership@rihoso.com",
     subject: "Welcome to RIHOSO â€” thank you for joining",
     html,

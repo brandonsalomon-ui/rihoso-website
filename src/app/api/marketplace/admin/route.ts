@@ -1,11 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { clean } from "@/lib/email";
-import { refundMembership } from "@/lib/memberships";
+import { formatDate, refundMembership } from "@/lib/memberships";
+import { sendWelcomeEmail } from "@/lib/welcome-email";
 import { UserError, approveReturn, getOrder, isAdmin, partialRefund, refundOrder, releaseOrder, verifyReceipt } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
 import { cancelServiceRequest, quoteRepair } from "@/lib/services";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -38,6 +39,23 @@ export async function POST(request: Request) {
 
   try {
     switch (action) {
+      case "send_welcome": {
+        // Re-sends the welcome letter to a member (e.g. someone who joined before the letter existed).
+        const { data: m } = await admin
+          .from("memberships")
+          .select("full_name, period_end")
+          .eq("user_id", id)
+          .eq("status", "paid")
+          .order("period_end", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!m) throw new UserError("No paid membership found for this person.");
+        const email = await getUserEmail(id);
+        if (!email) throw new UserError("This member has no email address on file.");
+        const sent = await sendWelcomeEmail({ to: email, fullName: m.full_name as string, memberUntil: formatDate(m.period_end as string), base });
+        if (!sent.ok) throw new UserError("The email service didn't accept it — try again in a minute.");
+        return NextResponse.json({ ok: true, sentTo: email });
+      }
       case "set_member": {
         const { error } = await admin.from("profiles").update({ is_member: data.value === true }).eq("id", id);
         if (error) throw error;
