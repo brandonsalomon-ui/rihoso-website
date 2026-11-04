@@ -7,6 +7,15 @@ export const COMMISSION = {
 } as const;
 
 /**
+ * Watch Exchange public launch. While false, the /marketplace browse page shows a "Coming this
+ * December" placeholder to the public (no listings grid or search). Sellers can still sign up and
+ * list watches, and admins see the full page, so the Exchange can be stocked before launch.
+ * Set to true to open it to everyone.
+ */
+export const EXCHANGE_LAUNCHED = false;
+export const EXCHANGE_LAUNCH_LABEL = "Coming this December";
+
+/**
  * Repairs: requests are quote-only — the customer describes the watch and RIHOSO replies with a price
  * or a call. Nothing is accepted for work until a written quote/service order is agreed (see the
  * Terms). Set to false to hide the repair offer and stop new requests (existing requests and

@@ -3,7 +3,8 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import ListingCard from "@/components/exchange/ListingCard";
-import { COMMISSION, REPAIRS_OPEN, SERVICES } from "@/lib/marketplace";
+import { COMMISSION, EXCHANGE_LAUNCHED, EXCHANGE_LAUNCH_LABEL, REPAIRS_OPEN, SERVICES } from "@/lib/marketplace";
+import { isAdmin } from "@/lib/orders";
 import { MEMBERSHIP_TIERS } from "@/lib/membership";
 import { LISTING_SELECT, type Listing } from "@/lib/exchange-types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -44,26 +45,66 @@ async function loadListings(q: string) {
     if (term) query = query.or(`brand.ilike.%${term}%,title.ilike.%${term}%,reference.ilike.%${term}%`);
   }
   const { data } = await query;
-  return { listings: (data ?? []) as unknown as Listing[], signedIn: Boolean(user) };
+  const admin = user ? await isAdmin(user.id) : false;
+  return { listings: (data ?? []) as unknown as Listing[], signedIn: Boolean(user), admin };
 }
 
 export default async function MarketplacePage({ searchParams }: { searchParams: { q?: string } }) {
   const live = isSupabaseConfigured();
   const q = (searchParams.q ?? "").slice(0, 60);
-  const { listings, signedIn } = live ? await loadListings(q) : { listings: [], signedIn: false };
+  const { listings, signedIn, admin } = live ? await loadListings(q) : { listings: [], signedIn: false, admin: false };
+  // Before launch the public sees a placeholder; admins see the real page to check stock.
+  const showListings = live && (EXCHANGE_LAUNCHED || admin);
 
   return (
     <>
       <PageHero
-        eyebrow={live ? "RIHOSO" : "Coming Soon"}
+        eyebrow={!live ? "Coming Soon" : EXCHANGE_LAUNCHED ? "RIHOSO" : EXCHANGE_LAUNCH_LABEL}
         title="Watch Exchange"
         subtitle="A marketplace for watches only — run by collectors, for collectors."
       />
       {live && <ExchangeNav signedIn={signedIn} />}
 
-      {live && (
+      {live && !EXCHANGE_LAUNCHED && !admin && (
+        <section className="py-16 sm:py-20 bg-forest-800">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="panel-lux rounded-xl p-10 sm:p-14">
+              <p className="text-gold-400 text-sm uppercase tracking-[0.25em] mb-4">{EXCHANGE_LAUNCH_LABEL}</p>
+              <h2 className="text-3xl sm:text-4xl font-display font-bold text-cream-50 mb-5">
+                The Watch Exchange opens in December
+              </h2>
+              <p className="text-cream-300 leading-relaxed max-w-xl mx-auto">
+                We&apos;re stocking the Exchange with watches from collectors and members first, so there&apos;s plenty to
+                browse on opening day. Have a watch to sell? Set up a seller account now and your listing will be
+                live the moment we open.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href={signedIn ? "/marketplace/listings/new" : "/marketplace/sell"}
+                  className="btn-gold inline-block px-8 py-3 font-semibold tracking-widest uppercase text-sm"
+                >
+                  List a watch early
+                </Link>
+                <Link
+                  href="/memberships#join"
+                  className="inline-block px-8 py-3 border border-gold-400/40 text-gold-300 hover:text-gold-200 hover:border-gold-400/70 tracking-widest uppercase text-sm"
+                >
+                  Become a member
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {showListings && (
         <section className="py-14 bg-forest-800">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            {!EXCHANGE_LAUNCHED && (
+              <p className="mb-8 rounded border border-gold-400/30 bg-forest-900/60 px-4 py-3 text-sm text-gold-300">
+                Admin preview — the public sees the “{EXCHANGE_LAUNCH_LABEL}” page until launch.
+              </p>
+            )}
             <form className="flex gap-3 max-w-xl mb-10" action="/marketplace">
               <input
                 name="q"
