@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
+import ClinicBookingForm from "@/components/ClinicBookingForm";
 import ClinicInquiryForm from "@/components/ClinicInquiryForm";
+import { CLINIC_PRICE } from "@/lib/clinic";
 import { PHOTOS } from "@/lib/photos";
 import { Gear, Icon, OrnamentDivider, type IconName } from "@/components/ornaments";
 
@@ -14,7 +16,11 @@ export const metadata: Metadata = {
 };
 
 /** Clinic pricing, per person. */
-const PRICE = { standard: 75, member: 50, minimum: 4 } as const;
+const PRICE = {
+  standard: CLINIC_PRICE.standardCents / 100,
+  member: CLINIC_PRICE.memberCents / 100,
+  minimum: CLINIC_PRICE.minimumSeats,
+} as const;
 
 const OCCASIONS: { title: string; text: string; icon: IconName }[] = [
   { title: "Parties & celebrations", text: "Birthdays, anniversaries and milestones with a story to tell.", icon: "users" },
@@ -87,8 +93,8 @@ export default function WatchmakingClinicPage() {
         imageFocus="50% 45%"
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="#inquire" className="btn-gold px-8 py-4 tracking-widest uppercase inline-flex items-center justify-center gap-2">
-            Plan your clinic
+          <a href="#book" className="btn-gold px-8 py-4 tracking-widest uppercase inline-flex items-center justify-center gap-2">
+            Book your clinic
             <Icon name="arrow" className="w-5 h-5" />
           </a>
           <a
@@ -216,7 +222,7 @@ export default function WatchmakingClinicPage() {
                   ${PRICE.standard}
                   <span className="text-cream-400 text-base font-body ml-2">per person</span>
                 </p>
-                <p className="mt-4 text-cream-300">{PRICE.minimum}-person minimum</p>
+                <p className="mt-4 text-cream-300">{PRICE.minimum}-person minimum (${PRICE.minimum * PRICE.standard})</p>
               </div>
             </Reveal>
             <Reveal delay={120} className="h-full">
@@ -226,7 +232,8 @@ export default function WatchmakingClinicPage() {
                   ${PRICE.member}
                   <span className="text-cream-400 text-base font-body ml-2">per person</span>
                 </p>
-                <p className="mt-4 text-cream-300">
+                <p className="mt-4 text-cream-300">For each guest who is a member</p>
+                <p className="mt-1 text-cream-300">
                   Not a member yet?{" "}
                   <Link href="/memberships#join" className="text-gold-400 hover:text-gold-300">
                     Join the Society
@@ -263,8 +270,8 @@ export default function WatchmakingClinicPage() {
                 </span>
               ))}
             </div>
-            <a href="#inquire" className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 tracking-widest uppercase text-sm">
-              Ask about gifting a clinic
+            <a href="#book" className="inline-flex items-center gap-2 mt-8 text-gold-400 hover:text-gold-300 tracking-widest uppercase text-sm">
+              Book a clinic as a gift
               <Icon name="arrow" className="w-4 h-4" />
             </a>
           </Reveal>
@@ -295,23 +302,55 @@ export default function WatchmakingClinicPage() {
         </section>
       )}
 
-      {/* Inquiry form */}
-      <section id="inquire" className="relative py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10 scroll-mt-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_1.4fr] gap-12 items-start">
-          <Reveal>
-            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Inquire</p>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl text-cream-50 font-bold leading-tight">Plan your clinic</h2>
+      {/* Booking & payment */}
+      <section id="book" className="relative py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10 scroll-mt-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_1.6fr] gap-12 items-start">
+          <Reveal className="lg:sticky lg:top-28">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Book</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl text-cream-50 font-bold leading-tight">Book your clinic</h2>
             <p className="mt-6 text-lg text-cream-200 leading-relaxed">
-              Tell us a little about your group and what you have in mind. We&apos;ll get back to you to find a date, a
-              location and a watchmaker.
+              List your guests, tell us where you&apos;d like to hold it, and pay securely online. We&apos;ll then be in touch
+              to set the date and introduce your watchmaker.
             </p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <ul className="mt-6 space-y-2 text-cream-300">
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gold-400 shrink-0" />
+                ${PRICE.standard} per person, {PRICE.minimum}-person minimum
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gold-400 shrink-0" />
+                ${PRICE.member} for each guest who is a RIHOSO member — we confirm it with a code sent to their email
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gold-400 shrink-0" />
+                Don&apos;t know every name yet? Leave it as TBD and tell us later
+              </li>
+            </ul>
+            <div className="mt-8 hidden lg:grid grid-cols-2 gap-4">
               <Framed photo={PHOTOS.movementDemo} className="aspect-[3/4]" sizes="(min-width: 1024px) 200px, 45vw" />
               <Framed photo={PHOTOS.gears} className="aspect-[3/4]" sizes="(min-width: 1024px) 200px, 45vw" />
             </div>
           </Reveal>
           <Reveal delay={150}>
             <div className="panel-lux rounded-xl p-6 sm:p-10 relative">
+              <ClinicBookingForm />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Questions first */}
+      <section id="inquire" className="py-16 sm:py-20 bg-forest-800 scroll-mt-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Questions first?</p>
+            <h2 className="mt-3 font-display text-2xl sm:text-3xl text-cream-50 font-bold">Send us an inquiry</h2>
+            <p className="mt-4 text-cream-300">
+              Planning a large group, a school program or something unusual? Tell us about it and we&apos;ll help you plan.
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="mt-10 panel-lux rounded-xl p-6 sm:p-10 relative">
               <ClinicInquiryForm />
             </div>
           </Reveal>

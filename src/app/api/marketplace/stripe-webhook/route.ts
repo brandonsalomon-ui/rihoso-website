@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { finalizeClinicCheckout } from "@/lib/clinic-bookings";
 import { finalizeMembershipCheckout } from "@/lib/memberships";
 import { finalizeCheckout } from "@/lib/orders";
 import { finalizeServiceCheckout } from "@/lib/services";
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object;
       if (session.metadata?.kind === "service") await finalizeServiceCheckout(session.id, siteUrl(request));
+      else if (session.metadata?.kind === "clinic") await finalizeClinicCheckout(session.id);
       else if (session.metadata?.kind === "membership") await finalizeMembershipCheckout(session.id, siteUrl(request));
       else await finalizeCheckout(session.id, siteUrl(request));
     }
