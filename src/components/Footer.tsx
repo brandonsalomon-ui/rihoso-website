@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { GuillocheRosette } from "./ornaments";
 import SocialIcons from "./SocialIcons";
+import { CONTACT } from "@/lib/contact";
 
 export default function Footer() {
   return (
@@ -17,6 +18,18 @@ export default function Footer() {
               Preserving the history, culture and traditions of watchmaking through local community
               outreach, support and continued education.
             </p>
+            <ul className="mt-6 space-y-1 font-body">
+              <li>
+                <a href={CONTACT.phoneHref} className="text-cream-200 hover:text-gold-400 transition-colors">
+                  {CONTACT.phone}
+                </a>
+              </li>
+              <li>
+                <a href={CONTACT.emailHref} className="text-cream-200 hover:text-gold-400 transition-colors">
+                  {CONTACT.email}
+                </a>
+              </li>
+            </ul>
             <SocialIcons className="mt-6" />
           </div>
 
@@ -25,6 +38,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/about", label: "About RIHOSO" },
+                { href: "/people", label: "Our People" },
                 { href: "/events", label: "Events" },
                 { href: "/memberships", label: "Memberships" },
                 { href: "/marketplace", label: "Watch Exchange" },

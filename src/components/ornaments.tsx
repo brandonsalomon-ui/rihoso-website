@@ -289,6 +289,12 @@ export function Icon({ name, className }: { name: IconName; className?: string }
           <path d="M3.5 6.5l8.5 6.5 8.5-6.5" />
         </svg>
       );
+    case "phone":
+      return (
+        <svg {...common}>
+          <path d="M5 3.5h3.2l1.6 4.2-2.1 1.4a11 11 0 005.2 5.2l1.4-2.1 4.2 1.6V17a2 2 0 01-2 2A15.5 15.5 0 013 5.5a2 2 0 012-2z" />
+        </svg>
+      );
     case "arrow":
       return (
         <svg {...common}>
@@ -306,6 +312,7 @@ export function Icon({ name, className }: { name: IconName; className?: string }
 
 export type IconName =
   | "time"
+  | "phone"
   | "history"
   | "art"
   | "science"

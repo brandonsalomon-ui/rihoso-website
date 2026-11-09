@@ -241,6 +241,21 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* People */}
+      <section className="py-16 sm:py-20 bg-forest-900 border-t border-gold-400/10">
+        <Reveal className="max-w-3xl mx-auto px-4 text-center">
+          <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Our people</p>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-cream-50">Meet the people behind RIHOSO</h2>
+          <p className="mt-4 text-lg text-cream-300">
+            Master watchmakers, horological experts, advisors and the volunteers who make our events happen.
+          </p>
+          <Link href="/people" className="btn-gold mt-8 inline-flex items-center gap-2 px-8 py-4 tracking-widest uppercase">
+            Our People
+            <Icon name="arrow" className="w-5 h-5" />
+          </Link>
+        </Reveal>
+      </section>
+
       {/* What we do */}
       <section className="py-20 sm:py-24 bg-forest-900/60 border-t border-gold-400/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
