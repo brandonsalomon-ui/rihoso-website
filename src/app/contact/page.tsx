@@ -7,6 +7,7 @@ import LiveDial from "@/components/LiveDial";
 import { Icon } from "@/components/ornaments";
 import { EVENTS } from "@/lib/events";
 import { SOCIAL } from "@/lib/social";
+import { CONTACT } from "@/lib/contact";
 import { FacebookIcon, InstagramIcon } from "@/components/SocialIcons";
 
 const MEETING = EVENTS.find((e) => e.recurring);
@@ -42,7 +43,7 @@ export default function ContactPage() {
     <PageHero
       eyebrow="Get in Touch"
       title="Contact Us"
-      subtitle="Have a question about RIHOSO, our events, or membership? We'd love to hear from you."
+      subtitle="Have a question about RIHOSO, our events, or membership? Call, email, or send us a message — we'd love to hear from you."
     />
     <section className="py-20 sm:py-24 bg-forest-800">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.5fr_1fr] gap-10 items-start">
@@ -173,18 +174,20 @@ export default function ContactPage() {
               <p className="mt-5 text-xs uppercase tracking-[0.3em] text-gold-400">Now in Rhode Island</p>
             )}
           </div>
-          <a
-            href="mailto:info@rihoso.com"
-            className="card-lux group rounded-xl p-6 flex items-center gap-4"
-          >
-            <span className="flex items-center justify-center w-12 h-12 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors">
-              <Icon name="mail" className="w-6 h-6" />
-            </span>
-            <span>
-              <span className="block text-xs uppercase tracking-[0.25em] text-cream-400">Email us directly</span>
-              <span className="block font-display text-lg text-gold-300">info@rihoso.com</span>
-            </span>
-          </a>
+          {[
+            { href: CONTACT.phoneHref, label: "Call us", value: CONTACT.phone, icon: "phone" as const },
+            { href: CONTACT.emailHref, label: "Email us directly", value: CONTACT.email, icon: "mail" as const },
+          ].map((c) => (
+            <a key={c.href} href={c.href} className="card-lux group rounded-xl p-6 flex items-center gap-4">
+              <span className="flex items-center justify-center w-12 h-12 rounded-full border border-gold-400/40 text-gold-400 group-hover:bg-gold-400 group-hover:text-forest-950 transition-colors">
+                <Icon name={c.icon} className="w-6 h-6" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs uppercase tracking-[0.25em] text-cream-400">{c.label}</span>
+                <span className="block font-display text-lg text-gold-300 break-words">{c.value}</span>
+              </span>
+            </a>
+          ))}
           {[
             { href: SOCIAL.instagram.url, label: "Instagram", value: `@${SOCIAL.instagram.handle}`, Glyph: InstagramIcon },
             { href: SOCIAL.facebook.url, label: "Facebook", value: "Rhode Island Horological Society", Glyph: FacebookIcon },
