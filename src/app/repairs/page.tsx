@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
 import { Gear, Icon } from "@/components/ornaments";
 import { EXCLUDED_REPAIR_BRANDS, REPAIRS_OPEN } from "@/lib/marketplace";
+import { PHOTOS, type Photo } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Watch Repair",
@@ -32,12 +34,24 @@ const STEPS = [
   },
 ];
 
-const SERVICES = [
-  { title: "Battery replacement", body: "A fresh battery, with seals checked so your quartz watch keeps running as it should." },
-  { title: "Crystals & gaskets", body: "Scratched or cracked crystals replaced, and worn gaskets renewed." },
-  { title: "Full service", body: "Complete overhaul of quartz, mechanical and automatic movements — cleaned, adjusted and regulated." },
-  { title: "Vintage & pocket watches", body: "Careful restoration of older pieces, with original character respected." },
+const SERVICES: { title: string; body: string; photo: Photo }[] = [
+  { title: "Battery replacement", body: "A fresh battery, with seals checked so your quartz watch keeps running as it should.", photo: PHOTOS.repairHandsAtWork },
+  { title: "Crystals & gaskets", body: "Scratched or cracked crystals replaced, and worn gaskets renewed.", photo: PHOTOS.repairCaseHolder },
+  { title: "Full service", body: "Complete overhaul of quartz, mechanical and automatic movements — cleaned, adjusted and regulated.", photo: PHOTOS.repairScrewdriver },
+  { title: "Vintage & pocket watches", body: "Careful restoration of older pieces, with original character respected.", photo: PHOTOS.repairPocketMovement },
 ];
+
+const GALLERY: Photo[] = [PHOTOS.repairLoupe, PHOTOS.repairTools, PHOTOS.repairGears];
+
+function Framed({ photo, className = "", sizes }: { photo: Photo; className?: string; sizes: string }) {
+  return (
+    <div className={`relative rounded-2xl p-[1px] bg-gradient-to-br from-gold-300/80 via-gold-500/30 to-gold-400/60 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.7)] ${className}`}>
+      <div className="relative w-full h-full rounded-[15px] overflow-hidden">
+        <Image src={photo.src} alt={photo.alt} fill sizes={sizes} className="object-cover" style={{ objectPosition: photo.focus }} />
+      </div>
+    </div>
+  );
+}
 
 export default function RepairsPage() {
   const brands = EXCLUDED_REPAIR_BRANDS.join(", ").replace(/, ([^,]*)$/, " and $1");
@@ -47,6 +61,8 @@ export default function RepairsPage() {
         eyebrow="Watch Repair"
         title="Effortless Shipping. Expert Care."
         subtitle={`Repair and servicing for every watch brand except ${brands} — from a fresh battery to a complete restoration.`}
+        image={PHOTOS.repairMovement.src}
+        imageFocus={PHOTOS.repairMovement.focus}
       >
         {REPAIRS_OPEN && (
           <Link href={QUOTE_HREF} className="btn-gold inline-flex items-center gap-2 px-8 py-3 tracking-widest uppercase">
@@ -85,10 +101,16 @@ export default function RepairsPage() {
           </Reveal>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {SERVICES.map((s) => (
-              <Reveal key={s.title}>
-                <div className="panel-lux rounded-xl p-7 h-full">
-                  <h3 className="font-display text-xl text-cream-50 mb-2">{s.title}</h3>
-                  <p className="text-sm text-cream-300 leading-relaxed">{s.body}</p>
+              <Reveal key={s.title} className="h-full">
+                <div className="panel-lux rounded-xl overflow-hidden h-full">
+                  <div className="relative aspect-[16/9]">
+                    <Image src={s.photo.src} alt={s.photo.alt} fill sizes="(min-width: 640px) 480px, 92vw" className="object-cover" style={{ objectPosition: s.photo.focus }} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950/70 to-transparent" />
+                  </div>
+                  <div className="p-7">
+                    <h3 className="font-display text-xl text-cream-50 mb-2">{s.title}</h3>
+                    <p className="text-sm text-cream-300 leading-relaxed">{s.body}</p>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -97,6 +119,22 @@ export default function RepairsPage() {
             Every repair is quoted in writing first. No work begins until you approve it, and please don&apos;t ship your
             watch until then.
           </p>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-forest-900 border-t border-gold-400/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">At the bench</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-cream-50">Careful hands, the right tools</h2>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {GALLERY.map((p, i) => (
+              <Reveal key={p.src} delay={i * 120}>
+                <Framed photo={p} className="aspect-[4/5]" sizes="(min-width: 640px) 360px, 92vw" />
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
