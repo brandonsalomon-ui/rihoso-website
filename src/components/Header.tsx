@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/memberships", label: "Memberships" },
   { href: "/marketplace", label: "Watch Exchange" },
   { href: "https://shop.rihoso.com", label: "Shop" },
+  { href: "/wolf", label: "WOLF" },
   { href: "/repairs", label: "Repairs" },
   { href: "/blog", label: "Blog" },
   { href: "/watchmaking-schools", label: "Schools" },
