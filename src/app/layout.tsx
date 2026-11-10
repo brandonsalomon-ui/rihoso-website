@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TikTokPixel from "@/components/TikTokPixel";
+import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,6 +47,9 @@ export default function RootLayout({
         <Header />
         <main className="min-h-screen pt-16 sm:pt-20">{children}</main>
         <Footer />
+        <Suspense fallback={null}>
+          <TikTokPixel />
+        </Suspense>
       </body>
     </html>
   );
