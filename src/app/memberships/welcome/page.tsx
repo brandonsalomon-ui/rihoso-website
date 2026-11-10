@@ -6,6 +6,7 @@ import PageHero from "@/components/PageHero";
 import { finalizeMembershipCheckout, formatDate } from "@/lib/memberships";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getUser } from "@/lib/supabase/server";
+import TikTokPurchase from "@/components/TikTokPurchase";
 
 export const metadata: Metadata = { title: "Welcome to RIHOSO", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -17,12 +18,14 @@ export default async function MembershipWelcome({ searchParams }: { searchParams
   if (!user || !/^cs_/.test(sessionId)) redirect("/memberships");
 
   let until: string | null = null;
+  let paidCents = 0;
   try {
     const host = headers().get("x-forwarded-host") ?? headers().get("host");
     const base = process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : "https://rihoso.com");
     const membership = await finalizeMembershipCheckout(sessionId, base);
     if (membership && membership.user_id === user.id && membership.status === "paid" && membership.period_end) {
       until = membership.period_end;
+      paidCents = membership.amount_cents;
     }
   } catch (err) {
     console.error("[membership] finalize failed", err);
@@ -35,6 +38,7 @@ export default async function MembershipWelcome({ searchParams }: { searchParams
         <div className="max-w-lg mx-auto px-4 text-center panel-lux rounded-xl p-8 space-y-4">
           {until ? (
             <>
+              <TikTokPurchase eventId={sessionId} value={paidCents / 100} contentId="membership" contentName="RIHOSO Membership" />
               <p className="text-cream-100 text-lg">Your membership is active until {formatDate(until)}.</p>
               <p className="text-cream-300 text-sm">
                 Your Watch Exchange selling fee is now 5%. Membership doesn&apos;t renew automatically — we&apos;ll email you

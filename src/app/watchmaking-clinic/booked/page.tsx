@@ -5,6 +5,7 @@ import PageHero from "@/components/PageHero";
 import { dollars } from "@/lib/clinic";
 import { finalizeClinicCheckout, type ClinicBooking } from "@/lib/clinic-bookings";
 import { isStripeConfigured } from "@/lib/stripe";
+import TikTokPurchase from "@/components/TikTokPurchase";
 
 export const metadata: Metadata = { title: "Clinic booked", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -28,6 +29,13 @@ export default async function ClinicBooked({ searchParams }: { searchParams: { s
         <div className="max-w-lg mx-auto px-4 text-center panel-lux rounded-xl p-8 space-y-4">
           {paid && booking ? (
             <>
+              <TikTokPurchase
+                eventId={sessionId}
+                value={booking.amount_cents / 100}
+                contentId="watchmaking-clinic"
+                contentName="Watchmaking Clinic"
+                quantity={booking.seats}
+              />
               <p className="text-cream-100 text-lg">
                 Thank you, {booking.full_name.split(/\s+/)[0]}. We&apos;ve received {dollars(booking.amount_cents)} for{" "}
                 {booking.seats} people.
