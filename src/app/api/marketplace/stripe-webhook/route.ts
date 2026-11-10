@@ -4,6 +4,7 @@ import { finalizeMembershipCheckout } from "@/lib/memberships";
 import { finalizeCheckout } from "@/lib/orders";
 import { finalizeServiceCheckout } from "@/lib/services";
 import { getStripe, siteUrl } from "@/lib/stripe";
+import { finalizeWolfCheckout } from "@/lib/wolf-orders";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       if (session.metadata?.kind === "service") await finalizeServiceCheckout(session.id, siteUrl(request));
       else if (session.metadata?.kind === "clinic") await finalizeClinicCheckout(session.id);
       else if (session.metadata?.kind === "membership") await finalizeMembershipCheckout(session.id, siteUrl(request));
+      else if (session.metadata?.kind === "wolf") await finalizeWolfCheckout(session.id);
       else await finalizeCheckout(session.id, siteUrl(request));
     }
   } catch (err) {
