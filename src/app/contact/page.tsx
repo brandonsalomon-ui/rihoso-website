@@ -8,6 +8,7 @@ import { Icon } from "@/components/ornaments";
 import { EVENTS } from "@/lib/events";
 import { SOCIAL } from "@/lib/social";
 import { CONTACT } from "@/lib/contact";
+import { trackTikTok } from "@/lib/tiktok";
 import { FacebookIcon, InstagramIcon } from "@/components/SocialIcons";
 
 const MEETING = EVENTS.find((e) => e.recurring);
@@ -31,6 +32,7 @@ export default function ContactPage() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "Something went wrong.");
       setSubmitted(true);
+      trackTikTok("Contact", { content_name: "Contact form" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { CLINIC_PRICE, dollars, OCCASIONS, priceGuests, TBD } from "@/lib/clinic";
+import { trackTikTok } from "@/lib/tiktok";
 
 const label = "block text-sm text-cream-200 mb-1";
 const inputClass =
@@ -109,6 +110,7 @@ export default function ClinicBookingForm() {
           codeId: g.member ? g.codeId : "",
         })),
       });
+      trackTikTok("InitiateCheckout", { content_name: "Watchmaking Clinic", content_type: "product", currency: "USD" });
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");

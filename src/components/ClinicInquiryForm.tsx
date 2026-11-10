@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { trackTikTok } from "@/lib/tiktok";
 
 const label = "block text-sm text-cream-200 mb-1";
 const inputClass =
@@ -33,6 +34,7 @@ export default function ClinicInquiryForm() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Something went wrong.");
       setDone(true);
+      trackTikTok("SubmitForm", { content_name: "Clinic inquiry" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

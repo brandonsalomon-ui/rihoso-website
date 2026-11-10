@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "./ornaments";
+import { trackTikTok } from "@/lib/tiktok";
 
 const inputClass =
   "w-full bg-forest-900/70 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -44,6 +45,7 @@ export default function EventRsvp({
       if (!res.ok) throw new Error(body.error || "Something went wrong.");
       setSentTo(String(form.get("email") ?? ""));
       setStatus("sent");
+      trackTikTok("SubmitForm", { content_name: "Event RSVP" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStatus("error");

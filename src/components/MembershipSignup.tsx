@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { MEMBERSHIP_TIERS, type TierId } from "@/lib/membership";
 import { POLICIES } from "@/lib/policies";
+import { trackTikTok } from "@/lib/tiktok";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/browser";
 import { GuillocheRosette, Icon, type IconName } from "./ornaments";
@@ -79,6 +80,7 @@ export default function MembershipSignup() {
       }
       if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
       clearDraft();
+      trackTikTok("InitiateCheckout", { content_name: "RIHOSO Membership", content_type: "product", currency: "USD" });
       window.location.href = body.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");

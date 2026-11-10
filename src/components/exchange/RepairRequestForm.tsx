@@ -7,6 +7,7 @@ import { CONTACT_METHODS, EXCLUDED_BRANDS_NOTE, REPAIR_RULES, excludedRepairBran
 import { createClient } from "@/lib/supabase/browser";
 import { REPAIR_PHOTO_BUCKET } from "@/lib/supabase/config";
 import { inputClass } from "./SignInForm";
+import { trackTikTok } from "@/lib/tiktok";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -100,6 +101,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Couldn't send the request.");
       setSentId(json.id);
+      trackTikTok("SubmitForm", { content_name: "Repair request" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
