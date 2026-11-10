@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/events", label: "Events" },
   { href: "/memberships", label: "Memberships" },
   { href: "/marketplace", label: "Watch Exchange" },
+  { href: "https://shop.rihoso.com", label: "Shop" },
   { href: "/repairs", label: "Repairs" },
   { href: "/blog", label: "Blog" },
   { href: "/watchmaking-schools", label: "Schools" },
@@ -47,7 +48,7 @@ export default function Header() {
             ))}
             <Link
               href="/memberships#join"
-              className="btn-gold ml-3 px-5 py-2 text-sm font-body tracking-widest uppercase"
+              className="btn-gold ml-3 px-5 py-2 text-sm font-body tracking-widest uppercase whitespace-nowrap"
             >
               Join Now
             </Link>
