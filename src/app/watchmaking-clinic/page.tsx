@@ -5,6 +5,7 @@ import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
 import ClinicBookingForm from "@/components/ClinicBookingForm";
 import ClinicInquiryForm from "@/components/ClinicInquiryForm";
+import TikTokViewContent from "@/components/TikTokViewContent";
 import { CLINIC_PRICE } from "@/lib/clinic";
 import { PHOTOS } from "@/lib/photos";
 import { Gear, Icon, OrnamentDivider, type IconName } from "@/components/ornaments";
@@ -85,6 +86,7 @@ function Framed({ photo, className = "", sizes }: { photo: (typeof PHOTOS)[keyof
 export default function WatchmakingClinicPage() {
   return (
     <>
+      <TikTokViewContent contentId="watchmaking-clinic" contentName="Watchmaking Clinic" value={CLINIC_PRICE.standardCents / 100} />
       <PageHero
         eyebrow="Education"
         title="Watchmaking Clinic"

@@ -43,6 +43,13 @@ function clearDraft() {
 export default function MembershipSignup() {
   const [tier, setTier] = useState<TierId>(MEMBERSHIP_TIERS[0].id);
   const [status, setStatus] = useState<Status>("idle");
+  const startedRef = useRef(false);
+  // TikTok "Add to cart": the first time someone starts filling in the join form.
+  const trackStarted = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackTikTok("AddToCart", { content_id: "membership", content_name: "RIHOSO Membership", content_type: "product", currency: "USD" });
+  };
   const [error, setError] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -80,7 +87,7 @@ export default function MembershipSignup() {
       }
       if (!res.ok || !body.url) throw new Error(body.error || "Something went wrong.");
       clearDraft();
-      trackTikTok("InitiateCheckout", { content_name: "RIHOSO Membership", content_type: "product", currency: "USD" });
+      trackTikTok("InitiateCheckout", { content_id: "membership", content_name: "RIHOSO Membership", content_type: "product", currency: "USD" });
       window.location.href = body.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -282,7 +289,7 @@ export default function MembershipSignup() {
             </p>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
+          <form onSubmit={handleSubmit} onFocusCapture={trackStarted} className="space-y-6 panel-lux rounded-xl p-6 sm:p-8">
             {MEMBERSHIP_TIERS.length > 1 && (
             <fieldset>
               <legend className="block text-sm text-cream-200 mb-2">Membership type</legend>

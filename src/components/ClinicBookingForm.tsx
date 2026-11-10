@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CLINIC_PRICE, dollars, OCCASIONS, priceGuests, TBD } from "@/lib/clinic";
 import { trackTikTok } from "@/lib/tiktok";
 
@@ -38,6 +38,13 @@ async function post(url: string, body: unknown) {
 export default function ClinicBookingForm() {
   const [guests, setGuests] = useState<Guest[]>(() => Array.from({ length: CLINIC_PRICE.minimumSeats }, blankGuest));
   const [occasion, setOccasion] = useState("");
+  const startedRef = useRef(false);
+  // TikTok "Add to cart": the first time someone starts filling in the booking form.
+  const trackStarted = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackTikTok("AddToCart", { content_id: "watchmaking-clinic", content_name: "Watchmaking Clinic", content_type: "product", currency: "USD" });
+  };
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
@@ -110,7 +117,7 @@ export default function ClinicBookingForm() {
           codeId: g.member ? g.codeId : "",
         })),
       });
-      trackTikTok("InitiateCheckout", { content_name: "Watchmaking Clinic", content_type: "product", currency: "USD" });
+      trackTikTok("InitiateCheckout", { content_id: "watchmaking-clinic", content_name: "Watchmaking Clinic", content_type: "product", currency: "USD" });
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -119,7 +126,7 @@ export default function ClinicBookingForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-8">
+    <form onSubmit={submit} onFocusCapture={trackStarted} className="space-y-8">
       {/* Contact */}
       <fieldset className="space-y-4">
         <legend className="font-display text-xl text-cream-50 mb-2">Your details</legend>

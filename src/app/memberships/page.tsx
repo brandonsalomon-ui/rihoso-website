@@ -5,6 +5,8 @@ import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
 import PhotoGallery from "@/components/PhotoGallery";
 import MembershipSignup from "@/components/MembershipSignup";
+import TikTokViewContent from "@/components/TikTokViewContent";
+import { MEMBERSHIP_PRICE_CENTS } from "@/lib/membership";
 import { PHOTOS, type Photo } from "@/lib/photos";
 import { Gear, Icon, OrnamentDivider, type IconName } from "@/components/ornaments";
 
@@ -74,6 +76,7 @@ function Framed({ photo, className = "", sizes }: { photo: Photo; className?: st
 export default function MembershipsPage() {
   return (
     <>
+      <TikTokViewContent contentId="membership" contentName="RIHOSO Membership" value={MEMBERSHIP_PRICE_CENTS / 100} />
       <PageHero
         eyebrow="Join the Society"
         title="Membership"
