@@ -73,9 +73,38 @@ function Framed({ photo, className = "", sizes }: { photo: Photo; className?: st
   );
 }
 
+/** States the real membership price for search engines and AI assistants. */
+const MEMBERSHIP_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "RIHOSO Membership",
+  description:
+    "Annual membership in the Rhode Island Horological Society: invitations to exclusive members-only events, watch parties and horological talks, monthly meetings, the newsletter, show-and-tell, member pricing on events and the Watchmaking Clinic, and a 5% Watch Exchange selling fee.",
+  brand: { "@type": "Organization", name: "Rhode Island Horological Society" },
+  image: "https://rihoso.com/rihoso-logo.jpeg",
+  url: "https://rihoso.com/memberships",
+  offers: {
+    "@type": "Offer",
+    price: (MEMBERSHIP_PRICE_CENTS / 100).toFixed(2),
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+    url: "https://rihoso.com/memberships",
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: (MEMBERSHIP_PRICE_CENTS / 100).toFixed(2),
+      priceCurrency: "USD",
+      referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "ANN" },
+    },
+  },
+};
+
 export default function MembershipsPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(MEMBERSHIP_JSON_LD) }}
+      />
       <TikTokViewContent contentId="membership" contentName="RIHOSO Membership" value={MEMBERSHIP_PRICE_CENTS / 100} />
       <PageHero
         eyebrow="Join the Society"
