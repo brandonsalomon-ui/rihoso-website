@@ -214,9 +214,14 @@ export default async function AdminPage() {
               <p className="text-gold-400 text-xs uppercase tracking-[0.2em]">RIHOSO only</p>
               <h1 className="font-display text-3xl text-cream-50">Watch Exchange Admin</h1>
             </div>
-            <Link href="/marketplace/admin/members" className="btn-gold px-4 py-2 rounded text-sm font-semibold">
-              Members &amp; email →
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/marketplace/admin/newsletter" className="btn-gold px-4 py-2 rounded text-sm font-semibold">
+                Newsletter →
+              </Link>
+              <Link href="/marketplace/admin/members" className="btn-gold px-4 py-2 rounded text-sm font-semibold">
+                Members &amp; email →
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

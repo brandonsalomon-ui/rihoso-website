@@ -215,12 +215,12 @@ export async function unsubscribe(email: string) {
 
 export type Message = { subject: string; body: string; ctaLabel?: string; ctaUrl?: string };
 
-const FROM = () => process.env.MEMBER_MAIL_FROM || "RIHOSO <membership@rihoso.com>";
-const REPLY_TO = () => process.env.MEMBER_MAIL_REPLY_TO || "membership@rihoso.com";
-const POSTAL = () =>
+export const FROM = () => process.env.MEMBER_MAIL_FROM || "RIHOSO <membership@rihoso.com>";
+export const REPLY_TO = () => process.env.MEMBER_MAIL_REPLY_TO || "membership@rihoso.com";
+export const POSTAL = () =>
   process.env.MAIL_POSTAL_ADDRESS || "Rhode Island Horological Society · 651 Putnam Pike, Greenville, RI 02828";
 
-function firstName(name: string) {
+export function firstName(name: string) {
   return name.trim().split(/\s+/)[0] || "friend";
 }
 

@@ -14,6 +14,8 @@ const NAV_ITEMS = [
   { href: "https://shop.rihoso.com", label: "Shop" },
   { href: "/repairs", label: "Repairs" },
   { href: "/blog", label: "Blog" },
+  // Desktop bar shows this only on wide screens (2xl) so the row fits on laptops; the menu always has it.
+  { href: "/newsletter", label: "Newsletter", wideOnly: true },
   { href: "/watchmaking-schools", label: "Schools" },
   { href: "/watchmaking-clinic", label: "Clinic" },
   { href: "/sponsors", label: "Sponsors" },
@@ -39,7 +41,7 @@ export default function Header() {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
-                className={`relative whitespace-nowrap px-2.5 2xl:px-3 py-2 text-sm font-body tracking-wide transition-colors duration-300 hover:text-gold-400 after:absolute after:left-2.5 after:right-2.5 2xl:after:left-3 2xl:after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-400 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100 ${
+                className={`${"wideOnly" in item && item.wideOnly ? "hidden 2xl:inline-block " : ""}relative whitespace-nowrap px-2.5 2xl:px-3 py-2 text-sm font-body tracking-wide transition-colors duration-300 hover:text-gold-400 after:absolute after:left-2.5 after:right-2.5 2xl:after:left-3 2xl:after:right-3 after:-bottom-0.5 after:h-px after:bg-gold-400 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100 ${
                   isActive(item.href) ? "text-gold-300 after:scale-x-100" : "text-cream-200 after:scale-x-0"
                 }`}
               >
