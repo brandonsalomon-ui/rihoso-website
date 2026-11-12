@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { finalizeMembershipCheckout, runMembershipHousekeeping } from "@/lib/memberships";
+import { runNewsletterHousekeeping } from "@/lib/newsletter";
 import { addBusinessDays } from "@/lib/business-days";
 import { finalizeCheckout, getOrder, notifyOrderEvent, refundOrder, releaseOrder } from "@/lib/orders";
 import { PICKUP_DAYS, RETURN_REVIEW_BUSINESS_DAYS } from "@/lib/policies";
@@ -8,6 +9,7 @@ import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 /**
  * Runs daily (Vercel Cron).
@@ -16,6 +18,7 @@ export const runtime = "nodejs";
  *  2a. Missed deadlines: tells buyers they can cancel late shipments; cancels and refunds pickups not done in 7 days.
  *  2b. Refunds approved returns 2 business days after verified delivery to the seller, unless the seller reported a problem.
  *  3. Membership renewal reminders, and ends the member fee rate when an online membership lapses.
+ *  4. The RIHOSO Monthly: emails an approved issue to members on its date; reminds Brandon about an unapproved draft.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -77,6 +80,13 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error("[cron] membership housekeeping failed", err);
     membership = { error: "failed" };
+  }
+  let newsletter: Awaited<ReturnType<typeof runNewsletterHousekeeping>> | { error: string };
+  try {
+    newsletter = await runNewsletterHousekeeping(base);
+  } catch (err) {
+    console.error("[cron] newsletter failed", err);
+    newsletter = { error: "failed" };
   }
 
   const nowIso = new Date().toISOString();
@@ -163,5 +173,5 @@ export async function GET(request: Request) {
       results[row.id] = "failed";
     }
   }
-  return NextResponse.json({ ok: true, confirmed, deadlines, results, membership });
+  return NextResponse.json({ ok: true, confirmed, deadlines, results, membership, newsletter });
 }

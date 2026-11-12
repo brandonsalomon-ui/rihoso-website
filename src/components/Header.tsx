@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "https://shop.rihoso.com", label: "Shop" },
   { href: "/repairs", label: "Repairs" },
   { href: "/blog", label: "Blog" },
+  { href: "/newsletter", label: "Newsletter" },
   { href: "/watchmaking-schools", label: "Schools" },
   { href: "/watchmaking-clinic", label: "Clinic" },
   { href: "/sponsors", label: "Sponsors" },
