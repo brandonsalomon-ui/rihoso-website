@@ -1,6 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
-import { sendMemberEmail, sendNotification, type EmailImage } from "@/lib/email";
+import { brandonCopy, sendMemberEmail, sendNotification, type EmailImage } from "@/lib/email";
 import { SERVICES, formatUsd } from "@/lib/marketplace";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
@@ -211,6 +211,8 @@ export async function quoteRepair(id: string, amountCents: number, note: string,
       quote: note || undefined,
       ctaLabel: "Review and pay",
       ctaUrl: `${base}/marketplace/requests/${id}`,
+      replyTo: "membership@rihoso.com",
+      bcc: brandonCopy(),
     });
 }
 

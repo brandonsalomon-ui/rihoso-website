@@ -12,6 +12,12 @@ export const runtime = "nodejs";
 /** Links in the notification email stay valid this long (RIHOSO may answer a few days later). */
 const EMAIL_PHOTO_LINK_SECONDS = 30 * 24 * 60 * 60;
 
+/** Also copied on every new repair request. Override with REPAIR_CC_EMAIL (comma-separated). */
+const REPAIR_CC = (process.env.REPAIR_CC_EMAIL || "membership@rihoso.com,hello@onvawatches.com")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 /**
  * Creates a repair request: watch details, the customer's description of the issue, photos and how
  * they'd like to be contacted. It's recorded and emailed to RIHOSO, who replies with a price or a call.
@@ -110,6 +116,7 @@ export async function POST(request: Request) {
       images: photos,
       subject: `Repair request: ${watch} — ${contactName} prefers ${method.toLowerCase()}`,
       replyTo: user.email,
+      cc: REPAIR_CC,
       rows: [
         ["Name", contactName],
         ["Best contact", contactMethod === "email" ? `Email — ${user.email}` : `${method} — ${contactPhone}`],
