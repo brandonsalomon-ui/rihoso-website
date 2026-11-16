@@ -7,6 +7,8 @@ import QuoteButton from "@/components/exchange/QuoteButton";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import { contactMethodLabel, formatUsd } from "@/lib/marketplace";
 import { repairPhotoUrls, repairWatchName } from "@/lib/services";
+import { jobStatusLabel } from "@/lib/repair-partner-rules";
+import type { RepairPartner, RepairQuote } from "@/lib/repair-partners";
 import { duesRefundCheck } from "@/lib/memberships";
 import { isAdmin } from "@/lib/orders";
 import { DUES_REFUND_DAYS } from "@/lib/policies";
@@ -124,7 +126,7 @@ export default async function AdminPage() {
   const ORDER_SELECT =
     "id, status, amount_cents, commission_cents, fulfillment, dispute_reason, disputed_at, created_at, auto_release_at, paid_at, ship_by, pickup_deadline, shipping_carrier, tracking_number, delivery_reported_at, handover_reported_at, return_approved_at, return_carrier, return_tracking, return_shipped_at, return_received_at, return_problem, decision_note, listings(id, title), buyer:profiles!orders_buyer_id_fkey(display_name), seller:profiles!orders_seller_id_fkey(display_name)";
 
-  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes, blogRes, rsvpRes] = await Promise.all([
+  const [disputesRes, ordersRes, sellersRes, requestsRes, emailsRes, membersRes, openRes, blogRes, rsvpRes, partnersRes, quotesRes] = await Promise.all([
     admin.from("orders").select(ORDER_SELECT).eq("status", "disputed").order("disputed_at", { ascending: true }),
     admin.from("orders").select(ORDER_SELECT).neq("status", "pending_payment").order("created_at", { ascending: false }).limit(50),
     admin
@@ -150,7 +152,24 @@ export default async function AdminPage() {
       .select("id, event_slug, full_name, email, phone, says_member, member_verified, guests, created_at")
       .order("created_at", { ascending: true })
       .limit(500),
+    admin
+      .from("repair_partners")
+      .select("id, user_id, business_name, contact_name, phone, website, city, address, blurb, status, amount_cents, paid_at, approved_at, period_end, refunded_at, created_at")
+      .neq("status", "pending_payment")
+      .order("created_at", { ascending: false }),
+    admin
+      .from("repair_quotes")
+      .select("id, request_id, partner_id, status, price_cents, includes, turnaround, warranty, dropoff, notes, quoted_at, selected_at, job_status, fee_cents, fee_paid_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500),
   ]);
+  const partners = (partnersRes.data ?? []) as RepairPartner[];
+  const partnerName = new Map(partners.map((p) => [p.id, p.business_name]));
+  const repairQuotes = (quotesRes.data ?? []) as RepairQuote[];
+  const quotesByRequest = new Map<string, RepairQuote[]>();
+  for (const q of repairQuotes) quotesByRequest.set(q.request_id, [...(quotesByRequest.get(q.request_id) ?? []), q]);
+  const awardedJobs = repairQuotes.filter((q) => q.status === "selected");
+  const feesDue = awardedJobs.filter((q) => !q.fee_paid_at).reduce((n, q) => n + (q.fee_cents ?? 0), 0);
   const rsvps = (rsvpRes.data ?? []) as RsvpRow[];
   const rsvpEvents = EVENTS.filter((e) => e.rsvp).map((e) => {
     const list = rsvps.filter((r) => r.event_slug === e.rsvp!.slug);
@@ -475,6 +494,93 @@ export default async function AdminPage() {
             </div>
           </Section>
 
+          <div id="repair-partners" className="scroll-mt-24">
+            <Section title="Repair partners" count={partners.filter((p) => p.status === "active").length}>
+              {partners.length ? (
+                <ul className="divide-y divide-forest-600/30">
+                  {partners.map((p) => (
+                    <li key={p.id} className="py-4 flex flex-wrap items-start justify-between gap-3">
+                      <div className="text-sm">
+                        <p className="text-cream-50 text-base">
+                          {p.business_name}{" "}
+                          <span
+                            className={`ml-2 text-xs uppercase tracking-widest ${
+                              p.status === "pending_approval" ? "text-gold-300" : p.status === "active" ? "text-green-300" : "text-cream-400"
+                            }`}
+                          >
+                            {p.status === "pending_approval" ? "Paid — waiting for your approval" : p.status}
+                          </span>
+                        </p>
+                        <p className="text-cream-300">
+                          {p.contact_name} · {emails.get(p.user_id) || "—"} · {p.phone ?? "—"} · {p.city ?? "—"}
+                          {p.website ? ` · ${p.website}` : ""}
+                        </p>
+                        {p.blurb && <p className="text-cream-400 mt-1">{p.blurb}</p>}
+                        <p className="text-xs text-cream-400 mt-1">
+                          {p.paid_at ? `Paid ${fmtDay(p.paid_at)}` : "Not paid"}
+                          {p.period_end ? ` · active until ${fmtDay(p.period_end)}` : ""}
+                          {p.refunded_at ? " · refunded" : ""}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {p.status === "pending_approval" && (
+                          <>
+                            <AdminButton label="Approve" variant="gold" body={{ action: "partner_approve", id: p.id }}
+                              confirmText={`Approve ${p.business_name} as a repair partner? Their year starts today and leads begin.`} />
+                            <AdminButton label="Decline & refund" variant="danger" body={{ action: "partner_decline", id: p.id }}
+                              promptText="Optional note to the workshop (leave blank for none):" />
+                          </>
+                        )}
+                        {p.status === "active" && (
+                          <AdminButton label="Pause leads" body={{ action: "partner_active", id: p.id, value: false }}
+                            confirmText={`Stop sending new leads to ${p.business_name}?`} />
+                        )}
+                        {p.status === "inactive" && (
+                          <AdminButton label="Resume leads" variant="gold" body={{ action: "partner_active", id: p.id, value: true }} />
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-cream-400 text-sm">
+                  No partners yet. Workshops apply at <Link href="/repair-partners#join" className="text-gold-400">rihoso.com/repair-partners</Link>.
+                </p>
+              )}
+
+              <h3 className="font-display text-xl text-cream-50 mt-8 mb-2">
+                Jobs &amp; referral fees <span className="text-gold-400 text-base">({formatUsd(feesDue)} due)</span>
+              </h3>
+              {awardedJobs.length ? (
+                <ul className="divide-y divide-forest-600/30 text-sm">
+                  {awardedJobs.map((q) => {
+                    const r = requests.find((x) => x.id === q.request_id);
+                    return (
+                      <li key={q.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-cream-200">
+                          <span className="text-cream-50">{partnerName.get(q.partner_id) ?? "Workshop"}</span>
+                          {" · "}
+                          {r ? repairWatchName(r) || "Repair" : "Repair"} · {formatUsd(q.price_cents ?? 0)} · {jobStatusLabel(q.job_status)}
+                          <span className="block text-xs text-cream-400">
+                            Chosen {q.selected_at ? fmtDay(q.selected_at) : ""} · fee {formatUsd(q.fee_cents ?? 0)}
+                            {q.fee_paid_at ? ` · paid ${fmtDay(q.fee_paid_at)}` : " · not paid yet"}
+                          </span>
+                        </span>
+                        <AdminButton
+                          label={q.fee_paid_at ? "Mark fee unpaid" : "Mark fee received"}
+                          variant={q.fee_paid_at ? "plain" : "gold"}
+                          body={{ action: "partner_fee_paid", id: q.id, value: !q.fee_paid_at }}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-cream-400 text-sm">No jobs awarded yet.</p>
+              )}
+            </Section>
+          </div>
+
           <Section title="Repair requests" count={openRequests.length}>
             {requests.length ? (
               <ul className="divide-y divide-forest-600/30">
@@ -528,11 +634,36 @@ export default async function AdminPage() {
                         ))}
                       </div>
                     ) : null}
+                    {quotesByRequest.get(r.id)?.length ? (
+                      <div className="mt-2 text-sm rounded border border-forest-600/40 p-3">
+                        <p className="text-xs uppercase tracking-widest text-gold-400 mb-1">Sent to partners</p>
+                        <ul className="space-y-1">
+                          {quotesByRequest.get(r.id)!.map((q) => (
+                            <li key={q.id} className="text-cream-200">
+                              {partnerName.get(q.partner_id) ?? "Workshop"}:{" "}
+                              <strong className="text-cream-50">
+                                {q.status === "quoted" || q.status === "selected" || q.status === "not_selected"
+                                  ? q.price_cents
+                                    ? formatUsd(q.price_cents)
+                                    : "—"
+                                  : q.status === "invited"
+                                    ? "waiting"
+                                    : q.status}
+                              </strong>
+                              {q.turnaround ? ` · ${q.turnaround}` : ""}
+                              {q.status === "selected" ? ` · CHOSEN · ${jobStatusLabel(q.job_status)}` : ""}
+                              {q.status === "not_selected" ? " · not chosen" : ""}
+                              {q.quoted_at ? <span className="text-xs text-cream-400"> · quoted {fmt(q.quoted_at)}</span> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                     {r.result_notes && <p className="text-sm text-gold-200 mt-1">Result: {r.result_notes}</p>}
                     {r.price_cents ? <p className="text-sm text-cream-200 mt-1">Price: {formatUsd(r.price_cents)}</p> : null}
                     {!["complete", "cancelled"].includes(r.status) && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {r.type === "repair" && ["requested", "awaiting_payment"].includes(r.status) && (
+                        {r.type === "repair" && !quotesByRequest.get(r.id)?.length && ["requested", "awaiting_payment"].includes(r.status) && (
                           <QuoteButton id={r.id} hasQuote={r.status === "awaiting_payment"} />
                         )}
                         {["paid"].includes(r.status) && (
