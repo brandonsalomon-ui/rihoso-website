@@ -212,7 +212,11 @@ export async function quoteRepair(id: string, amountCents: number, note: string,
       ctaLabel: "Review and pay",
       ctaUrl: `${base}/marketplace/requests/${id}`,
       replyTo: "membership@rihoso.com",
-      bcc: brandonCopy(),
+      // Blind copies, so the customer never sees the workshop's address. Same list as new repair requests.
+      bcc: [
+        ...brandonCopy(),
+        ...(process.env.REPAIR_CC_EMAIL || "membership@rihoso.com,hello@onvawatches.com").split(",").map((s) => s.trim()).filter(Boolean),
+      ],
     });
 }
 
