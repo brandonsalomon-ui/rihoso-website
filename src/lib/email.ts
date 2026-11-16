@@ -41,11 +41,14 @@ export async function sendNotification({
   subject,
   rows,
   replyTo,
+  cc = [],
   images = [],
 }: {
   subject: string;
   rows: [string, string][];
   replyTo?: string;
+  /** Extra addresses copied on the notification. */
+  cc?: string[];
   /** Photos to attach. Common web formats also appear in the body of the email. */
   images?: EmailImage[];
 }) {
@@ -93,6 +96,7 @@ export async function sendNotification({
       from: process.env.FORM_FROM_EMAIL || DEFAULT_FROM,
       to: (process.env.FORM_NOTIFY_EMAIL || DEFAULT_TO).split(",").map((s) => s.trim()),
       reply_to: replyTo,
+      ...(cc.length ? { cc } : {}),
       subject,
       html,
       text,
@@ -117,6 +121,8 @@ export async function sendMemberEmail({
   ctaLabel,
   ctaUrl,
   paragraphs = [],
+  replyTo,
+  bcc = [],
 }: {
   to: string;
   subject: string;
@@ -126,6 +132,9 @@ export async function sendMemberEmail({
   ctaUrl: string;
   /** Extra paragraphs shown after the intro (and quote), before the button. */
   paragraphs?: string[];
+  /** Where the customer's reply goes. */
+  replyTo?: string;
+  bcc?: string[];
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -147,6 +156,8 @@ export async function sendMemberEmail({
     body: JSON.stringify({
       from: process.env.EXCHANGE_FROM_EMAIL || process.env.FORM_FROM_EMAIL || "RIHOSO Watch Exchange <website@rihoso.com>",
       to: [to],
+      ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(bcc.length ? { bcc } : {}),
       subject,
       html,
       text,
