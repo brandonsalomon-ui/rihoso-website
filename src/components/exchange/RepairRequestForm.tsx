@@ -20,7 +20,19 @@ function extFor(file: File) {
 const label = "block text-sm text-cream-200 mb-1";
 const req = <span className="text-gold-400">*</span>;
 
-export default function RepairRequestForm({ userId, email }: { userId: string; email: string }) {
+type PartnerOption = { id: string; name: string; city: string | null };
+
+export default function RepairRequestForm({
+  userId,
+  email,
+  partners = [],
+}: {
+  userId: string;
+  email: string;
+  /** Active RIHOSO repair partners; when present, the customer chooses who quotes. */
+  partners?: PartnerOption[];
+}) {
+  const [chosen, setChosen] = useState<string[]>(partners.map((p) => p.id));
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [method, setMethod] = useState<ContactMethod>("email");
@@ -60,6 +72,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
     if (files.length < REPAIR_RULES.minPhotos) problems.push("at least one photo of the watch (dial and caseback help most)");
     if (!String(f.get("name") ?? "").trim()) problems.push("your name");
     if (method !== "email" && phone.replace(/\D/g, "").length < 7) problems.push("a phone number we can call or text");
+    if (partners.length && !chosen.length) problems.push("at least one workshop to quote");
     if (problems.length) {
       setError(`Please add ${problems.join("; ")}.`);
       return;
@@ -96,6 +109,7 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
           watchYear: Number.isFinite(year) ? year : null,
           description: issue,
           photoPaths,
+          partnerIds: partners.length ? chosen : [],
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -115,7 +129,9 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
       <div className="panel-lux rounded-xl p-8 text-center space-y-3" role="status">
         <h2 className="text-2xl font-display text-cream-50">Request received</h2>
         <p className="text-cream-300">
-          Thank you. RIHOSO will review your watch and get back to you {how} with a price or any questions.
+          {partners.length
+            ? `Thank you. Your request is with ${chosen.length === 1 ? "the workshop you chose" : `${chosen.length} RIHOSO repair partners`}. Their quotes will arrive by email over the next 48 hours; compare them on your request page and choose the one you prefer. Your contact details go only to the workshop you choose.`
+            : `Thank you. RIHOSO will review your watch and get back to you ${how} with a price or any questions.`}{" "}
           Please don&apos;t send the watch until you&apos;ve agreed to a written quote.
         </p>
         <Link href={`/marketplace/requests/${sentId}`} className="inline-block text-gold-400 hover:text-gold-300 text-sm">
@@ -182,8 +198,39 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
             </label>
           )}
         </div>
-        <p className="text-xs text-cream-400 mt-2">Photos are private — only you and RIHOSO can see them.</p>
+        <p className="text-xs text-cream-400 mt-2">
+          Photos are private — only you, RIHOSO{partners.length ? " and the workshops you choose to quote" : ""} can see them.
+        </p>
       </div>
+
+      {partners.length > 0 && (
+        <fieldset className="space-y-3">
+          <legend className="font-display text-xl text-cream-50 mb-1">Who should quote? {req}</legend>
+          <p className="text-sm text-cream-400">
+            Your request goes to the RIHOSO repair partners you tick. Compare their quotes side by side and choose one; only the
+            workshop you choose receives your contact details.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {partners.map((p) => {
+              const on = chosen.includes(p.id);
+              return (
+                <label key={p.id}
+                  className={`flex items-start gap-3 px-4 py-3 rounded border cursor-pointer text-sm ${
+                    on ? "border-gold-400 bg-gold-400/10 text-gold-100" : "border-forest-600/50 text-cream-200"
+                  }`}>
+                  <input type="checkbox" checked={on} className="mt-1 accent-gold-400"
+                    onChange={() => setChosen((c) => (on ? c.filter((x) => x !== p.id) : [...c, p.id]))} />
+                  <span>
+                    <span className="block text-cream-50">{p.name}</span>
+                    {p.city && <span className="block text-xs text-cream-400">{p.city}</span>}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <a href="/repair-partners" target="_blank" className="inline-block text-xs text-gold-400 hover:text-gold-300">About our repair partners →</a>
+        </fieldset>
+      )}
 
       <fieldset className="space-y-4">
         <legend className="font-display text-xl text-cream-50 mb-2">How should we reach you?</legend>
@@ -220,14 +267,17 @@ export default function RepairRequestForm({ userId, email }: { userId: string; e
       </fieldset>
 
       <p className="text-xs text-cream-400 leading-relaxed">
-        This is a request for a quote only. RIHOSO will review your description and photos and get back to you with a
-        price or a call. No work is agreed and nothing should be sent until you approve a written quote.
+        This is a request for a quote only.{" "}
+        {partners.length
+          ? "The workshops you choose review your description and photos and send a written quote; they may confirm or adjust it once they've examined the watch."
+          : "RIHOSO will review your description and photos and get back to you with a price or a call."}{" "}
+        No work is agreed and nothing should be sent until you approve a written quote.
       </p>
 
       {error && <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>}
 
       <button disabled={Boolean(busy)} className="btn-gold w-full py-3 rounded font-semibold disabled:opacity-60">
-        {busy || "Request a repair quote"}
+        {busy || (partners.length ? "Request quotes" : "Request a repair quote")}
       </button>
     </form>
   );
