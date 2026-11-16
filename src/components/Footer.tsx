@@ -67,6 +67,8 @@ export default function Footer() {
                 { href: "/watchmaking-clinic", label: "Watchmaking Clinic" },
                 { href: "/sponsors", label: "Sponsors" },
                 { href: "/memberships#join", label: "Join Now" },
+                { href: "/marketplace/account", label: "Member Sign In" },
+                { href: "/marketplace/admin", label: "Admin" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
