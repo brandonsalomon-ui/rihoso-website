@@ -94,3 +94,14 @@ export function nextMonthlyMeeting(now = new Date()) {
   }
   return null;
 }
+
+/** The dated event happening today in Rhode Island, if any (for "Sponsor Tonight's Event"). */
+export function tonightsEvent(now = new Date()) {
+  const today = todayInRI(now);
+  return EVENTS.find((e) => !e.recurring && e.endsOn === today) ?? null;
+}
+
+export function tonightsEventTitle(now = new Date()) {
+  const e = tonightsEvent(now);
+  return e ? e.shortTitle ?? e.title : null;
+}

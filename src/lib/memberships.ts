@@ -1,13 +1,15 @@
 import "server-only";
-import { sendMemberEmail, sendNotification } from "@/lib/email";
+import { brandonCopy, sendMemberEmail, sendNotification } from "@/lib/email";
 import { formatUsd } from "@/lib/marketplace";
 import { COMMISSION } from "@/lib/marketplace";
 import { MEMBERSHIP_PRICE_CENTS, MEMBERSHIP_TERM_MONTHS } from "@/lib/membership";
+import { POLICIES } from "@/lib/policies";
+import { SPONSOR_TERM_MONTHS, sponsorLevel, type SponsorLevelId } from "@/lib/sponsorship";
 import { DUES_REFUND_DAYS } from "@/lib/policies";
 import { UserError } from "@/lib/orders";
 import { getStripe } from "@/lib/stripe";
 import { sendWelcomeEmail } from "@/lib/welcome-email";
-import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
+import { createAdminClient, findOrCreateUserByEmail, getUserEmail } from "@/lib/supabase/admin";
 
 export type Membership = {
   id: string;
@@ -100,6 +102,66 @@ export async function startMembershipCheckout(userId: string, fullName: string, 
 }
 
 /**
+ * "Sponsor Tonight's Event": no sign-in needed (people pay from a QR code at the event). Finds or creates the
+ * account for their email, records a pending membership for the sponsorship amount and opens Stripe Checkout.
+ * Once paid, it becomes a SPONSOR_TERM_MONTHS membership.
+ */
+export async function startSponsorCheckout(
+  input: { email: string; fullName: string; phone: string; level: SponsorLevelId; recognizeAs: string; event: string },
+  base: string
+) {
+  const level = sponsorLevel(input.level);
+  if (!level) throw new UserError("Please choose a sponsorship level.");
+  if (!input.fullName) throw new UserError("Please enter your name.");
+  const userId = await findOrCreateUserByEmail(input.email, {
+    display_name: input.fullName,
+    terms_version: POLICIES.terms.version,
+    privacy_version: POLICIES.privacy.version,
+  });
+  const admin = createAdminClient();
+  const { data: row, error } = await admin
+    .from("memberships")
+    .insert({ user_id: userId, full_name: input.fullName, phone: input.phone || null, amount_cents: level.cents })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  const metadata = {
+    kind: "membership",
+    membership_id: row.id as string,
+    term_months: String(SPONSOR_TERM_MONTHS),
+    sponsor_level: level.id,
+    sponsor_event: input.event.slice(0, 200),
+    recognize_as: input.recognizeAs.slice(0, 120),
+  };
+  const session = await getStripe().checkout.sessions.create({
+    mode: "payment",
+    customer_email: input.email.trim().toLowerCase(),
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: level.cents,
+          product_data: {
+            name: `RIHOSO ${level.name}${input.event ? ` — ${input.event}` : ""}`.slice(0, 250),
+            description: `Includes a ${SPONSOR_TERM_MONTHS / 12}-year RIHOSO membership. Does not renew automatically.`,
+          },
+        },
+      },
+    ],
+    payment_intent_data: { description: `RIHOSO ${level.name} — ${input.fullName}`, metadata },
+    metadata,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+    success_url: `${base}/sponsor/thanks?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${base}/sponsor`,
+  });
+  await admin.from("memberships").update({ stripe_checkout_session_id: session.id }).eq("id", row.id);
+  if (!session.url) throw new Error("Stripe did not return a checkout URL");
+  return { url: session.url, userId, membershipId: row.id as string };
+}
+
+/**
  * Whether a paid membership qualifies for the 14-day dues refund: paid within DUES_REFUND_DAYS
  * and no member-rate Exchange sale paid since. (Member event use isn't tracked online — check by hand.)
  */
@@ -168,7 +230,9 @@ export async function finalizeMembershipCheckout(sessionId: string, base: string
   const now = new Date();
   const currentEnd = await currentMembershipEnd(row.user_id);
   const start = currentEnd && new Date(currentEnd) > now ? new Date(currentEnd) : now;
-  const end = addMonths(start, MEMBERSHIP_TERM_MONTHS);
+  const sponsor = sponsorLevel(session.metadata.sponsor_level);
+  const termMonths = sponsor && session.metadata.term_months === String(SPONSOR_TERM_MONTHS) ? SPONSOR_TERM_MONTHS : MEMBERSHIP_TERM_MONTHS;
+  const end = addMonths(start, termMonths);
 
   const { data: updated } = await admin
     .from("memberships")
@@ -193,20 +257,45 @@ export async function finalizeMembershipCheckout(sessionId: string, base: string
   await admin.from("profiles").update({ is_member: true }).eq("id", row.user_id);
 
   const email = await getUserEmail(row.user_id);
+  const memberUntil = formatDate(end.toISOString());
+  const event = session.metadata.sponsor_event || "";
+  const recognizeAs = session.metadata.recognize_as || "";
   await sendNotification({
-    subject: `New RIHOSO member: ${row.full_name}`,
+    subject: sponsor
+      ? `New event sponsor: ${row.full_name} — ${sponsor.name} (${formatUsd(row.amount_cents)})`
+      : `New RIHOSO member: ${row.full_name}`,
     replyTo: email ?? undefined,
     rows: [
       ["Name", row.full_name],
+      ...(sponsor
+        ? ([
+            ["Sponsorship", `${sponsor.name}${event ? ` — ${event}` : ""}`],
+            ["Recognize as", `${recognizeAs || "—"}${sponsor.id === "full" ? " (Full Sponsor: name at the event)" : ""}`],
+          ] as [string, string][])
+        : []),
       ["Email", email ?? ""],
       ["Phone", row.phone ?? ""],
       ["Paid", formatUsd(row.amount_cents)],
-      ["Member until", formatDate(end.toISOString())],
+      ["Member until", memberUntil],
       ["Admin", `${base}/marketplace/admin`],
     ],
   });
   if (email) {
-    await sendWelcomeEmail({ to: email, fullName: row.full_name, memberUntil: formatDate(end.toISOString()), base });
+    if (sponsor) {
+      await sendMemberEmail({
+        to: email,
+        subject: "Thank you for sponsoring RIHOSO",
+        intro: `Thank you, ${row.full_name.split(/\s+/)[0]}. Your ${formatUsd(row.amount_cents)} ${sponsor.name.toLowerCase()}ship${event ? ` of ${event}` : ""} is confirmed, and it includes a RIHOSO membership through ${memberUntil}.`,
+        paragraphs: [
+          "To use your member benefits on rihoso.com, sign in with this email address. We'll send you a 6-digit code; there's no password to remember.",
+        ],
+        ctaLabel: "Your RIHOSO account",
+        ctaUrl: `${base}/marketplace/account`,
+        replyTo: "membership@rihoso.com",
+        bcc: brandonCopy(),
+      });
+    }
+    await sendWelcomeEmail({ to: email, fullName: row.full_name, memberUntil, base });
   }
   return updated as Membership;
 }
