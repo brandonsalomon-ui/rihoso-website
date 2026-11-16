@@ -46,13 +46,24 @@ export default function SponsorsPage() {
                 Interested in supporting the Rhode Island Horological Society? We offer
                 multiple sponsorship tiers with visibility at events and on our website.
               </p>
-              <Link
-                href="/contact"
-                className="btn-gold relative inline-flex items-center gap-2 px-8 py-3 tracking-widest uppercase"
-              >
-                Get in Touch
-                <Icon name="arrow" className="w-4 h-4" />
-              </Link>
+              <div className="relative flex flex-wrap justify-center gap-4">
+                <Link
+                  href="/sponsor"
+                  className="btn-gold inline-flex items-center gap-2 px-8 py-3 tracking-widest uppercase"
+                >
+                  Sponsor Tonight&apos;s Event
+                  <Icon name="arrow" className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 px-8 py-3 tracking-widest uppercase rounded border border-cream-200/30 text-cream-100 hover:border-gold-400 hover:text-gold-200"
+                >
+                  Get in Touch
+                </Link>
+              </div>
+              <p className="relative mt-6 text-sm text-cream-400">
+                Event sponsorships: Partial $250 or Full $500, each with a 2-year RIHOSO membership.
+              </p>
             </div>
           </Reveal>
         </div>
