@@ -4,6 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import PayServiceButton from "@/components/exchange/PayServiceButton";
+import ChooseQuoteButton from "@/components/partners/ChooseQuoteButton";
+import { jobStatusLabel } from "@/lib/repair-partner-rules";
+import { fmtWhen, quotesForRequest } from "@/lib/repair-partners";
 import { SERVICES, contactMethodLabel, formatUsd } from "@/lib/marketplace";
 import { isAdmin } from "@/lib/orders";
 import { finalizeServiceCheckout, getServiceRequest, repairPhotoUrls, repairWatchName } from "@/lib/services";
@@ -52,6 +55,20 @@ export default async function RequestPage({
   const name = req.type === "validation" ? SERVICES.validation.name : SERVICES.repair.name;
   const watch = repairWatchName(req);
   const photos = await repairPhotoUrls(req.photo_paths).catch(() => [] as string[]);
+  const quotes = req.partner_mode ? await quotesForRequest(req.id).catch(() => []) : [];
+  const offered = quotes.filter((q) => q.status === "quoted");
+  const chosen = quotes.find((q) => q.status === "selected");
+  const waiting = quotes.filter((q) => q.status === "invited").length;
+  const isOwner = req.requester_id === user.id;
+  const statusText = !req.partner_mode
+    ? STATUS[req.status] ?? req.status
+    : req.status === "cancelled"
+      ? "Cancelled"
+      : chosen
+        ? `With ${chosen.repair_partners?.business_name ?? "your workshop"} — ${jobStatusLabel(chosen.job_status)}`
+        : offered.length
+          ? `${offered.length} quote${offered.length === 1 ? "" : "s"} ready — choose a workshop`
+          : "Waiting for workshop quotes";
 
   return (
     <>
@@ -71,10 +88,10 @@ export default async function RequestPage({
 
           <div className="panel-lux rounded-xl p-6 space-y-3">
             <p className="text-cream-100">
-              Status: <span className="text-gold-300 font-semibold">{STATUS[req.status] ?? req.status}</span>
+              Status: <span className="text-gold-300 font-semibold">{statusText}</span>
             </p>
             {req.price_cents ? <p className="text-cream-200">Price: {formatUsd(req.price_cents)}</p> : null}
-            {req.contact_method && (
+            {req.contact_method && !req.partner_mode && (
               <p className="text-sm text-cream-300">
                 We&apos;ll reach you by <span className="text-cream-100">{contactMethodLabel(req.contact_method).toLowerCase()}</span>
                 {req.contact_method !== "email" && req.contact_phone ? ` at ${req.contact_phone}` : ""}.
@@ -91,7 +108,7 @@ export default async function RequestPage({
                 ))}
               </div>
             ) : null}
-            {req.result_notes && (
+            {req.result_notes && !req.partner_mode && (
               <p className="text-sm text-cream-100 whitespace-pre-line border-l-2 border-gold-400 pl-3">{req.result_notes}</p>
             )}
             {req.refunded_at && <p className="text-sm text-cream-300">Refunded.</p>}
@@ -99,6 +116,69 @@ export default async function RequestPage({
               <PayServiceButton id={req.id} label={`Pay ${formatUsd(req.price_cents)}`} />
             )}
           </div>
+          {req.partner_mode && req.status !== "cancelled" && (
+            <div className="space-y-4">
+              {chosen ? (
+                <div className="panel-lux rounded-xl p-6 space-y-2 border border-gold-400/50">
+                  <p className="text-xs uppercase tracking-widest text-gold-400">Your workshop</p>
+                  <p className="font-display text-2xl text-cream-50">{chosen.repair_partners?.business_name}</p>
+                  <p className="text-cream-200">
+                    {formatUsd(chosen.price_cents ?? 0)} · {chosen.turnaround}
+                    {chosen.warranty ? ` · ${chosen.warranty} warranty` : ""}
+                  </p>
+                  <p className="text-sm text-cream-300 whitespace-pre-line">
+                    {[chosen.repair_partners?.address, chosen.repair_partners?.city, chosen.repair_partners?.phone, chosen.repair_partners?.website]
+                      .filter(Boolean)
+                      .join("\n")}
+                  </p>
+                  <p className="text-sm text-cream-400">
+                    They&apos;ll contact you to arrange drop-off or shipping. Progress: {jobStatusLabel(chosen.job_status)}.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <h2 className="font-display text-2xl text-cream-50">Compare quotes</h2>
+                  <p className="text-sm text-cream-300">
+                    {waiting > 0
+                      ? `${waiting} workshop${waiting === 1 ? " is" : "s are"} still reviewing your request${req.quotes_due_at ? ` (quotes requested by ${fmtWhen(req.quotes_due_at)})` : ""}. We'll email you as each quote arrives.`
+                      : offered.length
+                        ? "All quotes are in."
+                        : "No quotes yet."}{" "}
+                    Only the workshop you choose receives your contact details.
+                  </p>
+                  {offered.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {offered
+                        .slice()
+                        .sort((a, b) => (a.price_cents ?? 0) - (b.price_cents ?? 0))
+                        .map((q) => (
+                          <div key={q.id} className="card-lux rounded-xl p-5 flex flex-col gap-3">
+                            <div>
+                              <p className="text-cream-50 font-display text-xl">{q.repair_partners?.business_name}</p>
+                              {q.repair_partners?.city && <p className="text-xs text-cream-400">{q.repair_partners.city}</p>}
+                            </div>
+                            <p className="font-display text-3xl text-gold-foil">{formatUsd(q.price_cents ?? 0)}</p>
+                            <dl className="text-sm space-y-1">
+                              <div><dt className="inline text-cream-400">Turnaround: </dt><dd className="inline text-cream-100">{q.turnaround}</dd></div>
+                              <div><dt className="inline text-cream-400">Warranty: </dt><dd className="inline text-cream-100">{q.warranty || "—"}</dd></div>
+                              <div><dt className="inline text-cream-400">Drop-off: </dt><dd className="inline text-cream-100">{q.dropoff ? "Yes" : "Ship only"}</dd></div>
+                            </dl>
+                            <p className="text-sm text-cream-200 whitespace-pre-line">{q.includes}</p>
+                            {q.notes && <p className="text-sm text-cream-300 whitespace-pre-line border-l-2 border-gold-400/50 pl-3">{q.notes}</p>}
+                            {isOwner && (
+                              <div className="mt-auto pt-2">
+                                <ChooseQuoteButton quoteId={q.id} shop={q.repair_partners?.business_name ?? "this workshop"} price={formatUsd(q.price_cents ?? 0)} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-cream-400 leading-relaxed">
             Repairs are quoted in writing before any work begins, and nothing beyond the quote is done without your approval.
           </p>
