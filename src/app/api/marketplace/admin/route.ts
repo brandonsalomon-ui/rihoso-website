@@ -5,6 +5,7 @@ import { formatDate, refundMembership } from "@/lib/memberships";
 import { sendWelcomeEmail } from "@/lib/welcome-email";
 import { UserError, approveReturn, getOrder, isAdmin, partialRefund, refundOrder, releaseOrder, verifyReceipt } from "@/lib/orders";
 import { siteUrl } from "@/lib/stripe";
+import { approvePartner, declinePartner, markFeePaid, setPartnerActive } from "@/lib/repair-partners";
 import { cancelServiceRequest, quoteRepair } from "@/lib/services";
 import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
@@ -107,6 +108,22 @@ export async function POST(request: Request) {
       case "quote": {
         const cents = Math.round(parseFloat(String(data.amount ?? "").replace(/[$,]/g, "")) * 100);
         await quoteRepair(id, cents, clean(data.note, 4000), base);
+        break;
+      }
+      case "partner_approve": {
+        await approvePartner(id, base);
+        break;
+      }
+      case "partner_decline": {
+        await declinePartner(id, clean(data.note, 2000), base);
+        break;
+      }
+      case "partner_active": {
+        await setPartnerActive(id, data.value === true);
+        break;
+      }
+      case "partner_fee_paid": {
+        await markFeePaid(id, data.value === true);
         break;
       }
       case "cancel_service": {
