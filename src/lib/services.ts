@@ -29,10 +29,13 @@ export type ServiceRequest = {
   watch_reference: string | null;
   watch_year: number | null;
   photo_paths: string[];
+  /** Sent to RIHOSO repair partners to quote (instead of RIHOSO quoting itself). */
+  partner_mode: boolean;
+  quotes_due_at: string | null;
 };
 
 const COLUMNS =
-  "id, type, requester_id, listing_id, description, status, price_cents, stripe_checkout_session_id, stripe_payment_intent_id, result_notes, paid_at, refunded_at, created_at, contact_name, contact_phone, contact_method, watch_brand, watch_model, watch_reference, watch_year, photo_paths";
+  "id, type, requester_id, listing_id, description, status, price_cents, stripe_checkout_session_id, stripe_payment_intent_id, result_notes, paid_at, refunded_at, created_at, contact_name, contact_phone, contact_method, watch_brand, watch_model, watch_reference, watch_year, photo_paths, partner_mode, quotes_due_at";
 
 export async function getServiceRequest(id: string) {
   const { data } = await createAdminClient().from("service_requests").select(COLUMNS).eq("id", id).maybeSingle();
