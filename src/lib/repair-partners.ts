@@ -16,7 +16,7 @@ import {
 } from "@/lib/repair-partner-rules";
 import { getServiceRequest, repairWatchName } from "@/lib/services";
 import { getStripe } from "@/lib/stripe";
-import { createAdminClient, getUserEmail } from "@/lib/supabase/admin";
+import { createAdminClient, findOrCreateUserByEmail, getUserEmail } from "@/lib/supabase/admin";
 
 export type RepairPartner = {
   id: string;
@@ -96,11 +96,11 @@ export async function getPartner(id: string) {
 export async function quotesForRequest(requestId: string) {
   const { data } = await createAdminClient()
     .from("repair_quotes")
-    .select(`${QUOTE_COLUMNS}, repair_partners(business_name, city, website, phone, address, user_id)`)
+    .select(`${QUOTE_COLUMNS}, repair_partners(business_name, city, user_id)`)
     .eq("request_id", requestId)
     .order("created_at");
   return (data ?? []) as unknown as (RepairQuote & {
-    repair_partners: Pick<RepairPartner, "business_name" | "city" | "website" | "phone" | "address" | "user_id"> | null;
+    repair_partners: Pick<RepairPartner, "business_name" | "city" | "user_id"> | null;
   })[];
 }
 
@@ -296,6 +296,78 @@ export async function approvePartner(id: string, base: string) {
       replyTo: "membership@rihoso.com",
       bcc: brandonCopy(),
     });
+}
+
+/**
+ * Admin: adds a workshop as a partner at no charge (e.g. founding partners), active immediately until `through`.
+ * Creates their sign-in account from the email if they don't have one. After `through` they renew at the normal price.
+ */
+export async function addComplimentaryPartner(
+  d: {
+    email: string;
+    businessName: string;
+    contactName: string;
+    phone: string;
+    website: string;
+    city: string;
+    address: string;
+    blurb: string;
+    through: Date;
+    sendWelcome: boolean;
+  },
+  base: string
+) {
+  const userId = await findOrCreateUserByEmail(d.email, { display_name: d.contactName });
+  const admin = createAdminClient();
+  const existing = await getPartnerForUser(userId);
+  const now = new Date();
+  // Never shorten a year someone already paid for.
+  const periodEnd =
+    existing?.period_end && new Date(existing.period_end) > d.through ? new Date(existing.period_end) : d.through;
+  const row = {
+    business_name: d.businessName,
+    contact_name: d.contactName,
+    phone: d.phone || null,
+    website: d.website || null,
+    city: d.city || null,
+    address: d.address || null,
+    blurb: d.blurb || null,
+    status: "active",
+    approved_at: existing?.approved_at ?? now.toISOString(),
+    period_end: periodEnd.toISOString(),
+    refunded_at: null,
+  };
+  const { error } = existing
+    ? await admin
+        .from("repair_partners")
+        .update({ ...row, ...(existing.paid_at ? {} : { amount_cents: 0 }) })
+        .eq("id", existing.id)
+    : await admin.from("repair_partners").insert({ user_id: userId, ...row, amount_cents: 0 });
+  if (error) throw error;
+
+  let emailed = false;
+  if (d.sendWelcome) {
+    const renewFrom = new Date(periodEnd.getTime() - RENEW_WINDOW_DAYS * 86400000);
+    const res = await sendMemberEmail({
+      to: d.email,
+      subject: "You're a RIHOSO Repair Partner",
+      intro: `Welcome, ${d.businessName}. RIHOSO has added you as a Repair Partner, complimentary through ${formatDate(periodEnd.toISOString())}. When a customer asks you to quote on a repair, you'll get an email. Sign in to your partner dashboard with this email address (${d.email}) to see the photos and send your quote.`,
+      paragraphs: [
+        "Customers compare quotes side by side, so a clear description of what's included, your turnaround and your warranty matters as much as the price. Only the workshop the customer chooses receives their contact details.",
+        `RIHOSO's referral fee is included in your quoted price: ${FEE_SCHEDULE_TEXT}.`,
+        `To keep receiving requests after ${formatDate(periodEnd.toISOString())}, you can renew from your dashboard starting ${formatDate(renewFrom.toISOString())} (${formatUsd(PARTNER_PRICE_CENTS)} a year).`,
+      ],
+      ctaLabel: "Open your partner dashboard",
+      ctaUrl: `${base}/partner`,
+      replyTo: "membership@rihoso.com",
+      bcc: brandonCopy(),
+    }).catch((err) => {
+      console.error("[partners] welcome email failed", err);
+      return null;
+    });
+    emailed = Boolean(res?.ok);
+  }
+  return { emailed, periodEnd: periodEnd.toISOString() };
 }
 
 /** Admin: decline an application and refund it in full. */
@@ -498,9 +570,9 @@ export async function selectQuote(userId: string, quoteId: string, base: string)
         subject: `You chose ${partner.business_name} for your ${watch}`,
         intro: `Thank you. ${partner.business_name} will contact you by ${method.toLowerCase()} to arrange drop-off or shipping for your ${watch}, at the quoted ${formatUsd(quote.price_cents)}.`,
         paragraphs: [
-          [partner.address, partner.city, partner.phone, partner.website].filter(Boolean).join("\n"),
           "Please don't send the watch until you've spoken with the workshop. They'll confirm the final price once they've examined it, and nothing beyond the quote is done without your approval.",
-        ].filter(Boolean),
+          "Questions at any point? Reply to this email and RIHOSO will help.",
+        ],
         ctaLabel: "View your request",
         ctaUrl: `${base}/marketplace/requests/${req.id}`,
         replyTo: "membership@rihoso.com",

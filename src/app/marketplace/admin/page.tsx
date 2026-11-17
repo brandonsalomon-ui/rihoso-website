@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import AddPartnerForm from "@/components/admin/AddPartnerForm";
 import AdminButton from "@/components/exchange/AdminButton";
 import DecisionPanel from "@/components/exchange/DecisionPanel";
 import QuoteButton from "@/components/exchange/QuoteButton";
@@ -517,7 +518,7 @@ export default async function AdminPage() {
                         </p>
                         {p.blurb && <p className="text-cream-400 mt-1">{p.blurb}</p>}
                         <p className="text-xs text-cream-400 mt-1">
-                          {p.paid_at ? `Paid ${fmtDay(p.paid_at)}` : "Not paid"}
+                          {p.paid_at ? `Paid ${fmtDay(p.paid_at)}` : p.amount_cents === 0 ? "Complimentary" : "Not paid"}
                           {p.period_end ? ` · active until ${fmtDay(p.period_end)}` : ""}
                           {p.refunded_at ? " · refunded" : ""}
                         </p>
@@ -547,6 +548,7 @@ export default async function AdminPage() {
                   No partners yet. Workshops apply at <Link href="/repair-partners#join" className="text-gold-400">rihoso.com/repair-partners</Link>.
                 </p>
               )}
+              <AddPartnerForm defaultThrough={`${new Date().getFullYear()}-12-31`} />
 
               <h3 className="font-display text-xl text-cream-50 mt-8 mb-2">
                 Jobs &amp; referral fees <span className="text-gold-400 text-base">({formatUsd(feesDue)} due)</span>
