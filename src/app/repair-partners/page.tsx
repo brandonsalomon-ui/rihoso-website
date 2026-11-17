@@ -32,6 +32,7 @@ const TERMS = [
   `Customers choose which partners quote on their request. Please quote, or decline, within ${QUOTE_WINDOW_HOURS} hours.`,
   "Quotes include the price, what it covers, turnaround and warranty. You may confirm or adjust the price after examining the watch; the customer approves the final price.",
   `RIHOSO's referral fee is included in your quoted price: ${FEE_SCHEDULE_TEXT}. It's due on every job you're chosen for.`,
+  "Customers see your business name, city and description. Your phone, address, website and email are kept private to RIHOSO.",
   "You receive the customer's contact details only when they choose you. Please keep RIHOSO leads on RIHOSO and contact the customer within one business day.",
   "You're responsible for your work, pricing, warranty and the watch while it's in your care. RIHOSO introduces customers and isn't a party to the repair.",
   "RIHOSO doesn't take Rolex, Tudor or Patek Philippe repairs through this program.",
@@ -56,7 +57,7 @@ export default async function RepairPartnersPage() {
 
       <section className="py-16 sm:py-20 bg-forest-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <PartnerList partners={partners} />
+          <PartnerList partners={partners.map((p) => ({ id: p.id, business_name: p.business_name, city: p.city, blurb: p.blurb }))} />
         </div>
       </section>
 
