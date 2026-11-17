@@ -62,19 +62,19 @@ export default function PartnerSignupForm({ initial, buttonLabel }: { initial?: 
           <input id="rp-contact" name="contactName" required maxLength={120} autoComplete="name" defaultValue={initial?.contactName} className={inputClass} />
         </div>
         <div>
-          <label className={label} htmlFor="rp-phone">Business phone</label>
+          <label className={label} htmlFor="rp-phone">Business phone <span className="text-cream-400">(private — for RIHOSO only)</span></label>
           <input id="rp-phone" name="phone" type="tel" required maxLength={40} autoComplete="tel" defaultValue={initial?.phone} className={inputClass} placeholder="(401) 555-0123" />
         </div>
         <div className="sm:col-span-2">
-          <label className={label} htmlFor="rp-address">Shop address <span className="text-cream-400">(for drop-offs)</span></label>
+          <label className={label} htmlFor="rp-address">Shop address <span className="text-cream-400">(private — for RIHOSO only)</span></label>
           <input id="rp-address" name="address" maxLength={200} autoComplete="street-address" defaultValue={initial?.address} className={inputClass} />
         </div>
         <div>
-          <label className={label} htmlFor="rp-city">City / town</label>
+          <label className={label} htmlFor="rp-city">City / town <span className="text-cream-400">(shown to customers)</span></label>
           <input id="rp-city" name="city" required maxLength={80} defaultValue={initial?.city} className={inputClass} placeholder="Providence, RI" />
         </div>
         <div>
-          <label className={label} htmlFor="rp-web">Website <span className="text-cream-400">(optional)</span></label>
+          <label className={label} htmlFor="rp-web">Website <span className="text-cream-400">(optional, private)</span></label>
           <input id="rp-web" name="website" maxLength={200} defaultValue={initial?.website} className={inputClass} placeholder="example.com" />
         </div>
         <div className="sm:col-span-2">
