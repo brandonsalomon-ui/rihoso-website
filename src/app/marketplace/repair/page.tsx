@@ -4,6 +4,7 @@ import PageHero from "@/components/PageHero";
 import ExchangeNav from "@/components/exchange/ExchangeNav";
 import RepairRequestForm from "@/components/exchange/RepairRequestForm";
 import { EXCLUDED_BRANDS_NOTE, REPAIRS_OPEN, SERVICES } from "@/lib/marketplace";
+import { activePartners } from "@/lib/repair-partners";
 import { getUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Watch Repair", description: SERVICES.repair.summary };
@@ -12,9 +13,10 @@ export const dynamic = "force-dynamic";
 
 export default async function RepairPage() {
   const { user } = await getUser();
+  const partners = REPAIRS_OPEN ? await activePartners().catch(() => []) : [];
   return (
     <>
-      <PageHero eyebrow="Watch Repair" title="Get Your Free Quote" subtitle={`Tell us about your watch and we'll come back with a price. ${EXCLUDED_BRANDS_NOTE}`}>
+      <PageHero eyebrow="Watch Repair" title="Get Your Free Quote" subtitle={`Tell us about your watch and get quotes from RIHOSO's repair partners. ${EXCLUDED_BRANDS_NOTE}`}>
         <Link href="/repairs" className="text-gold-400 hover:text-gold-300 text-sm">How repairs work →</Link>
       </PageHero>
       <ExchangeNav signedIn={Boolean(user)} />
@@ -27,7 +29,11 @@ export default async function RepairPage() {
           ) : (
             <>
               {user?.email ? (
-                <RepairRequestForm userId={user.id} email={user.email} />
+                <RepairRequestForm
+                  userId={user.id}
+                  email={user.email}
+                  partners={partners.map((p) => ({ id: p.id, name: p.business_name, city: p.city }))}
+                />
               ) : (
                 <div className="panel-lux rounded-xl p-8 text-center">
                   <p className="text-cream-200 mb-6">Sign in with your email to request a repair quote — it only takes a moment.</p>

@@ -3,6 +3,7 @@ import { finalizeClinicCheckout } from "@/lib/clinic-bookings";
 import { finalizeDonationCheckout } from "@/lib/donations";
 import { finalizeMembershipCheckout } from "@/lib/memberships";
 import { finalizeCheckout } from "@/lib/orders";
+import { finalizePartnerCheckout } from "@/lib/repair-partners";
 import { finalizeServiceCheckout } from "@/lib/services";
 import { getStripe, siteUrl } from "@/lib/stripe";
 
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
       if (session.metadata?.kind === "service") await finalizeServiceCheckout(session.id, siteUrl(request));
       else if (session.metadata?.kind === "clinic") await finalizeClinicCheckout(session.id);
       else if (session.metadata?.kind === "membership") await finalizeMembershipCheckout(session.id, siteUrl(request));
+      else if (session.metadata?.kind === "repair_partner") await finalizePartnerCheckout(session.id, siteUrl(request));
       else if (session.metadata?.kind === "donation") await finalizeDonationCheckout(session.id);
       else await finalizeCheckout(session.id, siteUrl(request));
     }

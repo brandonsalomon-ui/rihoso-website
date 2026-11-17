@@ -7,6 +7,7 @@ import DisplayNameForm from "@/components/exchange/DisplayNameForm";
 import { formatUsd } from "@/lib/marketplace";
 import { getSellerAccount, syncSellerFromStripe } from "@/lib/sellers";
 import { isAdmin } from "@/lib/orders";
+import { getPartnerForUser } from "@/lib/repair-partners";
 import { isStripeConfigured } from "@/lib/stripe";
 import { getUser } from "@/lib/supabase/server";
 
@@ -86,6 +87,7 @@ export default async function AccountPage() {
   }[];
 
   const showAdmin = await isAdmin(user.id);
+  const partner = await getPartnerForUser(user.id).catch(() => null);
 
   return (
     <>
@@ -97,6 +99,12 @@ export default async function AccountPage() {
             <Link href="/marketplace/admin" className="block panel-lux rounded-xl px-6 py-4 border border-gold-400/40 hover:bg-gold-400/5">
               <span className="text-gold-300 font-semibold">RIHOSO admin →</span>
               <span className="block text-sm text-cream-400">Member approvals, problems & refunds, all orders, repair requests</span>
+            </Link>
+          )}
+          {partner && partner.status !== "pending_payment" && (
+            <Link href="/partner" className="block panel-lux rounded-xl px-6 py-4 border border-gold-400/40 hover:bg-gold-400/5">
+              <span className="text-gold-300 font-semibold">Repair partner dashboard →</span>
+              <span className="block text-sm text-cream-400">{partner.business_name}: repair requests, quotes and jobs</span>
             </Link>
           )}
           <div className="panel-lux rounded-xl p-6 sm:p-8">

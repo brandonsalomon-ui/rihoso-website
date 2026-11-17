@@ -4,7 +4,10 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import Reveal from "@/components/Reveal";
 import { Gear, Icon } from "@/components/ornaments";
+import PartnerList from "@/components/partners/PartnerList";
 import { EXCLUDED_REPAIR_BRANDS, REPAIRS_OPEN } from "@/lib/marketplace";
+import { activePartners } from "@/lib/repair-partners";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { PHOTOS, type Photo } from "@/lib/photos";
 
 export const metadata: Metadata = {
@@ -14,11 +17,13 @@ export const metadata: Metadata = {
 };
 
 const QUOTE_HREF = "/marketplace/repair";
+// Partner list refreshes every few minutes.
+export const revalidate = 300;
 
 const STEPS = [
   {
     title: "Get Your Free Quote",
-    body: "A simple, guided form helps you describe the issue and add a few photos. We review it and come back with a price — by email, phone or text, whichever you prefer.",
+    body: "A simple, guided form helps you describe the issue and add a few photos. Choose which RIHOSO repair partners should quote, then compare their prices side by side and pick the one you prefer.",
   },
   {
     title: "Ship Your Way",
@@ -53,7 +58,8 @@ function Framed({ photo, className = "", sizes }: { photo: Photo; className?: st
   );
 }
 
-export default function RepairsPage() {
+export default async function RepairsPage() {
+  const partners = isSupabaseConfigured() ? await activePartners().catch(() => []) : [];
   const brands = EXCLUDED_REPAIR_BRANDS.join(", ").replace(/, ([^,]*)$/, " and $1");
   return (
     <>
@@ -135,6 +141,25 @@ export default function RepairsPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section id="partners" className="py-20 sm:py-24 bg-forest-800 border-t border-gold-400/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-10">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Trusted local workshops</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-cream-50">Our Repair Partners</h2>
+            <p className="mt-4 text-cream-300 max-w-2xl mx-auto">
+              Independent workshops vetted by RIHOSO. You choose who quotes, compare prices, turnaround and warranty side by
+              side, and only the workshop you choose receives your contact details.
+            </p>
+          </Reveal>
+          <PartnerList partners={partners} />
+          <p className="text-center mt-8 text-sm">
+            <Link href="/repair-partners" className="text-gold-400 hover:text-gold-300">Read about our repair partners →</Link>
+            <span className="text-cream-400 mx-3">·</span>
+            <Link href="/repair-partners#join" className="text-gold-400 hover:text-gold-300">Become a Repair Partner →</Link>
+          </p>
         </div>
       </section>
 

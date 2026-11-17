@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clean, sendMemberEmail, sendNotification } from "@/lib/email";
 import { CONTACT_METHODS, EXCLUDED_BRANDS_NOTE, REPAIRS_OPEN, REPAIR_RULES, contactMethodLabel, excludedRepairBrand, type ContactMethod } from "@/lib/marketplace";
 import { UserError } from "@/lib/orders";
+import { activePartners, invitePartners } from "@/lib/repair-partners";
 import { repairPhotoAttachments, repairPhotoUrls, repairWatchName } from "@/lib/services";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -70,6 +71,14 @@ export async function POST(request: Request) {
   if (contactMethod !== "email" && contactPhone.replace(/\D/g, "").length < 7) problems.push("a phone number to call or text");
   if (problems.length) return NextResponse.json({ error: `Please add ${problems.join(", ")}.` }, { status: 400 });
 
+  // When RIHOSO has active repair partners, the customer chooses which of them quote (at least one).
+  const partners = await activePartners().catch(() => []);
+  const requested = Array.isArray(data.partnerIds) ? data.partnerIds.filter((x): x is string => typeof x === "string") : [];
+  const chosenPartners = partners.filter((p) => requested.includes(p.id));
+  if (partners.length && !chosenPartners.length) {
+    return NextResponse.json({ error: "Please choose at least one workshop to quote." }, { status: 400 });
+  }
+
   if (listingId) {
     // Visibility check runs as the user, so they can only reference listings they can see.
     const { data: listing } = await supabase.from("listings").select("id").eq("id", listingId).maybeSingle();
@@ -112,12 +121,23 @@ export async function POST(request: Request) {
       }),
     ]);
 
+    if (chosenPartners.length) {
+      await invitePartners(created.id, chosenPartners, base).catch((err) =>
+        console.error("[service-requests] partner invitations failed", { id: created.id, err })
+      );
+    }
+    const partnerNames = chosenPartners.map((p) => p.business_name).join(", ");
+
     const notified = await sendNotification({
       images: photos,
-      subject: `Repair request: ${watch} — ${contactName} prefers ${method.toLowerCase()}`,
+      subject: chosenPartners.length
+        ? `Repair request sent to ${chosenPartners.length} partner${chosenPartners.length === 1 ? "" : "s"}: ${watch} — ${contactName}`
+        : `Repair request: ${watch} — ${contactName} prefers ${method.toLowerCase()}`,
       replyTo: user.email,
-      cc: REPAIR_CC,
+      // In the partner program, the customer's details stay with RIHOSO until they choose a workshop.
+      cc: chosenPartners.length ? ["membership@rihoso.com"] : REPAIR_CC,
       rows: [
+        ...(chosenPartners.length ? ([["Sent to", partnerNames]] as [string, string][]) : []),
         ["Name", contactName],
         ["Best contact", contactMethod === "email" ? `Email — ${user.email}` : `${method} — ${contactPhone}`],
         ["Email", user.email],
@@ -125,7 +145,7 @@ export async function POST(request: Request) {
         ["Watch", watch],
         ["The issue", description],
         ["Photos", photoLinks.length ? photoLinks.map((u, i) => `Photo ${i + 1}: ${u}`).join("\n") : `${photoPaths.length} attached — see the request`],
-        ["Send a quote", `${base}/marketplace/admin`],
+        [chosenPartners.length ? "Admin" : "Send a quote", `${base}/marketplace/admin`],
         ["Request", `${base}/marketplace/requests/${created.id}`],
       ],
     });
@@ -134,7 +154,9 @@ export async function POST(request: Request) {
     await sendMemberEmail({
       to: user.email,
       subject: "We received your RIHOSO repair request",
-      intro: `Thank you, ${contactName.split(/\s+/)[0]}. We've received your request for the ${watch} and will get back to you by ${method.toLowerCase()} with a price or any questions. Please don't send the watch until you've agreed to a written quote.`,
+      intro: chosenPartners.length
+        ? `Thank you, ${contactName.split(/\s+/)[0]}. Your request for the ${watch} has gone to ${partnerNames}. Their quotes will arrive by email over the next 48 hours; compare them on your request page and choose the workshop you prefer. Only the workshop you choose receives your contact details. Please don't send the watch until you've agreed to a written quote.`
+        : `Thank you, ${contactName.split(/\s+/)[0]}. We've received your request for the ${watch} and will get back to you by ${method.toLowerCase()} with a price or any questions. Please don't send the watch until you've agreed to a written quote.`,
       quote: description,
       ctaLabel: "View your request",
       ctaUrl: `${base}/marketplace/requests/${created.id}`,
