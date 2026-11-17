@@ -154,7 +154,7 @@ export default async function RepairsPage() {
               side, and only the workshop you choose receives your contact details.
             </p>
           </Reveal>
-          <PartnerList partners={partners} />
+          <PartnerList partners={partners.map((p) => ({ id: p.id, business_name: p.business_name, city: p.city, blurb: p.blurb }))} />
           <p className="text-center mt-8 text-sm">
             <Link href="/repair-partners" className="text-gold-400 hover:text-gold-300">Read about our repair partners →</Link>
             <span className="text-cream-400 mx-3">·</span>
