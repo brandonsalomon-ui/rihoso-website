@@ -9,6 +9,7 @@ import Reveal from "@/components/Reveal";
 import LiveDial from "@/components/LiveDial";
 import PhotoGallery from "@/components/PhotoGallery";
 import SocialFeed from "@/components/SocialFeed";
+import DonateForm from "@/components/DonateForm";
 import { PHOTOS } from "@/lib/photos";
 import { Gear, GuillocheRosette, Icon, WatchDial, type IconName } from "@/components/ornaments";
 
@@ -87,6 +88,12 @@ export default function HomePage() {
             >
               Become a Member
             </Link>
+            <a
+              href="#donate"
+              className="px-8 py-4 border border-gold-400/60 text-gold-300 font-body text-lg tracking-widest uppercase hover:border-gold-400 hover:text-gold-200 hover:bg-gold-400/10 transition-colors duration-300"
+            >
+              Donate
+            </a>
             <Link
               href="/about"
               className="px-8 py-4 border border-cream-300/30 text-cream-200 font-body text-lg tracking-widest uppercase hover:border-gold-400 hover:text-gold-400 hover:bg-gold-400/5 transition-colors duration-300"
@@ -336,6 +343,25 @@ export default function HomePage() {
             </Link>
           </Reveal>
         </div>
+      </section>
+
+      {/* General donation, any amount */}
+      <section id="donate" className="scroll-mt-24 pt-24 px-4 sm:px-6 lg:px-8">
+        <Reveal className="max-w-5xl mx-auto grid md:grid-cols-[1fr_1.1fr] gap-10 items-center">
+          <div className="text-center md:text-left">
+            <p className="text-gold-400 text-sm uppercase tracking-[0.3em]">Support RIHOSO</p>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl text-cream-50 font-bold leading-tight">
+              Make a <span className="text-gold-foil">gift</span>
+            </h2>
+            <p className="mt-6 text-lg text-cream-300 leading-relaxed">
+              Every gift, of any size, supports scholarships, hands-on education for the next generation of watchmakers,
+              and the work of preserving horology in Rhode Island.
+            </p>
+          </div>
+          <div className="panel-lux rounded-xl p-6 sm:p-8">
+            <DonateForm />
+          </div>
+        </Reveal>
       </section>
 
       {/* Membership CTA */}
