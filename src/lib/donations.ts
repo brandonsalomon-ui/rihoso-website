@@ -10,6 +10,7 @@ import { getStripe } from "@/lib/stripe";
 export const DONATION_MIN_CENTS = 500; // $5 — keeps card-testing bots from using the form for $1 probes
 export const DONATION_MAX_CENTS = 2_500_000; // $25,000 — larger gifts by contacting the society
 export const LEGAL_NAME = "Rhode Island Horological Society";
+export const EIN = "92-1472556";
 
 export function dollars(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -98,7 +99,7 @@ async function sendThankYou(d: Donation) {
   const paragraphs = [
     `Dear ${first},`,
     `Thank you for your generous gift of ${dollars(d.amountCents)} to the ${LEGAL_NAME}. Every dollar goes toward our scholarships, our education programs for the next generation of watchmakers, and the work of keeping horology alive here in Rhode Island.`,
-    `Please keep this email for your records: the ${LEGAL_NAME} received your contribution of ${dollars(d.amountCents)} on ${date}. No goods or services were provided in exchange for this contribution.`,
+    `Please keep this email for your records: the ${LEGAL_NAME} (EIN ${EIN}) received your contribution of ${dollars(d.amountCents)} on ${date}. No goods or services were provided in exchange for this contribution.`,
     "We hope to see you at an upcoming gathering.",
     "With gratitude,\nBrandon Salomon\nFounder, Rhode Island Horological Society",
   ];
