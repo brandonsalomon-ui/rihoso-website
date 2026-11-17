@@ -126,13 +126,10 @@ export default async function RequestPage({
                     {formatUsd(chosen.price_cents ?? 0)} · {chosen.turnaround}
                     {chosen.warranty ? ` · ${chosen.warranty} warranty` : ""}
                   </p>
-                  <p className="text-sm text-cream-300 whitespace-pre-line">
-                    {[chosen.repair_partners?.address, chosen.repair_partners?.city, chosen.repair_partners?.phone, chosen.repair_partners?.website]
-                      .filter(Boolean)
-                      .join("\n")}
-                  </p>
+                  {chosen.repair_partners?.city && <p className="text-sm text-cream-300">{chosen.repair_partners.city}</p>}
                   <p className="text-sm text-cream-400">
-                    They&apos;ll contact you to arrange drop-off or shipping. Progress: {jobStatusLabel(chosen.job_status)}.
+                    They&apos;ll contact you to arrange drop-off or shipping. Progress: {jobStatusLabel(chosen.job_status)}. Questions? Email{" "}
+                    <a href="mailto:membership@rihoso.com" className="text-gold-400 hover:text-gold-300">membership@rihoso.com</a>.
                   </p>
                 </div>
               ) : (
