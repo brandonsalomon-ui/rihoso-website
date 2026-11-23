@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { SPONSOR_LEVELS, SPONSOR_TERM_MONTHS, type SponsorLevelId } from "@/lib/sponsorship";
 import { GuillocheRosette } from "./ornaments";
+import SpamNotice from "@/components/SpamNotice";
 
 const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -122,6 +123,7 @@ export default function SponsorTonightForm() {
           </p>
         )}
 
+        <SpamNotice />
         <button type="submit" disabled={sending} className="btn-gold w-full py-4 rounded font-semibold tracking-wide text-lg disabled:opacity-60">
           {sending ? "Opening secure payment…" : `Sponsor — ${selected.price}`}
         </button>

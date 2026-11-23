@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { trackTikTok } from "@/lib/tiktok";
+import SpamNotice from "@/components/SpamNotice";
 
 const label = "block text-sm text-cream-200 mb-1";
 const inputClass =
@@ -90,6 +91,7 @@ export default function ClinicInquiryForm() {
 
       {error && <p className="text-sm text-red-300">{error}</p>}
 
+      <SpamNotice />
       <button
         type="submit"
         disabled={sending}

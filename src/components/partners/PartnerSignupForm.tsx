@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { inputClass } from "@/components/exchange/SignInForm";
+import SpamNotice from "@/components/SpamNotice";
 
 type Initial = {
   businessName?: string;
@@ -91,6 +92,7 @@ export default function PartnerSignupForm({ initial, buttonLabel }: { initial?: 
 
       {error && <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>}
 
+      <SpamNotice />
       <button type="submit" disabled={sending} className="btn-gold w-full py-3 rounded font-semibold disabled:opacity-60">
         {sending ? "Opening secure payment…" : buttonLabel}
       </button>
