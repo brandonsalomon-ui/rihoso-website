@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "./ornaments";
 import { trackTikTok } from "@/lib/tiktok";
+import SpamNotice from "@/components/SpamNotice";
 
 const inputClass =
   "w-full bg-forest-900/70 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -156,6 +157,7 @@ export default function EventRsvp({
             </p>
           )}
 
+          <SpamNotice />
           <div className="flex flex-wrap items-center gap-4">
             <button type="submit" disabled={status === "sending"} className="btn-gold px-8 py-3 rounded font-semibold tracking-wide disabled:opacity-60">
               {status === "sending" ? "Sending…" : "Send RSVP"}

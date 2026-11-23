@@ -9,6 +9,7 @@ import { trackTikTok } from "@/lib/tiktok";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/browser";
 import { GuillocheRosette, Icon, type IconName } from "./ornaments";
+import SpamNotice from "@/components/SpamNotice";
 
 const TIER_ICON: Record<string, IconName> = { member: "tradition" };
 
@@ -404,6 +405,7 @@ export default function MembershipSignup() {
               </p>
             )}
 
+            <SpamNotice />
             <button
               type="submit"
               disabled={status === "sending" || account === undefined}

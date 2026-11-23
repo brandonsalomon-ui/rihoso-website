@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useState } from "react";
+import SpamNotice from "@/components/SpamNotice";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const TIMES = ["After school (3–5 pm)", "Early evening (5–7 pm)", "Evening (7–9 pm)", "Weekend daytime"];
@@ -205,6 +206,7 @@ export default function StudentInterestForm() {
       </p>
 
       {error && <p className="text-sm text-red-300" role="alert">{error}</p>}
+      <SpamNotice />
       <button disabled={sending} className="btn-gold w-full px-8 py-4 tracking-widest uppercase disabled:opacity-60">
         {sending ? "Sending…" : "Send"}
       </button>

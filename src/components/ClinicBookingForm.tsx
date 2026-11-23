@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import { CLINIC_PRICE, dollars, OCCASIONS, priceGuests, TBD } from "@/lib/clinic";
 import { trackTikTok } from "@/lib/tiktok";
+import SpamNotice from "@/components/SpamNotice";
 
 const label = "block text-sm text-cream-200 mb-1";
 const inputClass =
@@ -370,6 +371,7 @@ export default function ClinicBookingForm() {
 
       {error && <p className="text-sm text-red-300">{error}</p>}
 
+      <SpamNotice />
       <button type="submit" disabled={sending} className="btn-gold w-full px-8 py-4 tracking-widest uppercase disabled:opacity-60">
         {sending ? "Opening secure payment…" : `Pay ${dollars(price.totalCents)} & book`}
       </button>
