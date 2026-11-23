@@ -10,6 +10,7 @@ import { SOCIAL } from "@/lib/social";
 import { CONTACT } from "@/lib/contact";
 import { trackTikTok } from "@/lib/tiktok";
 import { FacebookIcon, InstagramIcon } from "@/components/SocialIcons";
+import SpamNotice from "@/components/SpamNotice";
 
 const MEETING = EVENTS.find((e) => e.recurring);
 
@@ -148,6 +149,7 @@ export default function ContactPage() {
               </p>
             )}
 
+            <SpamNotice />
             <button
               type="submit"
               disabled={sending}
