@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { REPAIR_PHOTO_BUCKET } from "@/lib/supabase/config";
 import { inputClass } from "./SignInForm";
 import { trackTikTok } from "@/lib/tiktok";
+import SpamNotice from "@/components/SpamNotice";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -276,6 +277,7 @@ export default function RepairRequestForm({
 
       {error && <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>}
 
+      <SpamNotice />
       <button disabled={Boolean(busy)} className="btn-gold w-full py-3 rounded font-semibold disabled:opacity-60">
         {busy || (partners.length ? "Request quotes" : "Request a repair quote")}
       </button>

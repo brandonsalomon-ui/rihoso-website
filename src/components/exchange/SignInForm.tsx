@@ -6,6 +6,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/browser";
 import { POLICIES } from "@/lib/policies";
+import SpamNotice from "@/components/SpamNotice";
 
 export const inputClass =
   "w-full bg-forest-800 border border-forest-600/50 rounded px-4 py-3 text-cream-100 placeholder-cream-400 focus:outline-none focus:border-gold-400/60 transition-colors";
@@ -121,6 +122,7 @@ export default function SignInForm({ next }: { next: string }) {
       {error && (
         <p className="text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded px-4 py-3" role="alert">{error}</p>
       )}
+      <SpamNotice />
       <button type="submit" disabled={status === "sending"} className="btn-gold w-full py-3 rounded font-semibold disabled:opacity-60">
         {status === "sending" ? "Sending…" : "Email me a sign-in link"}
       </button>
