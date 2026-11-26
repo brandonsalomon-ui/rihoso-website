@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { EVENTS, todayInRI } from "@/lib/events";
-import { addWriterPhoto, cleanSections, firstOfMonth, getIssueBySlug, listAllIssues, notifyDraftReady, type Newsletter } from "@/lib/newsletter";
+import { addWriterPhoto, cleanSections, firstOfMonth, getIssueBySlug, listAllIssues, newsletterPhotoUrl, notifyDraftReady, type Newsletter } from "@/lib/newsletter";
 import { sectionDef } from "@/lib/newsletter-sections";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -42,6 +42,12 @@ export async function GET(request: Request) {
       status: i.status,
       title: i.title,
       covered: i.sections.map((s) => ({ section: s.key, label: sectionDef(s.key)?.label, title: s.title })),
+      // Photos already in each section, so the writer only fills empty slots and doesn't repeat one.
+      photos: i.sections.map((s) => ({
+        section: s.key,
+        slots: sectionDef(s.key)?.photos ?? 0,
+        photos: s.photos.map((p) => ({ url: newsletterPhotoUrl(p.path), caption: p.caption, credit: p.credit })),
+      })),
     })),
     events: EVENTS.map((e) => ({
       title: e.title,
