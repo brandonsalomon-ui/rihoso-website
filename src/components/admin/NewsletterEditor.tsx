@@ -296,7 +296,7 @@ export default function NewsletterEditor({
                 type="button"
                 disabled={Boolean(busy)}
                 onClick={() => run("send", async () => {
-                  if (!window.confirm(`Send the ${issueMonthLabel(issue.issue_date)} issue to all current members now?\n\nThis can't be undone.`)) return;
+                  if (!window.confirm(`Send the ${issueMonthLabel(issue.issue_date)} issue to all current members and event RSVPs now?\n\nThis can't be undone.`)) return;
                   if (dirty) await save(true);
                   const r = await call("send");
                   setNotice({ kind: "ok", text: `Sent to ${r.sent} ${r.sent === 1 ? "person" : "people"}${r.failed ? ` (${r.failed} failed)` : ""}.` });

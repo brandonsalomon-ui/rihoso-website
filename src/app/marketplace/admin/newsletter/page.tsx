@@ -58,7 +58,7 @@ export default async function NewsletterAdminPage({ searchParams }: { searchPara
               <p className="text-gold-400 text-xs uppercase tracking-[0.2em]">RIHOSO only</p>
               <h1 className="font-display text-3xl text-cream-50">The RIHOSO Monthly</h1>
               <p className="text-sm text-cream-400 mt-1">
-                The writer drafts each issue around the 25th. Add photos, edit anything, then approve. Approved issues email members at 9 AM on the 1st.
+                The writer drafts each issue around the 25th. Add photos, edit anything, then approve. Approved issues email members, and everyone who RSVP&apos;d to an event, at 9 AM on the 1st.
               </p>
             </div>
             <Link href="/marketplace/admin" className="text-sm text-cream-300 hover:text-gold-300">← Back to admin</Link>

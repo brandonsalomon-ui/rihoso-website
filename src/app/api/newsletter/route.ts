@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { EVENTS, todayInRI } from "@/lib/events";
-import { cleanSections, firstOfMonth, getIssueBySlug, listAllIssues, notifyDraftReady, type Newsletter } from "@/lib/newsletter";
+import { addWriterPhoto, cleanSections, firstOfMonth, getIssueBySlug, listAllIssues, newsletterPhotoUrl, notifyDraftReady, type Newsletter } from "@/lib/newsletter";
 import { sectionDef } from "@/lib/newsletter-sections";
 import { siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,18 +19,19 @@ function authorized(request: Request) {
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\r\n/g, "\n").trim().slice(0, max) : "");
 
 /**
- * For the writer: what earlier issues covered (so nothing repeats), RIHOSO's events with RSVP counts
- * (for the "From the Society" recap), and today's date in Rhode Island.
+ * For the writer: what earlier issues covered (so nothing repeats), RIHOSO's events with RSVP counts and the
+ * names people RSVP'd under (for the "From the Society" recap), and today's date in Rhode Island.
  */
 export async function GET(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const issues = await listAllIssues(24);
-  const { data: rsvps } = await createAdminClient().from("event_rsvps").select("event_slug, guests");
-  const counts = new Map<string, { replies: number; people: number }>();
+  const { data: rsvps } = await createAdminClient().from("event_rsvps").select("event_slug, full_name, guests").order("created_at");
+  const counts = new Map<string, { replies: number; people: number; names: string[] }>();
   for (const r of rsvps ?? []) {
-    const c = counts.get(r.event_slug as string) ?? { replies: 0, people: 0 };
+    const c = counts.get(r.event_slug as string) ?? { replies: 0, people: 0, names: [] };
     c.replies += 1;
     c.people += 1 + ((r.guests as number) ?? 0);
+    c.names.push(r.full_name as string);
     counts.set(r.event_slug as string, c);
   }
   return NextResponse.json({
@@ -41,6 +42,12 @@ export async function GET(request: Request) {
       status: i.status,
       title: i.title,
       covered: i.sections.map((s) => ({ section: s.key, label: sectionDef(s.key)?.label, title: s.title })),
+      // Photos already in each section, so the writer only fills empty slots and doesn't repeat one.
+      photos: i.sections.map((s) => ({
+        section: s.key,
+        slots: sectionDef(s.key)?.photos ?? 0,
+        photos: s.photos.map((p) => ({ url: newsletterPhotoUrl(p.path), caption: p.caption, credit: p.credit })),
+      })),
     })),
     events: EVENTS.map((e) => ({
       title: e.title,
@@ -50,9 +57,30 @@ export async function GET(request: Request) {
       location: e.location,
       description: e.description,
       recurring: Boolean(e.recurring),
-      rsvp: e.rsvp ? { slug: e.rsvp.slug, ...(counts.get(e.rsvp.slug) ?? { replies: 0, people: 0 }) } : null,
+      rsvp: e.rsvp ? { slug: e.rsvp.slug, ...(counts.get(e.rsvp.slug) ?? { replies: 0, people: 0, names: [] }) } : null,
     })),
   });
+}
+
+/**
+ * Adds one photo to a section of a draft. Body: { action: "photo", issue_date, key, content_type, image (base64),
+ * caption, credit }. Only fills an empty slot; never replaces Brandon's photos or touches the text.
+ */
+async function addPhoto(data: Record<string, unknown>) {
+  const issueDate = str(data.issue_date, 10);
+  if (!firstOfMonth(issueDate)) return NextResponse.json({ error: "issue_date must be the first of a month, YYYY-MM-01" }, { status: 400 });
+  const image = typeof data.image === "string" ? data.image.replace(/^data:[^,]*,/, "") : "";
+  if (!/^[A-Za-z0-9+/=\s]+$/.test(image)) return NextResponse.json({ error: "image must be base64" }, { status: 400 });
+  const result = await addWriterPhoto({
+    slug: issueDate.slice(0, 7),
+    key: str(data.key, 40),
+    bytes: Buffer.from(image, "base64"),
+    contentType: str(data.content_type, 40),
+    caption: str(data.caption, 200),
+    credit: str(data.credit, 120),
+  });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  return NextResponse.json(result);
 }
 
 /**
@@ -68,6 +96,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  if (data.action === "photo") return addPhoto(data);
   const issueDate = str(data.issue_date, 10);
   const title = str(data.title, 140);
   const intro = str(data.intro, 1200);

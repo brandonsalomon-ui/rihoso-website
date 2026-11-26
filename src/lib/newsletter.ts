@@ -1,7 +1,8 @@
 import "server-only";
+import crypto from "node:crypto";
 import { brandonCopy, escapeHtml, sendNotification } from "@/lib/email";
 import { todayInRI } from "@/lib/events";
-import { FROM, POSTAL, REPLY_TO, firstName, loadDirectory, recipients, sendEach, unsubscribeParams } from "@/lib/member-mail";
+import { FROM, POSTAL, REPLY_TO, firstName, isMember, loadDirectory, newsletterGuestParams, sendEach, unsubscribeParams } from "@/lib/member-mail";
 import {
   GROUP_LABEL,
   PHOTO_BUCKET,
@@ -178,9 +179,14 @@ function para(text: string, style = "font-size:16px;line-height:1.6;margin:0 0 1
     .join("");
 }
 
-/** The teaser email: an opener, a blurb per section, and a button to read the full issue on rihoso.com. */
-export function renderNewsletterEmail(issue: Newsletter, person: { email: string; name: string }, base: string, test = false) {
-  const issueUrl = `${base}/newsletter/${issue.slug}`;
+/** Who a newsletter email goes to. Guests are event RSVPs who aren't members: their link opens this issue for them. */
+export type NewsletterRecipient = { email: string; name: string; guest?: boolean };
+
+/** The teaser email: an opener, a blurb (and photo) per section, and a button to read the full issue on rihoso.com. */
+export function renderNewsletterEmail(issue: Newsletter, person: NewsletterRecipient, base: string, test = false) {
+  const issueUrl = person.guest
+    ? `${base}/newsletter/${issue.slug}?${newsletterGuestParams(person.email, issue.slug)}`
+    : `${base}/newsletter/${issue.slug}`;
   const month = issueMonthLabel(issue.issue_date);
   const unsubUrl = `${base}/unsubscribe?${unsubscribeParams(person.email)}`;
   const greeting = `Dear ${firstName(person.name)},`;
@@ -197,12 +203,18 @@ export function renderNewsletterEmail(issue: Newsletter, person: { email: string
           ? `<div style="margin:28px 0 10px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8a6d1f;border-bottom:1px solid #e8e0d0;padding-bottom:6px">${escapeHtml(GROUP_LABEL[def.group])}</div>`
           : "";
       lastGroup = def.group;
-      return `${groupHead}
-      <div style="margin:0 0 18px">
+      const text = `
         <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a6d1f">${escapeHtml(def.label)}</div>
         <div style="font-size:18px;font-weight:bold;margin:2px 0 4px">${escapeHtml(s.title)}</div>
-        <div style="font-size:15px;line-height:1.55;color:#333">${escapeHtml(s.blurb.replace(/\[([^\]]+)\](?!\()/g, "$1"))}</div>
-      </div>`;
+        <div style="font-size:15px;line-height:1.55;color:#333">${escapeHtml(s.blurb.replace(/\[([^\]]+)\](?!\()/g, "$1"))}</div>`;
+      // The store's first photo already leads the email, so its section shows the second one (if any).
+      const photo = s.key === "store" ? s.photos[1] : s.photos[0];
+      if (!photo) return `${groupHead}<div style="margin:0 0 18px">${text}</div>`;
+      return `${groupHead}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 18px;border-collapse:collapse"><tr>
+        <td style="width:132px;vertical-align:top;padding:4px 16px 0 0"><img src="${escapeHtml(newsletterPhotoUrl(photo.path))}" alt="${escapeHtml(photo.caption || s.title)}" width="132" style="display:block;width:132px;height:auto;border-radius:4px"/></td>
+        <td style="vertical-align:top">${text}</td>
+      </tr></table>`;
     })
     .join("");
 
@@ -225,7 +237,11 @@ export function renderNewsletterEmail(issue: Newsletter, person: { email: string
       ${button("Read the full issue")}
       ${items}
       ${button("Read the full issue")}
-      <p style="font-size:13px;line-height:1.5;color:#666;text-align:center;margin:0 0 8px">The full newsletter is for members. Sign in at rihoso.com with this email address; we'll send you a one-time code, no password needed.</p>
+      <p style="font-size:13px;line-height:1.5;color:#666;text-align:center;margin:0 0 8px">${
+        person.guest
+          ? `You're receiving this because you RSVP'd to a RIHOSO event, so this month's full issue is on us. <a href="${escapeHtml(`${base}/memberships`)}" style="color:#8a6d1f">Become a member</a> to get every issue, monthly meetings and more.`
+          : "The full newsletter is for members. Sign in at rihoso.com with this email address; we'll send you a one-time code, no password needed."
+      }</p>
     </div>
     <div style="padding:16px 28px 24px;border-top:1px solid #e8e0d0;font-size:12px;color:#777;line-height:1.5">
       Questions? Just reply to this email.<br/>
@@ -239,7 +255,10 @@ export function renderNewsletterEmail(issue: Newsletter, person: { email: string
     .filter((s) => s.blurb)
     .map((s) => `${sectionDef(s.key)!.label.toUpperCase()}: ${s.title}\n${s.blurb}`)
     .join("\n\n");
-  const text = `${greeting}\n\n${issue.intro.trim()}\n\nRead the full issue: ${issueUrl}\n\n${textItems}\n\nThe full newsletter is for members. Sign in at rihoso.com with this email address.\n\n—\nRhode Island Horological Society\n${POSTAL()}\nUnsubscribe: ${unsubUrl}`;
+  const access = person.guest
+    ? `You're receiving this because you RSVP'd to a RIHOSO event, so this month's full issue is on us. Become a member to get every issue: ${base}/memberships`
+    : "The full newsletter is for members. Sign in at rihoso.com with this email address.";
+  const text = `${greeting}\n\n${issue.intro.trim()}\n\nRead the full issue: ${issueUrl}\n\n${textItems}\n\n${access}\n\n—\nRhode Island Horological Society\n${POSTAL()}\nUnsubscribe: ${unsubUrl}`;
 
   return {
     from: FROM(),
@@ -258,7 +277,30 @@ export function renderNewsletterEmail(issue: Newsletter, person: { email: string
 // ───────────────────────── sending ─────────────────────────
 
 /**
- * Emails an approved issue to every current member (plus Brandon's copy) and logs it in the sent log.
+ * Who an issue goes to: every current member, plus everyone who RSVP'd to a RIHOSO event (as a guest, with a
+ * link that opens this issue), plus Brandon's copy. Unsubscribed people are left out.
+ */
+export async function newsletterRecipients() {
+  const people = await loadDirectory();
+  const to: NewsletterRecipient[] = [];
+  let skipped = 0;
+  for (const p of people) {
+    const member = isMember(p);
+    if (!member && p.events.length === 0) continue;
+    if (p.unsubscribed) {
+      skipped++;
+      continue;
+    }
+    to.push({ email: p.email, name: p.name, guest: !member });
+  }
+  for (const email of brandonCopy()) {
+    if (!to.some((p) => p.email === email.toLowerCase())) to.push({ email: email.toLowerCase(), name: "Brandon Salomon" });
+  }
+  return { to, skipped };
+}
+
+/**
+ * Emails an approved issue to its recipients (see newsletterRecipients) and logs it in the sent log.
  * Claims the issue first (approved → sending) so a double click or an overlapping cron can't send twice.
  */
 export async function sendNewsletter(issueId: string, base: string, sentBy: string | null) {
@@ -274,12 +316,8 @@ export async function sendNewsletter(issueId: string, base: string, sentBy: stri
   const issue = hydrate(claimed);
 
   try {
-    const people = await loadDirectory();
-    const list = recipients(people, "members")!;
-    const to = list.to.map((p) => ({ email: p.email, name: p.name }));
-    for (const email of brandonCopy()) {
-      if (!to.some((p) => p.email === email.toLowerCase())) to.push({ email: email.toLowerCase(), name: "Brandon Salomon" });
-    }
+    const list = await newsletterRecipients();
+    const to = list.to;
     const month = issueMonthLabel(issue.issue_date);
     const { data: campaign, error } = await admin
       .from("email_campaigns")
@@ -289,7 +327,7 @@ export async function sendNewsletter(issueId: string, base: string, sentBy: stri
         cta_label: "Read the full issue",
         cta_url: `${base}/newsletter/${issue.slug}`,
         audience: `newsletter:${issue.slug}`,
-        audience_label: `Current members — ${NEWSLETTER_NAME}`,
+        audience_label: `Current members and event RSVPs — ${NEWSLETTER_NAME}`,
         sent_by: sentBy,
         recipient_count: to.length,
         skipped_unsubscribed: list.skipped,
@@ -347,9 +385,8 @@ export function issueProblems(issue: Newsletter) {
       const ph = findPlaceholders(`${s.title}\n${s.blurb}\n${s.body}`);
       if (ph.length) notes.push(`${def.label} still has ${ph.length} [placeholder]${ph.length > 1 ? "s" : ""} to fill in`);
     }
-    if (def.photos && (s?.photos.length ?? 0) < def.photos) {
-      notes.push(`${def.label} needs ${def.photos - (s?.photos.length ?? 0)} more photo${def.photos - (s?.photos.length ?? 0) > 1 ? "s" : ""}`);
-    }
+    const need = (def.minPhotos ?? def.photos) - (s?.photos.length ?? 0);
+    if (need > 0) notes.push(`${def.label} needs ${need} more photo${need > 1 ? "s" : ""}`);
   }
   return notes;
 }
@@ -433,4 +470,61 @@ export async function newsletterReader() {
   if (!user) return { user: null, member: false, admin: false };
   const [member, admin] = await Promise.all([isActiveMember(user.id), isAdmin(user.id)]);
   return { user, member: member || admin, admin };
+}
+
+// ───────────────────────── writer photos ─────────────────────────
+
+const IMAGE_TYPES: Record<string, { ext: string; magic: (b: Buffer) => boolean }> = {
+  "image/jpeg": { ext: "jpg", magic: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  "image/png": { ext: "png", magic: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
+  "image/webp": { ext: "webp", magic: (b) => b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP" },
+};
+
+/**
+ * Adds one photo from the writer to a section of a draft issue. It only fills an empty photo slot: it never
+ * replaces or removes a photo, and never touches the text, so it is safe on a draft Brandon has edited.
+ */
+export async function addWriterPhoto(input: {
+  slug: string;
+  key: string;
+  bytes: Buffer;
+  contentType: string;
+  caption: string;
+  credit: string;
+}): Promise<{ ok: true; path: string; photos: number; slots: number } | { ok: false; status: number; error: string }> {
+  const def = sectionDef(input.key);
+  if (!def) return { ok: false, status: 400, error: `Unknown section "${input.key}"` };
+  const type = IMAGE_TYPES[input.contentType];
+  if (!type) return { ok: false, status: 400, error: "content_type must be image/jpeg, image/png or image/webp" };
+  if (!type.magic(input.bytes)) return { ok: false, status: 400, error: "The image data doesn't match its content_type" };
+  if (input.bytes.length < 2000 || input.bytes.length > 4 * 1024 * 1024) return { ok: false, status: 400, error: "Images must be between 2 KB and 4 MB" };
+  if (!input.credit) return { ok: false, status: 400, error: "credit is required (who the photo is by or from)" };
+
+  const issue = await getIssueBySlug(input.slug);
+  if (!issue) return { ok: false, status: 404, error: "No issue for that month" };
+  if (issue.status !== "draft") return { ok: false, status: 409, error: "Photos can only be added to a draft" };
+  const section = issue.sections.find((s) => s.key === def.key);
+  if (!section) return { ok: false, status: 409, error: "That section is empty in this issue" };
+  if (section.photos.length >= def.photos) return { ok: false, status: 409, error: `${def.label} already has all its photos` };
+
+  const admin = createAdminClient();
+  const path = `${issue.slug}/${def.key}-${crypto.randomUUID().slice(0, 8)}.${type.ext}`;
+  const up = await admin.storage.from(PHOTO_BUCKET).upload(path, input.bytes, { contentType: input.contentType, cacheControl: "31536000" });
+  if (up.error) return { ok: false, status: 500, error: `Upload failed: ${up.error.message}` };
+
+  // Re-read just before saving so a photo Brandon added meanwhile isn't lost.
+  const fresh = await getIssueBySlug(input.slug);
+  const target = fresh?.sections.find((s) => s.key === def.key);
+  if (!fresh || fresh.status !== "draft" || !target || target.photos.length >= def.photos) {
+    await admin.storage.from(PHOTO_BUCKET).remove([path]);
+    return { ok: false, status: 409, error: "The issue changed while uploading; try again" };
+  }
+  const photo: NewsletterPhoto = { path, caption: input.caption.slice(0, 200), credit: input.credit.slice(0, 120) };
+  const sections = fresh.sections.map((s) => (s.key === def.key ? { ...s, photos: [...s.photos, photo] } : s));
+  const { error } = await admin.from("newsletters").update({ sections }).eq("id", fresh.id).eq("status", "draft");
+  if (error) {
+    await admin.storage.from(PHOTO_BUCKET).remove([path]);
+    return { ok: false, status: 500, error: "Couldn't save the photo" };
+  }
+  return { ok: true, path, photos: target.photos.length + 1, slots: def.photos };
 }
