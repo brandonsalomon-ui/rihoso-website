@@ -189,6 +189,33 @@ export function unsubscribeParams(email: string) {
   return `e=${e}&t=${sign(email.toLowerCase())}`;
 }
 
+// ───────────────────────── newsletter guest passes ─────────────────────────
+
+function signGuest(email: string, slug: string) {
+  return crypto.createHmac("sha256", mailSecret()).update(`newsletter-guest:${slug}:${email}`).digest("base64url").slice(0, 32);
+}
+
+/** Query string that lets one non-member (an event RSVP) read one newsletter issue. */
+export function newsletterGuestParams(email: string, slug: string) {
+  const e = Buffer.from(email.toLowerCase()).toString("base64url");
+  return `g=${e}&t=${signGuest(email.toLowerCase(), slug)}`;
+}
+
+/** The guest's email if this pass is genuine for this issue, otherwise null. */
+export function verifyNewsletterGuest(g: string | null | undefined, t: string | null | undefined, slug: string) {
+  if (!g || !t) return null;
+  let email: string;
+  try {
+    email = Buffer.from(g, "base64url").toString("utf8").toLowerCase();
+  } catch {
+    return null;
+  }
+  if (!email.includes("@") || email.length > 200) return null;
+  const expected = Buffer.from(signGuest(email, slug));
+  const given = Buffer.from(t);
+  return expected.length === given.length && crypto.timingSafeEqual(expected, given) ? email : null;
+}
+
 /** The email address an unsubscribe link belongs to, or null if the link was altered. */
 export function verifyUnsubscribe(e: string | null, t: string | null) {
   if (!e || !t) return null;

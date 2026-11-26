@@ -5,6 +5,7 @@ import NewsletterIssue, { IssueContents } from "@/components/NewsletterIssue";
 import PageHero from "@/components/PageHero";
 import { getIssueBySlug, issueProblems, NEWSLETTER_NAME, newsletterReader } from "@/lib/newsletter";
 import { issueMonthLabel } from "@/lib/newsletter-sections";
+import { verifyNewsletterGuest } from "@/lib/member-mail";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +15,35 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return { title: `${NEWSLETTER_NAME} — ${issueMonthLabel(issue.issue_date)}`, description: issue.title, robots: { index: false } };
 }
 
-export default async function NewsletterIssuePage({ params }: { params: { slug: string } }) {
+export default async function NewsletterIssuePage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { g?: string; t?: string };
+}) {
   const [issue, reader] = await Promise.all([getIssueBySlug(params.slug), newsletterReader()]);
   if (!issue || issue.status === "cancelled") notFound();
   if (issue.status !== "sent" && !reader.admin) notFound();
   const month = issueMonthLabel(issue.issue_date);
   const next = `/newsletter/${issue.slug}`;
+  // Event RSVPs get the issue by email with a pass that opens this one issue for them.
+  const guest = !reader.member && issue.status === "sent" && Boolean(verifyNewsletterGuest(searchParams.g, searchParams.t, issue.slug));
+
+  if (guest) {
+    return (
+      <>
+        <div className="bg-gold-400/15 border-b border-gold-400/30 text-cream-100 text-sm">
+          <div className="max-w-5xl mx-auto px-4 py-3">
+            <strong>You&apos;re reading this issue as a guest of RIHOSO.</strong> Members get every issue, monthly meetings and more.{" "}
+            <Link href="/memberships#join" className="underline text-gold-300">Become a member</Link>
+          </div>
+        </div>
+        <PageHero eyebrow={`${NEWSLETTER_NAME} · ${month}`} title={issue.title} />
+        <NewsletterIssue issue={issue} showPlaceholders={false} />
+      </>
+    );
+  }
 
   if (!reader.member) {
     return (
