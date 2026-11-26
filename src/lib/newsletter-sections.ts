@@ -26,8 +26,10 @@ export type SectionDef = {
   label: string;
   /** What the writer should put here (shown to Brandon in the editor too). */
   guide: string;
-  /** Photo slots Brandon fills on the admin page. */
+  /** Photo slots Brandon fills on the admin page (the most a section can hold). */
   photos: number;
+  /** Photos needed before the issue counts as ready; defaults to `photos`. */
+  minPhotos?: number;
   /** Does the writer need web sources for this section? */
   sourced: boolean;
   /** Shorter sections RIHOSO writes itself (repair, exchange, referral, clinic). */
@@ -43,7 +45,7 @@ export const SECTIONS: SectionDef[] = [
   { key: "watchmaker", label: "Watchmaker Profile", guide: "A watchmaker, historic or living: background, training, accomplishments, inventions, awards. Professional facts only.", photos: 0, sourced: true, minBody: 800, group: "feature" },
   { key: "independent", label: "Independent Spotlight", guide: "An independent watch brand: founder, philosophy, signature pieces, why collectors care.", photos: 0, sourced: true, minBody: 700, group: "feature" },
   { key: "mainstream", label: "Brand in Focus", guide: "A major brand in the news this month (a release, anniversary or story) and why it matters.", photos: 0, sourced: true, minBody: 600, group: "feature" },
-  { key: "rihoso_event", label: "From the Society", guide: "A recap of RIHOSO's most recent event: where, when, who came, what was shown and discussed. One photo.", photos: 1, sourced: false, minBody: 300, group: "society" },
+  { key: "rihoso_event", label: "From the Society", guide: "A recap of RIHOSO's most recent event: where, when, who came, what was shown and discussed. One to four photos.", photos: 4, minPhotos: 1, sourced: false, minBody: 300, group: "society" },
   { key: "repair", label: "Repair Corner", guide: "A short repair highlight plus why having your watch checked or serviced matters, and that RIHOSO can do it or point you to the right place.", photos: 0, sourced: false, minBody: 250, group: "society" },
   { key: "exchange", label: "The Watch Exchange", guide: "Have a watch to sell or trade? List it on the RIHOSO Watch Exchange. Members save on the transaction fee (5% instead of 10%).", photos: 0, sourced: false, minBody: 150, group: "society" },
   { key: "refer", label: "Bring a Friend", guide: "Ask members to refer friends who love watches; a membership makes a great gift.", photos: 0, sourced: false, minBody: 150, group: "society" },

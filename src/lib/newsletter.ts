@@ -347,9 +347,8 @@ export function issueProblems(issue: Newsletter) {
       const ph = findPlaceholders(`${s.title}\n${s.blurb}\n${s.body}`);
       if (ph.length) notes.push(`${def.label} still has ${ph.length} [placeholder]${ph.length > 1 ? "s" : ""} to fill in`);
     }
-    if (def.photos && (s?.photos.length ?? 0) < def.photos) {
-      notes.push(`${def.label} needs ${def.photos - (s?.photos.length ?? 0)} more photo${def.photos - (s?.photos.length ?? 0) > 1 ? "s" : ""}`);
-    }
+    const need = (def.minPhotos ?? def.photos) - (s?.photos.length ?? 0);
+    if (need > 0) notes.push(`${def.label} needs ${need} more photo${need > 1 ? "s" : ""}`);
   }
   return notes;
 }
